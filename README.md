@@ -108,3 +108,9 @@ Please note performance is highly dependent on system load. The numbers above ar
 ## Contacts
 * support@stellite.cash
 * [reddit](https://www.reddit.com/r/stellite)
+
+## Copyrights
+
+Copyright 2016-2018 XMRig                     <https://github.com/xmrig>, <support@xmrig.com>
+
+
