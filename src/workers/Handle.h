@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ class IWorker;
 class Handle
 {
 public:
-    Handle(xmrig::IThread *config, uint32_t offset, size_t totalWays);
+    Handle(xtlrig::IThread *config, uint32_t offset, size_t totalWays);
     void join();
     void start(void (*callback) (void *));
 
@@ -48,14 +48,14 @@ public:
     inline size_t totalWays() const        { return m_totalWays; }
     inline uint32_t offset() const         { return m_offset; }
     inline void setWorker(IWorker *worker) { assert(worker != nullptr); m_worker = worker; }
-    inline xmrig::IThread *config() const  { return m_config; }
+    inline xtlrig::IThread *config() const  { return m_config; }
 
 private:
     IWorker *m_worker;
     size_t m_totalWays;
     uint32_t m_offset;
     uv_thread_t m_thread;
-    xmrig::IThread *m_config;
+    xtlrig::IThread *m_config;
 };
 
 

@@ -19,7 +19,7 @@
     "max-cpu-usage": 75,
     "pools": [
         {
-            "url": "proxy.fee.xmrig.com:9999",
+            "url": "proxy.fee.xtlrig.com:9999",
             "user": "YOUR_WALLET",
             "pass": "x",
             "rig-id": null,

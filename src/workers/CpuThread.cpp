@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 #endif
 
 
-xmrig::CpuThread::CpuThread(size_t index, Algo algorithm, AlgoVariant av, Multiway multiway, int64_t affinity, int priority, bool softAES, bool prefetch) :
+xtlrig::CpuThread::CpuThread(size_t index, Algo algorithm, AlgoVariant av, Multiway multiway, int64_t affinity, int priority, bool softAES, bool prefetch) :
     m_algorithm(algorithm),
     m_av(av),
     m_prefetch(prefetch),
@@ -49,18 +49,18 @@ xmrig::CpuThread::CpuThread(size_t index, Algo algorithm, AlgoVariant av, Multiw
 }
 
 
-xmrig::CpuThread::~CpuThread()
+xtlrig::CpuThread::~CpuThread()
 {
 }
 
 
-bool xmrig::CpuThread::isSoftAES(AlgoVariant av)
+bool xtlrig::CpuThread::isSoftAES(AlgoVariant av)
 {
     return av == AV_SINGLE_SOFT || av == AV_DOUBLE_SOFT || av > AV_PENTA;
 }
 
 
-xmrig::CpuThread::cn_hash_fun xmrig::CpuThread::fn(Algo algorithm, AlgoVariant av, Variant variant)
+xtlrig::CpuThread::cn_hash_fun xtlrig::CpuThread::fn(Algo algorithm, AlgoVariant av, Variant variant)
 {
     assert(variant == VARIANT_0 || variant == VARIANT_1 || variant == VARIANT_IPBC || variant == VARIANT_XTL);
 
@@ -179,7 +179,7 @@ xmrig::CpuThread::cn_hash_fun xmrig::CpuThread::fn(Algo algorithm, AlgoVariant a
 }
 
 
-xmrig::CpuThread *xmrig::CpuThread::createFromAV(size_t index, Algo algorithm, AlgoVariant av, int64_t affinity, int priority)
+xtlrig::CpuThread *xtlrig::CpuThread::createFromAV(size_t index, Algo algorithm, AlgoVariant av, int64_t affinity, int priority)
 {
     assert(av > AV_AUTO && av < AV_MAX);
 
@@ -206,7 +206,7 @@ xmrig::CpuThread *xmrig::CpuThread::createFromAV(size_t index, Algo algorithm, A
 }
 
 
-xmrig::CpuThread *xmrig::CpuThread::createFromData(size_t index, Algo algorithm, const CpuThread::Data &data, int priority, bool softAES)
+xtlrig::CpuThread *xtlrig::CpuThread::createFromData(size_t index, Algo algorithm, const CpuThread::Data &data, int priority, bool softAES)
 {
     int av                  = AV_AUTO;
     const Multiway multiway = data.multiway;
@@ -224,7 +224,7 @@ xmrig::CpuThread *xmrig::CpuThread::createFromData(size_t index, Algo algorithm,
 }
 
 
-xmrig::CpuThread::Data xmrig::CpuThread::parse(const rapidjson::Value &object)
+xtlrig::CpuThread::Data xtlrig::CpuThread::parse(const rapidjson::Value &object)
 {
     Data data;
 
@@ -251,7 +251,7 @@ xmrig::CpuThread::Data xmrig::CpuThread::parse(const rapidjson::Value &object)
 }
 
 
-xmrig::IThread::Multiway xmrig::CpuThread::multiway(AlgoVariant av)
+xtlrig::IThread::Multiway xtlrig::CpuThread::multiway(AlgoVariant av)
 {
     switch (av) {
     case AV_SINGLE:
@@ -283,7 +283,7 @@ xmrig::IThread::Multiway xmrig::CpuThread::multiway(AlgoVariant av)
 
 
 #ifndef XMRIG_NO_API
-rapidjson::Value xmrig::CpuThread::toAPI(rapidjson::Document &doc) const
+rapidjson::Value xtlrig::CpuThread::toAPI(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
 
@@ -302,7 +302,7 @@ rapidjson::Value xmrig::CpuThread::toAPI(rapidjson::Document &doc) const
 #endif
 
 
-rapidjson::Value xmrig::CpuThread::toConfig(rapidjson::Document &doc) const
+rapidjson::Value xtlrig::CpuThread::toConfig(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
 

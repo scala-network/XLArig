@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(xmrig)
+project(xtlrig)
 
 option(WITH_LIBCPUID "Use Libcpuid" ON)
 option(WITH_AEON     "CryptoNight-Lite support" ON)
@@ -35,7 +35,7 @@ set(HEADERS
     src/common/Platform.h
     src/common/utils/c_str.h
     src/common/utils/mm_malloc.h
-    src/common/xmrig.h
+    src/common/xtlrig.h
     src/core/Config.cpp
     src/core/ConfigLoader_platform.h
     src/core/Controller.h
@@ -118,7 +118,7 @@ set(SOURCES
     src/workers/MultiWorker.cpp
     src/workers/Worker.cpp
     src/workers/Workers.cpp
-    src/xmrig.cpp
+    src/xtlrig.cpp
    )
 
 set(SOURCES_CRYPTO
@@ -246,5 +246,5 @@ if (BUILD_STATIC)
     set(CMAKE_EXE_LINKER_FLAGS " -static")
 endif()
 
-add_executable(xmrig ${HEADERS} ${SOURCES} ${SOURCES_OS} ${SOURCES_CPUID} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} ${SOURCES_SYSLOG} ${HTTPD_SOURCES})
-target_link_libraries(xmrig ${UV_LIBRARIES} ${MHD_LIBRARY} ${EXTRA_LIBS} ${CPUID_LIB})
+add_executable(xtlrig ${HEADERS} ${SOURCES} ${SOURCES_OS} ${SOURCES_CPUID} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} ${SOURCES_SYSLOG} ${HTTPD_SOURCES})
+target_link_libraries(xtlrig ${UV_LIBRARIES} ${MHD_LIBRARY} ${EXTRA_LIBS} ${CPUID_LIB})

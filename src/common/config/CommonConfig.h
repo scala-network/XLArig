@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,11 +30,11 @@
 
 #include "common/net/Pool.h"
 #include "common/utils/c_str.h"
-#include "common/xmrig.h"
+#include "common/xtlrig.h"
 #include "interfaces/IConfig.h"
 
 
-namespace xmrig {
+namespace xtlrig {
 
 
 class CommonConfig : public IConfig
@@ -94,17 +94,17 @@ protected:
     State m_state;
     std::vector<Pool> m_activePools;
     std::vector<Pool> m_pools;
-    xmrig::c_str m_apiToken;
-    xmrig::c_str m_apiWorkerId;
-    xmrig::c_str m_fileName;
-    xmrig::c_str m_logFile;
-    xmrig::c_str m_userAgent;
+    xtlrig::c_str m_apiToken;
+    xtlrig::c_str m_apiWorkerId;
+    xtlrig::c_str m_fileName;
+    xtlrig::c_str m_logFile;
+    xtlrig::c_str m_userAgent;
 
 private:
     bool parseInt(int key, int arg);
 };
 
 
-} /* namespace xmrig */
+} /* namespace xtlrig */
 
 #endif /* __COMMONCONFIG_H__ */

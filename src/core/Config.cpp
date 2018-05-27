@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 static char affinity_tmp[20] = { 0 };
 
 
-xmrig::Config::Config() : xmrig::CommonConfig(),
+xtlrig::Config::Config() : xtlrig::CommonConfig(),
     m_aesMode(AES_AUTO),
     m_algoVariant(AV_AUTO),
     m_dryRun(false),
@@ -52,18 +52,18 @@ xmrig::Config::Config() : xmrig::CommonConfig(),
 }
 
 
-xmrig::Config::~Config()
+xtlrig::Config::~Config()
 {
 }
 
 
-bool xmrig::Config::reload(const char *json)
+bool xtlrig::Config::reload(const char *json)
 {
-    return xmrig::ConfigLoader::reload(this, json);
+    return xtlrig::ConfigLoader::reload(this, json);
 }
 
 
-void xmrig::Config::getJSON(rapidjson::Document &doc) const
+void xtlrig::Config::getJSON(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
 
@@ -135,13 +135,13 @@ void xmrig::Config::getJSON(rapidjson::Document &doc) const
 }
 
 
-xmrig::Config *xmrig::Config::load(int argc, char **argv, IWatcherListener *listener)
+xtlrig::Config *xtlrig::Config::load(int argc, char **argv, IWatcherListener *listener)
 {
     return static_cast<Config*>(ConfigLoader::load(argc, argv, new ConfigCreator(), listener));
 }
 
 
-bool xmrig::Config::finalize()
+bool xtlrig::Config::finalize()
 {
     if (m_state != NoneState) {
         return CommonConfig::finalize();
@@ -185,7 +185,7 @@ bool xmrig::Config::finalize()
 }
 
 
-bool xmrig::Config::parseBoolean(int key, bool enable)
+bool xtlrig::Config::parseBoolean(int key, bool enable)
 {
     if (!CommonConfig::parseBoolean(key, enable)) {
         return false;
@@ -216,26 +216,26 @@ bool xmrig::Config::parseBoolean(int key, bool enable)
 }
 
 
-bool xmrig::Config::parseString(int key, const char *arg)
+bool xtlrig::Config::parseString(int key, const char *arg)
 {
     if (!CommonConfig::parseString(key, arg)) {
         return false;
     }
 
     switch (key) {
-    case xmrig::IConfig::AVKey:          /* --av */
-    case xmrig::IConfig::MaxCPUUsageKey: /* --max-cpu-usage */
-    case xmrig::IConfig::CPUPriorityKey: /* --cpu-priority */
+    case xtlrig::IConfig::AVKey:          /* --av */
+    case xtlrig::IConfig::MaxCPUUsageKey: /* --max-cpu-usage */
+    case xtlrig::IConfig::CPUPriorityKey: /* --cpu-priority */
         return parseUint64(key, strtol(arg, nullptr, 10));
 
-    case xmrig::IConfig::SafeKey:   /* --safe */
-    case xmrig::IConfig::DryRunKey: /* --dry-run */
+    case xtlrig::IConfig::SafeKey:   /* --safe */
+    case xtlrig::IConfig::DryRunKey: /* --dry-run */
         return parseBoolean(key, true);
 
-    case xmrig::IConfig::HugePagesKey: /* --no-huge-pages */
+    case xtlrig::IConfig::HugePagesKey: /* --no-huge-pages */
         return parseBoolean(key, false);
 
-    case xmrig::IConfig::ThreadsKey:  /* --threads */
+    case xtlrig::IConfig::ThreadsKey:  /* --threads */
         if (strncmp(arg, "all", 3) == 0) {
             m_threads.count = Cpu::threads();
             return true;
@@ -243,7 +243,7 @@ bool xmrig::Config::parseString(int key, const char *arg)
 
         return parseUint64(key, strtol(arg, nullptr, 10));
 
-    case xmrig::IConfig::CPUAffinityKey: /* --cpu-affinity */
+    case xtlrig::IConfig::CPUAffinityKey: /* --cpu-affinity */
         {
             const char *p  = strstr(arg, "0x");
             return parseUint64(key, p ? strtoull(p, nullptr, 16) : strtoull(arg, nullptr, 10));
@@ -257,14 +257,14 @@ bool xmrig::Config::parseString(int key, const char *arg)
 }
 
 
-bool xmrig::Config::parseUint64(int key, uint64_t arg)
+bool xtlrig::Config::parseUint64(int key, uint64_t arg)
 {
     if (!CommonConfig::parseUint64(key, arg)) {
         return false;
     }
 
     switch (key) {
-    case xmrig::IConfig::CPUAffinityKey: /* --cpu-affinity */
+    case xtlrig::IConfig::CPUAffinityKey: /* --cpu-affinity */
         if (arg) {
             m_threads.mask = arg;
         }
@@ -278,7 +278,7 @@ bool xmrig::Config::parseUint64(int key, uint64_t arg)
 }
 
 
-void xmrig::Config::parseJSON(const rapidjson::Document &doc)
+void xtlrig::Config::parseJSON(const rapidjson::Document &doc)
 {
     const rapidjson::Value &threads = doc["threads"];
 
@@ -300,28 +300,28 @@ void xmrig::Config::parseJSON(const rapidjson::Document &doc)
 }
 
 
-bool xmrig::Config::parseInt(int key, int arg)
+bool xtlrig::Config::parseInt(int key, int arg)
 {
     switch (key) {
-    case xmrig::IConfig::ThreadsKey: /* --threads */
+    case xtlrig::IConfig::ThreadsKey: /* --threads */
         if (arg >= 0 && arg < 1024) {
             m_threads.count = arg;
         }
         break;
 
-    case xmrig::IConfig::AVKey: /* --av */
+    case xtlrig::IConfig::AVKey: /* --av */
         if (arg >= AV_AUTO && arg < AV_MAX) {
             m_algoVariant = static_cast<AlgoVariant>(arg);
         }
         break;
 
-    case xmrig::IConfig::MaxCPUUsageKey: /* --max-cpu-usage */
+    case xtlrig::IConfig::MaxCPUUsageKey: /* --max-cpu-usage */
         if (m_maxCpuUsage > 0 && arg <= 100) {
             m_maxCpuUsage = arg;
         }
         break;
 
-    case xmrig::IConfig::CPUPriorityKey: /* --cpu-priority */
+    case xtlrig::IConfig::CPUPriorityKey: /* --cpu-priority */
         if (arg >= 0 && arg <= 5) {
             m_priority = arg;
         }
@@ -335,10 +335,10 @@ bool xmrig::Config::parseInt(int key, int arg)
 }
 
 
-xmrig::AlgoVariant xmrig::Config::getAlgoVariant() const
+xtlrig::AlgoVariant xtlrig::Config::getAlgoVariant() const
 {
 #   ifndef XMRIG_NO_AEON
-    if (m_algorithm.algo() == xmrig::CRYPTONIGHT_LITE) {
+    if (m_algorithm.algo() == xtlrig::CRYPTONIGHT_LITE) {
         return getAlgoVariantLite();
     }
 #   endif
@@ -356,7 +356,7 @@ xmrig::AlgoVariant xmrig::Config::getAlgoVariant() const
 
 
 #ifndef XMRIG_NO_AEON
-xmrig::AlgoVariant xmrig::Config::getAlgoVariantLite() const
+xtlrig::AlgoVariant xtlrig::Config::getAlgoVariantLite() const
 {
     if (m_algoVariant <= AV_AUTO || m_algoVariant >= AV_MAX) {
         return Cpu::hasAES() ? AV_DOUBLE : AV_DOUBLE_SOFT;

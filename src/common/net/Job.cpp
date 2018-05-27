@@ -1,4 +1,4 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ Job::Job() :
 }
 
 
-Job::Job(int poolId, bool nicehash, xmrig::Algorithm algorithm, const xmrig::Id &clientId) :
+Job::Job(int poolId, bool nicehash, xtlrig::Algorithm algorithm, const xtlrig::Id &clientId) :
     m_nicehash(nicehash),
     m_poolId(poolId),
     m_threadId(-1),
@@ -163,22 +163,22 @@ bool Job::setTarget(const char *target)
 }
 
 
-xmrig::Variant Job::variant() const
+xtlrig::Variant Job::variant() const
 {
-    if (m_algorithm.algo() == xmrig::CRYPTONIGHT_HEAVY) {
-        return xmrig::VARIANT_0;
+    if (m_algorithm.algo() == xtlrig::CRYPTONIGHT_HEAVY) {
+        return xtlrig::VARIANT_0;
     }
 
-    if (m_algorithm.variant() == xmrig::VARIANT_XTL && m_blob[0] < 4) {
-        return xmrig::VARIANT_1;
+    if (m_algorithm.variant() == xtlrig::VARIANT_XTL && m_blob[0] < 4) {
+        return xtlrig::VARIANT_1;
     }
 
-    if (m_algorithm.variant() == xmrig::VARIANT_AUTO) {
-        if (m_algorithm.algo() == xmrig::CRYPTONIGHT) {
-            return xmrig::VARIANT_1;
+    if (m_algorithm.variant() == xtlrig::VARIANT_AUTO) {
+        if (m_algorithm.algo() == xtlrig::CRYPTONIGHT) {
+            return xtlrig::VARIANT_1;
         }
 
-        return (m_blob[0] > 6 ? xmrig::VARIANT_1 : xmrig::VARIANT_0);
+        return (m_blob[0] > 6 ? xtlrig::VARIANT_1 : xtlrig::VARIANT_0);
     }
 
     return m_algorithm.variant();

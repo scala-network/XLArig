@@ -1,4 +1,4 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -47,39 +47,39 @@ struct AlgoData
 {
     const char *name;
     const char *shortName;
-    xmrig::Algo algo;
-    xmrig::Variant variant;
+    xtlrig::Algo algo;
+    xtlrig::Variant variant;
 };
 
 
 static AlgoData const algorithms[] = {
-    { "cryptonight",           "cn",           xmrig::CRYPTONIGHT,       xmrig::VARIANT_AUTO },
-    { "cryptonight/0",         "cn/0",         xmrig::CRYPTONIGHT,       xmrig::VARIANT_0    },
-    { "cryptonight/1",         "cn/1",         xmrig::CRYPTONIGHT,       xmrig::VARIANT_1    },
-    { "cryptonight/xtl",       "cn/xtl",       xmrig::CRYPTONIGHT,       xmrig::VARIANT_XTL  },
+    { "cryptonight",           "cn",           xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_AUTO },
+    { "cryptonight/0",         "cn/0",         xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_0    },
+    { "cryptonight/1",         "cn/1",         xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_1    },
+    { "cryptonight/xtl",       "cn/xtl",       xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_XTL  },
 
 #   ifndef XMRIG_NO_AEON
-    { "cryptonight-lite",      "cn-lite",      xmrig::CRYPTONIGHT_LITE,  xmrig::VARIANT_AUTO },
-    { "cryptonight-lite/0",    "cn-lite/0",    xmrig::CRYPTONIGHT_LITE,  xmrig::VARIANT_0    },
-    { "cryptonight-lite/1",    "cn-lite/1",    xmrig::CRYPTONIGHT_LITE,  xmrig::VARIANT_1    },
-    { "cryptonight-lite/ipbc", "cn-lite/ipbc", xmrig::CRYPTONIGHT_LITE,  xmrig::VARIANT_IPBC },
+    { "cryptonight-lite",      "cn-lite",      xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_AUTO },
+    { "cryptonight-lite/0",    "cn-lite/0",    xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_0    },
+    { "cryptonight-lite/1",    "cn-lite/1",    xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_1    },
+    { "cryptonight-lite/ipbc", "cn-lite/ipbc", xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_IPBC },
 #   endif
 
 #   ifndef XMRIG_NO_SUMO
-    { "cryptonight-heavy",     "cn-heavy",     xmrig::CRYPTONIGHT_HEAVY, xmrig::VARIANT_0    },
+    { "cryptonight-heavy",     "cn-heavy",     xtlrig::CRYPTONIGHT_HEAVY, xtlrig::VARIANT_0    },
 #   endif
 };
 
 
 #ifdef XMRIG_PROXY_PROJECT
 static AlgoData const xmrStakAlgorithms[] = {
-    { "cryptonight-monerov7",    nullptr, xmrig::CRYPTONIGHT,      xmrig::VARIANT_1    },
-    { "cryptonight_v7",          nullptr, xmrig::CRYPTONIGHT,      xmrig::VARIANT_1    },
-    { "cryptonight_v7_stellite", nullptr, xmrig::CRYPTONIGHT,      xmrig::VARIANT_XTL  },
-    { "cryptonight_lite",        nullptr, xmrig::CRYPTONIGHT_LITE, xmrig::VARIANT_0    },
-    { "cryptonight-aeonv7",      nullptr, xmrig::CRYPTONIGHT_LITE, xmrig::VARIANT_1    },
-    { "cryptonight_lite_v7",     nullptr, xmrig::CRYPTONIGHT_LITE, xmrig::VARIANT_1    },
-    { "cryptonight_lite_v7_xor", nullptr, xmrig::CRYPTONIGHT_LITE, xmrig::VARIANT_IPBC },
+    { "cryptonight-monerov7",    nullptr, xtlrig::CRYPTONIGHT,      xtlrig::VARIANT_1    },
+    { "cryptonight_v7",          nullptr, xtlrig::CRYPTONIGHT,      xtlrig::VARIANT_1    },
+    { "cryptonight_v7_stellite", nullptr, xtlrig::CRYPTONIGHT,      xtlrig::VARIANT_XTL  },
+    { "cryptonight_lite",        nullptr, xtlrig::CRYPTONIGHT_LITE, xtlrig::VARIANT_0    },
+    { "cryptonight-aeonv7",      nullptr, xtlrig::CRYPTONIGHT_LITE, xtlrig::VARIANT_1    },
+    { "cryptonight_lite_v7",     nullptr, xtlrig::CRYPTONIGHT_LITE, xtlrig::VARIANT_1    },
+    { "cryptonight_lite_v7_xor", nullptr, xtlrig::CRYPTONIGHT_LITE, xtlrig::VARIANT_IPBC },
 };
 #endif
 
@@ -92,7 +92,7 @@ static const char *variants[] = {
 };
 
 
-bool xmrig::Algorithm::isValid() const
+bool xtlrig::Algorithm::isValid() const
 {
     if (m_algo == INVALID_ALGO) {
         return false;
@@ -108,7 +108,7 @@ bool xmrig::Algorithm::isValid() const
 }
 
 
-const char *xmrig::Algorithm::variantName() const
+const char *xtlrig::Algorithm::variantName() const
 {
     if (m_variant == VARIANT_AUTO) {
         return "auto";
@@ -118,7 +118,7 @@ const char *xmrig::Algorithm::variantName() const
 }
 
 
-void xmrig::Algorithm::parseAlgorithm(const char *algo)
+void xtlrig::Algorithm::parseAlgorithm(const char *algo)
 {
     m_algo    = INVALID_ALGO;
     m_variant = VARIANT_AUTO;
@@ -142,7 +142,7 @@ void xmrig::Algorithm::parseAlgorithm(const char *algo)
 }
 
 
-void xmrig::Algorithm::parseVariant(const char *variant)
+void xtlrig::Algorithm::parseVariant(const char *variant)
 {
     if (m_algo == CRYPTONIGHT_HEAVY) {
         m_variant = VARIANT_0;
@@ -160,7 +160,7 @@ void xmrig::Algorithm::parseVariant(const char *variant)
 }
 
 
-void xmrig::Algorithm::parseVariant(int variant)
+void xtlrig::Algorithm::parseVariant(int variant)
 {
     if (variant >= VARIANT_AUTO && variant <= VARIANT_XTL) {
        m_variant = static_cast<Variant>(variant);
@@ -171,7 +171,7 @@ void xmrig::Algorithm::parseVariant(int variant)
 }
 
 
-void xmrig::Algorithm::setAlgo(Algo algo)
+void xtlrig::Algorithm::setAlgo(Algo algo)
 {
     m_algo = algo;
 
@@ -182,7 +182,7 @@ void xmrig::Algorithm::setAlgo(Algo algo)
 
 
 #ifdef XMRIG_PROXY_PROJECT
-void xmrig::Algorithm::parseXmrStakAlgorithm(const char *algo)
+void xtlrig::Algorithm::parseXmrStakAlgorithm(const char *algo)
 {
     m_algo    = INVALID_ALGO;
     m_variant = VARIANT_AUTO;
@@ -207,7 +207,7 @@ void xmrig::Algorithm::parseXmrStakAlgorithm(const char *algo)
 #endif
 
 
-const char *xmrig::Algorithm::name(bool shortName) const
+const char *xtlrig::Algorithm::name(bool shortName) const
 {
     for (size_t i = 0; i < ARRAY_SIZE(algorithms); i++) {
         if (algorithms[i].algo == m_algo && algorithms[i].variant == m_variant) {

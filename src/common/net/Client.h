@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ private:
     bool isCriticalError(const char *message);
     bool parseJob(const rapidjson::Value &params, int *code);
     bool parseLogin(const rapidjson::Value &result, int *code);
-    bool verifyAlgorithm(const xmrig::Algorithm &algorithm) const;
+    bool verifyAlgorithm(const xtlrig::Algorithm &algorithm) const;
     int resolve(const char *host);
     int64_t send(const rapidjson::Document &doc);
     int64_t send(size_t size);
@@ -141,10 +141,10 @@ private:
     uv_getaddrinfo_t m_resolver;
     uv_stream_t *m_stream;
     uv_tcp_t *m_socket;
-    xmrig::Id m_rpcId;
+    xtlrig::Id m_rpcId;
 
     static int64_t m_sequence;
-    static xmrig::Storage<Client> m_storage;
+    static xtlrig::Storage<Client> m_storage;
 };
 
 

@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -129,14 +129,14 @@ void Workers::setJob(const Job &job, bool donate)
 }
 
 
-void Workers::start(xmrig::Controller *controller)
+void Workers::start(xtlrig::Controller *controller)
 {
-    const std::vector<xmrig::IThread *> &threads = controller->config()->threads();
+    const std::vector<xtlrig::IThread *> &threads = controller->config()->threads();
     m_status.algo    = controller->config()->algorithm().algo();
     m_status.colors  = controller->config()->isColors();
     m_status.threads = threads.size();
 
-    for (const xmrig::IThread *thread : threads) {
+    for (const xtlrig::IThread *thread : threads) {
        m_status.ways += thread->multiway();
     }
 
@@ -154,7 +154,7 @@ void Workers::start(xmrig::Controller *controller)
 
     uint32_t offset = 0;
 
-    for (xmrig::IThread *thread : threads) {
+    for (xtlrig::IThread *thread : threads) {
         Handle *handle = new Handle(thread, offset, m_status.ways);
         offset += thread->multiway();
 
@@ -194,7 +194,7 @@ void Workers::threadsSummary(rapidjson::Document &doc)
 {
     uv_mutex_lock(&m_mutex);
     const uint64_t pages[2] = { m_status.hugePages, m_status.pages };
-    const uint64_t memory   = m_status.ways * xmrig::cn_select_memory(m_status.algo);
+    const uint64_t memory   = m_status.ways * xtlrig::cn_select_memory(m_status.algo);
     uv_mutex_unlock(&m_mutex);
 
     auto &allocator = doc.GetAllocator();
@@ -298,7 +298,7 @@ void Workers::start(IWorker *worker)
 
     if (m_status.started == m_status.threads) {
         const double percent = (double) m_status.hugePages / m_status.pages * 100.0;
-        const size_t memory  = m_status.ways * xmrig::cn_select_memory(m_status.algo) / 1048576;
+        const size_t memory  = m_status.ways * xtlrig::cn_select_memory(m_status.algo) / 1048576;
 
         if (m_status.colors) {
             LOG_INFO(GREEN_BOLD("READY (CPU)") " threads " CYAN_BOLD("%zu(%zu)") " huge pages %s%zu/%zu %1.0f%%\x1B[0m memory " CYAN_BOLD("%zu.0 MB") "",

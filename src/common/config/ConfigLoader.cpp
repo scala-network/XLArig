@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -45,9 +45,9 @@
 #include "rapidjson/filereadstream.h"
 
 
-xmrig::ConfigWatcher *xmrig::ConfigLoader::m_watcher     = nullptr;
-xmrig::IConfigCreator *xmrig::ConfigLoader::m_creator    = nullptr;
-xmrig::IWatcherListener *xmrig::ConfigLoader::m_listener = nullptr;
+xtlrig::ConfigWatcher *xtlrig::ConfigLoader::m_watcher     = nullptr;
+xtlrig::IConfigCreator *xtlrig::ConfigLoader::m_creator    = nullptr;
+xtlrig::IWatcherListener *xtlrig::ConfigLoader::m_listener = nullptr;
 
 
 #ifndef ARRAY_SIZE
@@ -55,7 +55,7 @@ xmrig::IWatcherListener *xmrig::ConfigLoader::m_listener = nullptr;
 #endif
 
 
-bool xmrig::ConfigLoader::loadFromFile(xmrig::IConfig *config, const char *fileName)
+bool xtlrig::ConfigLoader::loadFromFile(xtlrig::IConfig *config, const char *fileName)
 {
     rapidjson::Document doc;
     if (!getJSON(fileName, doc)) {
@@ -68,7 +68,7 @@ bool xmrig::ConfigLoader::loadFromFile(xmrig::IConfig *config, const char *fileN
 }
 
 
-bool xmrig::ConfigLoader::loadFromJSON(xmrig::IConfig *config, const char *json)
+bool xtlrig::ConfigLoader::loadFromJSON(xtlrig::IConfig *config, const char *json)
 {
     rapidjson::Document doc;
     doc.Parse(json);
@@ -81,7 +81,7 @@ bool xmrig::ConfigLoader::loadFromJSON(xmrig::IConfig *config, const char *json)
 }
 
 
-bool xmrig::ConfigLoader::loadFromJSON(xmrig::IConfig *config, const rapidjson::Document &doc)
+bool xtlrig::ConfigLoader::loadFromJSON(xtlrig::IConfig *config, const rapidjson::Document &doc)
 {
     for (size_t i = 0; i < ARRAY_SIZE(config_options); i++) {
         parseJSON(config, &config_options[i], doc);
@@ -113,9 +113,9 @@ bool xmrig::ConfigLoader::loadFromJSON(xmrig::IConfig *config, const rapidjson::
 }
 
 
-bool xmrig::ConfigLoader::reload(xmrig::IConfig *oldConfig, const char *json)
+bool xtlrig::ConfigLoader::reload(xtlrig::IConfig *oldConfig, const char *json)
 {
-    xmrig::IConfig *config = m_creator->create();
+    xtlrig::IConfig *config = m_creator->create();
     if (!loadFromJSON(config, json)) {
         delete config;
 
@@ -136,12 +136,12 @@ bool xmrig::ConfigLoader::reload(xmrig::IConfig *oldConfig, const char *json)
 }
 
 
-xmrig::IConfig *xmrig::ConfigLoader::load(int argc, char **argv, IConfigCreator *creator, IWatcherListener *listener)
+xtlrig::IConfig *xtlrig::ConfigLoader::load(int argc, char **argv, IConfigCreator *creator, IWatcherListener *listener)
 {
     m_creator  = creator;
     m_listener = listener;
 
-    xmrig::IConfig *config = m_creator->create();
+    xtlrig::IConfig *config = m_creator->create();
     int key;
 
     while (1) {
@@ -176,14 +176,14 @@ xmrig::IConfig *xmrig::ConfigLoader::load(int argc, char **argv, IConfigCreator 
     }
 
     if (config->isWatch()) {
-        m_watcher = new xmrig::ConfigWatcher(config->fileName(), creator, listener);
+        m_watcher = new xtlrig::ConfigWatcher(config->fileName(), creator, listener);
     }
 
     return config;
 }
 
 
-void xmrig::ConfigLoader::release()
+void xtlrig::ConfigLoader::release()
 {
     delete m_watcher;
     delete m_creator;
@@ -193,7 +193,7 @@ void xmrig::ConfigLoader::release()
 }
 
 
-bool xmrig::ConfigLoader::getJSON(const char *fileName, rapidjson::Document &doc)
+bool xtlrig::ConfigLoader::getJSON(const char *fileName, rapidjson::Document &doc)
 {
     uv_fs_t req;
     const int fd = uv_fs_open(uv_default_loop(), &req, fileName, O_RDONLY, 0644, nullptr);
@@ -222,18 +222,18 @@ bool xmrig::ConfigLoader::getJSON(const char *fileName, rapidjson::Document &doc
 }
 
 
-bool xmrig::ConfigLoader::parseArg(xmrig::IConfig *config, int key, const char *arg)
+bool xtlrig::ConfigLoader::parseArg(xtlrig::IConfig *config, int key, const char *arg)
 {
     switch (key) {
-    case xmrig::IConfig::VersionKey: /* --version */
+    case xtlrig::IConfig::VersionKey: /* --version */
         showVersion();
         return false;
 
-    case xmrig::IConfig::HelpKey: /* --help */
+    case xtlrig::IConfig::HelpKey: /* --help */
         showUsage();
         return false;
 
-    case xmrig::IConfig::ConfigKey: /* --config */
+    case xtlrig::IConfig::ConfigKey: /* --config */
         loadFromFile(config, arg);
         break;
 
@@ -245,7 +245,7 @@ bool xmrig::ConfigLoader::parseArg(xmrig::IConfig *config, int key, const char *
 }
 
 
-void xmrig::ConfigLoader::parseJSON(xmrig::IConfig *config, const struct option *option, const rapidjson::Value &object)
+void xtlrig::ConfigLoader::parseJSON(xtlrig::IConfig *config, const struct option *option, const rapidjson::Value &object)
 {
     if (!option->name || !object.HasMember(option->name)) {
         return;
@@ -270,13 +270,13 @@ void xmrig::ConfigLoader::parseJSON(xmrig::IConfig *config, const struct option 
 }
 
 
-void xmrig::ConfigLoader::showUsage()
+void xtlrig::ConfigLoader::showUsage()
 {
     printf(usage);
 }
 
 
-void xmrig::ConfigLoader::showVersion()
+void xtlrig::ConfigLoader::showVersion()
 {
     printf(APP_NAME " " APP_VERSION "\n built on " __DATE__
 

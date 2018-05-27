@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 #include "interfaces/IWatcherListener.h"
 
 
-xmrig::ConfigWatcher::ConfigWatcher(const char *path, IConfigCreator *creator, IWatcherListener *listener) :
+xtlrig::ConfigWatcher::ConfigWatcher(const char *path, IConfigCreator *creator, IWatcherListener *listener) :
     m_creator(creator),
     m_listener(listener),
     m_path(path)
@@ -46,37 +46,37 @@ xmrig::ConfigWatcher::ConfigWatcher(const char *path, IConfigCreator *creator, I
 }
 
 
-xmrig::ConfigWatcher::~ConfigWatcher()
+xtlrig::ConfigWatcher::~ConfigWatcher()
 {
     uv_timer_stop(&m_timer);
     uv_fs_event_stop(&m_fsEvent);
 }
 
 
-void xmrig::ConfigWatcher::onTimer(uv_timer_t* handle)
+void xtlrig::ConfigWatcher::onTimer(uv_timer_t* handle)
 {
-    static_cast<xmrig::ConfigWatcher *>(handle->data)->reload();
+    static_cast<xtlrig::ConfigWatcher *>(handle->data)->reload();
 }
 
 
-void xmrig::ConfigWatcher::onFsEvent(uv_fs_event_t* handle, const char *filename, int events, int status)
+void xtlrig::ConfigWatcher::onFsEvent(uv_fs_event_t* handle, const char *filename, int events, int status)
 {
     if (!filename) {
         return;
     }
 
-    static_cast<xmrig::ConfigWatcher *>(handle->data)->queueUpdate();
+    static_cast<xtlrig::ConfigWatcher *>(handle->data)->queueUpdate();
 }
 
 
-void xmrig::ConfigWatcher::queueUpdate()
+void xtlrig::ConfigWatcher::queueUpdate()
 {
     uv_timer_stop(&m_timer);
-    uv_timer_start(&m_timer, xmrig::ConfigWatcher::onTimer, kDelay, 0);
+    uv_timer_start(&m_timer, xtlrig::ConfigWatcher::onTimer, kDelay, 0);
 }
 
 
-void xmrig::ConfigWatcher::reload()
+void xtlrig::ConfigWatcher::reload()
 {
     LOG_WARN("\"%s\" was changed, reloading configuration", m_path.data());
 
@@ -99,7 +99,7 @@ void xmrig::ConfigWatcher::reload()
 }
 
 
-void xmrig::ConfigWatcher::start()
+void xtlrig::ConfigWatcher::start()
 {
-    uv_fs_event_start(&m_fsEvent, xmrig::ConfigWatcher::onFsEvent, m_path.data(), 0);
+    uv_fs_event_start(&m_fsEvent, xtlrig::ConfigWatcher::onFsEvent, m_path.data(), 0);
 }

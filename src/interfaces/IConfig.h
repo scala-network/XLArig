@@ -1,10 +1,10 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2018 XMRig       <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #include "rapidjson/fwd.h"
 
 
-namespace xmrig {
+namespace xtlrig {
 
 
 class IConfig
@@ -62,12 +62,12 @@ public:
         VersionKey        = 'V',
         WatchKey          = 1105,
 
-        // xmrig common
+        // xtlrig common
         CPUPriorityKey    = 1021,
         NicehashKey       = 1006,
         PrintTimeKey      = 1007,
 
-        // xmrig cpu
+        // xtlrig cpu
         AVKey             = 'v',
         CPUAffinityKey    = 1020,
         DryRunKey         = 5000,
@@ -77,7 +77,7 @@ public:
         ThreadsKey        = 't',
         HardwareAESKey    = 1011,
 
-        // xmrig-proxy
+        // xtlrig-proxy
         AccessLogFileKey  = 'A',
         BindKey           = 'b',
         CoinKey           = 1104,
@@ -104,7 +104,7 @@ public:
 };
 
 
-} /* namespace xmrig */
+} /* namespace xtlrig */
 
 
 #endif // __ICONFIG_H__

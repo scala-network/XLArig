@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <uv.h>
-
+#include <iostream>
+#include <cstdio>
 
 #include "common/log/Log.h"
 #include "common/net/Pool.h"
@@ -36,10 +37,21 @@
 #include "Summary.h"
 #include "version.h"
 
+using namespace std;
 
-static void print_versions(xmrig::Config *config)
+static void print_versions(xtlrig::Config *config)
 {
     char buf[16];
+
+printf(R"EOF(
+ __   _________ _      _____  _____ _____ 
+ \ \ / /__   __| |    |  __ \|_   _/ ____|
+  \ V /   | |  | |    | |__) | | || |  __ 
+   > <    | |  | |    |  _  /  | || | |_ |
+  / . \   | |  | |____| | \ \ _| || |__| |
+ /_/ \_\  |_|  |______|_|  \_\_____\_____|
+                                          
+)EOF");
 
 #   if defined(__clang__)
     snprintf(buf, 16, " clang/%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__);
@@ -52,12 +64,12 @@ static void print_versions(xmrig::Config *config)
 #   endif
 
 
-    Log::i()->text(config->isColors() ? "\x1B[01;32m * \x1B[01;37mVERSIONS:     \x1B[01;36mXMRig/%s\x1B[01;37m libuv/%s%s" : " * VERSIONS:     XMRig/%s libuv/%s%s",
+    Log::i()->text(config->isColors() ? "\x1B[01;32m * \x1B[01;37mVERSIONS:     \x1B[01;36mXTLRig/%s\x1B[01;37m libuv/%s%s" : " * VERSIONS:     XTLRig/%s libuv/%s%s",
                    APP_VERSION, uv_version_string(), buf);
 }
 
 
-static void print_memory(xmrig::Config *config) {
+static void print_memory(xtlrig::Config *config) {
 #   ifdef _WIN32
     if (config->isColors()) {
         Log::i()->text("\x1B[01;32m * \x1B[01;37mHUGE PAGES:   %s",
@@ -70,7 +82,7 @@ static void print_memory(xmrig::Config *config) {
 }
 
 
-static void print_cpu(xmrig::Config *config)
+static void print_cpu(xtlrig::Config *config)
 {
     if (config->isColors()) {
         Log::i()->text("\x1B[01;32m * \x1B[01;37mCPU:          %s (%d) %sx64 %sAES-NI",
@@ -91,9 +103,9 @@ static void print_cpu(xmrig::Config *config)
 }
 
 
-static void print_threads(xmrig::Config *config)
+static void print_threads(xtlrig::Config *config)
 {
-    if (config->threadsMode() != xmrig::Config::Advanced) {
+    if (config->threadsMode() != xtlrig::Config::Advanced) {
         char buf[32];
         if (config->affinity() != -1L) {
             snprintf(buf, 32, ", affinity=0x%" PRIX64, config->affinity());
@@ -120,7 +132,7 @@ static void print_threads(xmrig::Config *config)
 }
 
 
-static void print_pools(xmrig::Config *config)
+static void print_pools(xtlrig::Config *config)
 {
     const std::vector<Pool> &pools = config->pools();
 
@@ -140,7 +152,7 @@ static void print_pools(xmrig::Config *config)
 
 
 #ifndef XMRIG_NO_API
-static void print_api(xmrig::Config *config)
+static void print_api(xtlrig::Config *config)
 {
     const int port = config->apiPort();
     if (port == 0) {
@@ -153,7 +165,7 @@ static void print_api(xmrig::Config *config)
 #endif
 
 
-static void print_commands(xmrig::Config *config)
+static void print_commands(xtlrig::Config *config)
 {
     if (config->isColors()) {
         Log::i()->text("\x1B[01;32m * \x1B[01;37mCOMMANDS:     \x1B[01;35mh\x1B[01;37mashrate, \x1B[01;35mp\x1B[01;37mause, \x1B[01;35mr\x1B[01;37mesume");
@@ -164,7 +176,7 @@ static void print_commands(xmrig::Config *config)
 }
 
 
-void Summary::print(xmrig::Controller *controller)
+void Summary::print(xtlrig::Controller *controller)
 {
     print_versions(controller->config());
     print_memory(controller->config());

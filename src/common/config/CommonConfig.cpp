@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 #include "rapidjson/prettywriter.h"
 
 
-xmrig::CommonConfig::CommonConfig() :
+xtlrig::CommonConfig::CommonConfig() :
     m_adjusted(false),
     m_apiIPv6(false),
     m_apiRestricted(true),
@@ -67,12 +67,12 @@ xmrig::CommonConfig::CommonConfig() :
 }
 
 
-xmrig::CommonConfig::~CommonConfig()
+xtlrig::CommonConfig::~CommonConfig()
 {
 }
 
 
-bool xmrig::CommonConfig::finalize()
+bool xtlrig::CommonConfig::finalize()
 {
     if (m_state == ReadyState) {
         return true;
@@ -106,7 +106,7 @@ bool xmrig::CommonConfig::finalize()
 }
 
 
-bool xmrig::CommonConfig::parseBoolean(int key, bool enable)
+bool xtlrig::CommonConfig::parseBoolean(int key, bool enable)
 {
     switch (key) {
     case BackgroundKey: /* --background */
@@ -149,7 +149,7 @@ bool xmrig::CommonConfig::parseBoolean(int key, bool enable)
 }
 
 
-bool xmrig::CommonConfig::parseString(int key, const char *arg)
+bool xtlrig::CommonConfig::parseString(int key, const char *arg)
 {
     switch (key) {
     case AlgorithmKey: /* --algo */
@@ -248,13 +248,13 @@ bool xmrig::CommonConfig::parseString(int key, const char *arg)
 }
 
 
-bool xmrig::CommonConfig::parseUint64(int key, uint64_t arg)
+bool xtlrig::CommonConfig::parseUint64(int key, uint64_t arg)
 {
     return parseInt(key, static_cast<int>(arg));
 }
 
 
-bool xmrig::CommonConfig::save()
+bool xtlrig::CommonConfig::save()
 {
     if (m_fileName.isNull()) {
         return false;
@@ -288,13 +288,13 @@ bool xmrig::CommonConfig::save()
 }
 
 
-void xmrig::CommonConfig::setFileName(const char *fileName)
+void xtlrig::CommonConfig::setFileName(const char *fileName)
 {
     m_fileName = fileName;
 }
 
 
-bool xmrig::CommonConfig::parseInt(int key, int arg)
+bool xtlrig::CommonConfig::parseInt(int key, int arg)
 {
     switch (key) {
     case RetriesKey: /* --retries */

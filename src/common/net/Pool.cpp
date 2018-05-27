@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ Pool::Pool(const char *host, uint16_t port, const char *user, const char *passwo
 }
 
 
-bool Pool::isCompatible(const xmrig::Algorithm &algorithm) const
+bool Pool::isCompatible(const xtlrig::Algorithm &algorithm) const
 {
     if (m_algorithms.empty()) {
         return true;
@@ -202,9 +202,9 @@ rapidjson::Value Pool::toJSON(rapidjson::Document &doc) const
     }
 
     switch (m_algorithm.variant()) {
-    case xmrig::VARIANT_AUTO:
-    case xmrig::VARIANT_0:
-    case xmrig::VARIANT_1:
+    case xtlrig::VARIANT_AUTO:
+    case xtlrig::VARIANT_0:
+    case xtlrig::VARIANT_1:
         obj.AddMember("variant", m_algorithm.variant(), allocator);
         break;
 
@@ -217,7 +217,7 @@ rapidjson::Value Pool::toJSON(rapidjson::Document &doc) const
 }
 
 
-void Pool::adjust(xmrig::Algo algorithm)
+void Pool::adjust(xtlrig::Algo algorithm)
 {
     if (!isValid()) {
         return;
@@ -226,9 +226,9 @@ void Pool::adjust(xmrig::Algo algorithm)
     if (!m_algorithm.isValid()) {
         m_algorithm.setAlgo(algorithm);
 
-        if (m_algorithm.variant() == xmrig::VARIANT_AUTO) {
-            if (algorithm == xmrig::CRYPTONIGHT)  {
-                m_algorithm.setVariant(xmrig::VARIANT_1);
+        if (m_algorithm.variant() == xtlrig::VARIANT_AUTO) {
+            if (algorithm == xtlrig::CRYPTONIGHT)  {
+                m_algorithm.setVariant(xtlrig::VARIANT_1);
             }
         }
     }
@@ -238,24 +238,24 @@ void Pool::adjust(xmrig::Algo algorithm)
         m_nicehash  = true;
 
         if (strstr(m_host.data(), "cryptonightv7.")) {
-            m_algorithm.setVariant(xmrig::VARIANT_1);
+            m_algorithm.setVariant(xtlrig::VARIANT_1);
         }
     }
 
     if (strstr(m_host.data(), ".minergate.com")) {
         m_keepAlive = false;
-        m_algorithm.setVariant(xmrig::VARIANT_1);
+        m_algorithm.setVariant(xtlrig::VARIANT_1);
     }
 
     m_algorithms.push_back(m_algorithm);
 
 #   ifndef XMRIG_PROXY_PROJECT
-    if (m_algorithm.algo() != xmrig::CRYPTONIGHT_HEAVY) {
-        addVariant(xmrig::VARIANT_1);
-        addVariant(xmrig::VARIANT_0);
-        addVariant(xmrig::VARIANT_XTL);
-        addVariant(xmrig::VARIANT_IPBC);
-        addVariant(xmrig::VARIANT_AUTO);
+    if (m_algorithm.algo() != xtlrig::CRYPTONIGHT_HEAVY) {
+        addVariant(xtlrig::VARIANT_1);
+        addVariant(xtlrig::VARIANT_0);
+        addVariant(xtlrig::VARIANT_XTL);
+        addVariant(xtlrig::VARIANT_IPBC);
+        addVariant(xtlrig::VARIANT_AUTO);
     }
 #   endif
 }
@@ -300,9 +300,9 @@ bool Pool::parseIPv6(const char *addr)
 }
 
 
-void Pool::addVariant(xmrig::Variant variant)
+void Pool::addVariant(xtlrig::Variant variant)
 {
-    const xmrig::Algorithm algorithm(m_algorithm.algo(), variant);
+    const xtlrig::Algorithm algorithm(m_algorithm.algo(), variant);
     if (!algorithm.isValid() || m_algorithm == algorithm) {
         return;
     }

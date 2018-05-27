@@ -1,4 +1,4 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -38,21 +38,21 @@ class Job
 {
 public:
     Job();
-    Job(int poolId, bool nicehash, xmrig::Algorithm algorithm, const xmrig::Id &clientId);
+    Job(int poolId, bool nicehash, xtlrig::Algorithm algorithm, const xtlrig::Id &clientId);
     ~Job();
 
     bool setBlob(const char *blob);
     bool setTarget(const char *target);
-    xmrig::Variant variant() const;
+    xtlrig::Variant variant() const;
 
     inline bool isNicehash() const                    { return m_nicehash; }
     inline bool isValid() const                       { return m_size > 0 && m_diff > 0; }
     inline bool setId(const char *id)                 { return m_id.setId(id); }
     inline const uint32_t *nonce() const              { return reinterpret_cast<const uint32_t*>(m_blob + 39); }
     inline const uint8_t *blob() const                { return m_blob; }
-    inline const xmrig::Algorithm &algorithm() const  { return m_algorithm; }
-    inline const xmrig::Id &clientId() const          { return m_clientId; }
-    inline const xmrig::Id &id() const                { return m_id; }
+    inline const xtlrig::Algorithm &algorithm() const  { return m_algorithm; }
+    inline const xtlrig::Id &clientId() const          { return m_clientId; }
+    inline const xtlrig::Id &id() const                { return m_id; }
     inline int poolId() const                         { return m_poolId; }
     inline int threadId() const                       { return m_threadId; }
     inline size_t size() const                        { return m_size; }
@@ -60,10 +60,10 @@ public:
     inline uint32_t diff() const                      { return static_cast<uint32_t>(m_diff); }
     inline uint64_t target() const                    { return m_target; }
     inline void reset()                               { m_size = 0; m_diff = 0; }
-    inline void setClientId(const xmrig::Id &id)      { m_clientId = id; }
+    inline void setClientId(const xtlrig::Id &id)      { m_clientId = id; }
     inline void setPoolId(int poolId)                 { m_poolId = poolId; }
     inline void setThreadId(int threadId)             { m_threadId = threadId; }
-    inline xmrig::Algorithm &algorithm()              { return m_algorithm; }
+    inline xtlrig::Algorithm &algorithm()              { return m_algorithm; }
 
 #   ifdef XMRIG_PROXY_PROJECT
     inline char *rawBlob()                 { return m_rawBlob; }
@@ -89,10 +89,10 @@ private:
     size_t m_size;
     uint64_t m_diff;
     uint64_t m_target;
-    uint8_t m_blob[96]; // Max blob size is 84 (75 fixed + 9 variable), aligned to 96. https://github.com/xmrig/xmrig/issues/1 Thanks fireice-uk.
-    xmrig::Algorithm m_algorithm;
-    xmrig::Id m_clientId;
-    xmrig::Id m_id;
+    uint8_t m_blob[96]; // Max blob size is 84 (75 fixed + 9 variable), aligned to 96. https://github.com/xtlrig/xtlrig/issues/1 Thanks fireice-uk.
+    xtlrig::Algorithm m_algorithm;
+    xtlrig::Id m_clientId;
+    xtlrig::Id m_id;
 
 #   ifdef XMRIG_PROXY_PROJECT
     char m_rawBlob[176];

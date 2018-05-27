@@ -1,4 +1,4 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -50,36 +50,36 @@ MultiWorker<N>::~MultiWorker()
 template<size_t N>
 bool MultiWorker<N>::selfTest()
 {
-    if (m_thread->fn(xmrig::VARIANT_0) == nullptr) {
+    if (m_thread->fn(xtlrig::VARIANT_0) == nullptr) {
         return false;
     }
 
-    m_thread->fn(xmrig::VARIANT_0)(test_input, 76, m_hash, m_ctx);
+    m_thread->fn(xtlrig::VARIANT_0)(test_input, 76, m_hash, m_ctx);
 
-    if (m_thread->algorithm() == xmrig::CRYPTONIGHT && memcmp(m_hash, test_output_v0, sizeof m_hash) == 0) {
-        m_thread->fn(xmrig::VARIANT_1)(test_input, 76, m_hash, m_ctx);
+    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT && memcmp(m_hash, test_output_v0, sizeof m_hash) == 0) {
+        m_thread->fn(xtlrig::VARIANT_1)(test_input, 76, m_hash, m_ctx);
         if (memcmp(m_hash, test_output_v1, sizeof m_hash) != 0) {
             return false;
         }
 
-        m_thread->fn(xmrig::VARIANT_XTL)(test_input, 76, m_hash, m_ctx);
+        m_thread->fn(xtlrig::VARIANT_XTL)(test_input, 76, m_hash, m_ctx);
         return memcmp(m_hash, test_output_xtl, sizeof m_hash) == 0;
     }
 
 #   ifndef XMRIG_NO_AEON
-    if (m_thread->algorithm() == xmrig::CRYPTONIGHT_LITE && memcmp(m_hash, test_output_v0_lite, sizeof m_hash) == 0) {
-        m_thread->fn(xmrig::VARIANT_1)(test_input, 76, m_hash, m_ctx);
+    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT_LITE && memcmp(m_hash, test_output_v0_lite, sizeof m_hash) == 0) {
+        m_thread->fn(xtlrig::VARIANT_1)(test_input, 76, m_hash, m_ctx);
         if (memcmp(m_hash, test_output_v1_lite, sizeof m_hash) != 0) {
             return false;
         }
 
-        m_thread->fn(xmrig::VARIANT_IPBC)(test_input, 76, m_hash, m_ctx);
+        m_thread->fn(xtlrig::VARIANT_IPBC)(test_input, 76, m_hash, m_ctx);
         return memcmp(m_hash, test_output_ipbc_lite, sizeof m_hash) == 0;
     }
 #   endif
 
 #   ifndef XMRIG_NO_SUMO
-    return m_thread->algorithm() == xmrig::CRYPTONIGHT_HEAVY && memcmp(m_hash, test_output_heavy, sizeof m_hash) == 0;
+    return m_thread->algorithm() == xtlrig::CRYPTONIGHT_HEAVY && memcmp(m_hash, test_output_heavy, sizeof m_hash) == 0;
 #   else
     return false;
 #   endif

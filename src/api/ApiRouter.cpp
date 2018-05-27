@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ static inline double normalize(double d)
 }
 
 
-ApiRouter::ApiRouter(xmrig::Controller *controller) :
+ApiRouter::ApiRouter(xtlrig::Controller *controller) :
     m_controller(controller)
 {
     memset(m_workerId, 0, sizeof(m_workerId));
@@ -76,7 +76,7 @@ ApiRouter::~ApiRouter()
 }
 
 
-void ApiRouter::ApiRouter::get(const xmrig::HttpRequest &req, xmrig::HttpReply &reply) const
+void ApiRouter::ApiRouter::get(const xtlrig::HttpRequest &req, xtlrig::HttpReply &reply) const
 {
     rapidjson::Document doc;
 
@@ -109,9 +109,9 @@ void ApiRouter::ApiRouter::get(const xmrig::HttpRequest &req, xmrig::HttpReply &
 }
 
 
-void ApiRouter::exec(const xmrig::HttpRequest &req, xmrig::HttpReply &reply)
+void ApiRouter::exec(const xtlrig::HttpRequest &req, xtlrig::HttpReply &reply)
 {
-    if (req.method() == xmrig::HttpRequest::Put && req.match("/1/config")) {
+    if (req.method() == xtlrig::HttpRequest::Put && req.match("/1/config")) {
         m_controller->config()->reload(req.body());
         return;
     }
@@ -126,13 +126,13 @@ void ApiRouter::tick(const NetworkState &network)
 }
 
 
-void ApiRouter::onConfigChanged(xmrig::Config *config, xmrig::Config *previousConfig)
+void ApiRouter::onConfigChanged(xtlrig::Config *config, xtlrig::Config *previousConfig)
 {
     updateWorkerId(config->apiWorkerId(), previousConfig->apiWorkerId());
 }
 
 
-void ApiRouter::finalize(xmrig::HttpReply &reply, rapidjson::Document &doc) const
+void ApiRouter::finalize(xtlrig::HttpReply &reply, rapidjson::Document &doc) const
 {
     rapidjson::StringBuffer buffer(0, 4096);
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
@@ -166,7 +166,7 @@ void ApiRouter::genId()
             memcpy(input, interfaces[i].phys_addr, addrSize);
             memcpy(input + addrSize, APP_KIND, strlen(APP_KIND));
 
-            xmrig::keccak(input, inSize, hash);
+            xtlrig::keccak(input, inSize, hash);
             Job::toHex(hash, 8, m_id);
 
             delete [] input;
@@ -282,10 +282,10 @@ void ApiRouter::getThreads(rapidjson::Document &doc) const
 
     Workers::threadsSummary(doc);
 
-    const std::vector<xmrig::IThread *> &threads = m_controller->config()->threads();
+    const std::vector<xtlrig::IThread *> &threads = m_controller->config()->threads();
     rapidjson::Value list(rapidjson::kArrayType);
 
-    for (const xmrig::IThread *thread : threads) {
+    for (const xtlrig::IThread *thread : threads) {
         rapidjson::Value value = thread->toAPI(doc);
 
         rapidjson::Value hashrate(rapidjson::kArrayType);

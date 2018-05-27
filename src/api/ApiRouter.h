@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,29 +33,29 @@
 class Hashrate;
 
 
-namespace xmrig {
+namespace xtlrig {
     class Controller;
     class HttpReply;
     class HttpRequest;
 }
 
 
-class ApiRouter : public xmrig::IControllerListener
+class ApiRouter : public xtlrig::IControllerListener
 {
 public:
-    ApiRouter(xmrig::Controller *controller);
+    ApiRouter(xtlrig::Controller *controller);
     ~ApiRouter();
 
-    void get(const xmrig::HttpRequest &req, xmrig::HttpReply &reply) const;
-    void exec(const xmrig::HttpRequest &req, xmrig::HttpReply &reply);
+    void get(const xtlrig::HttpRequest &req, xtlrig::HttpReply &reply) const;
+    void exec(const xtlrig::HttpRequest &req, xtlrig::HttpReply &reply);
 
     void tick(const NetworkState &results);
 
 protected:
-    void onConfigChanged(xmrig::Config *config, xmrig::Config *previousConfig) override;
+    void onConfigChanged(xtlrig::Config *config, xtlrig::Config *previousConfig) override;
 
 private:
-    void finalize(xmrig::HttpReply &reply, rapidjson::Document &doc) const;
+    void finalize(xtlrig::HttpReply &reply, rapidjson::Document &doc) const;
     void genId();
     void getConnection(rapidjson::Document &doc) const;
     void getHashrate(rapidjson::Document &doc) const;
@@ -69,7 +69,7 @@ private:
     char m_id[17];
     char m_workerId[128];
     NetworkState m_network;
-    xmrig::Controller *m_controller;
+    xtlrig::Controller *m_controller;
 };
 
 #endif /* __APIROUTER_H__ */

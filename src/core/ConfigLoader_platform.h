@@ -1,11 +1,11 @@
-/* XMRig
+/* XTLRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
  *
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 #include "interfaces/IConfig.h"
 
 
-namespace xmrig {
+namespace xtlrig {
 
 
 static char const usage[] = "\
@@ -81,7 +81,7 @@ Options:\n\
 "\
       --max-cpu-usage=N    maximum CPU usage for automatic threads mode (default 75)\n\
       --safe               safe adjust threads and av settings for current CPU\n\
-      --nicehash           enable nicehash/xmrig-proxy support\n\
+      --nicehash           enable nicehash/xtlrig-proxy support\n\
       --print-time=N       print hashrate report every N seconds\n\
       --api-port=N         port for the miner API\n\
       --api-access-token=T access token for API\n\
@@ -97,91 +97,91 @@ static char const short_options[] = "a:c:khBp:Px:r:R:s:t:T:o:u:O:v:Vl:S";
 
 
 static struct option const options[] = {
-    { "algo",              1, nullptr, xmrig::IConfig::AlgorithmKey      },
-    { "api-access-token",  1, nullptr, xmrig::IConfig::ApiAccessTokenKey },
-    { "api-port",          1, nullptr, xmrig::IConfig::ApiPort           },
-    { "api-worker-id",     1, nullptr, xmrig::IConfig::ApiWorkerIdKey    },
-    { "api-ipv6",          0, nullptr, xmrig::IConfig::ApiIPv6Key        },
-    { "api-no-restricted", 0, nullptr, xmrig::IConfig::ApiRestrictedKey  },
-    { "av",                1, nullptr, xmrig::IConfig::AVKey             },
-    { "background",        0, nullptr, xmrig::IConfig::BackgroundKey     },
-    { "config",            1, nullptr, xmrig::IConfig::ConfigKey         },
-    { "cpu-affinity",      1, nullptr, xmrig::IConfig::CPUAffinityKey    },
-    { "cpu-priority",      1, nullptr, xmrig::IConfig::CPUPriorityKey    },
-    { "donate-level",      1, nullptr, xmrig::IConfig::DonateLevelKey    },
-    { "dry-run",           0, nullptr, xmrig::IConfig::DryRunKey         },
-    { "help",              0, nullptr, xmrig::IConfig::HelpKey           },
-    { "keepalive",         0, nullptr, xmrig::IConfig::KeepAliveKey      },
-    { "log-file",          1, nullptr, xmrig::IConfig::LogFileKey        },
-    { "max-cpu-usage",     1, nullptr, xmrig::IConfig::MaxCPUUsageKey    },
-    { "nicehash",          0, nullptr, xmrig::IConfig::NicehashKey       },
-    { "no-color",          0, nullptr, xmrig::IConfig::ColorKey          },
-    { "no-huge-pages",     0, nullptr, xmrig::IConfig::HugePagesKey      },
-    { "variant",           1, nullptr, xmrig::IConfig::VariantKey        },
-    { "pass",              1, nullptr, xmrig::IConfig::PasswordKey       },
-    { "print-time",        1, nullptr, xmrig::IConfig::PrintTimeKey      },
-    { "retries",           1, nullptr, xmrig::IConfig::RetriesKey        },
-    { "retry-pause",       1, nullptr, xmrig::IConfig::RetryPauseKey     },
-    { "safe",              0, nullptr, xmrig::IConfig::SafeKey           },
-    { "syslog",            0, nullptr, xmrig::IConfig::SyslogKey         },
-    { "threads",           1, nullptr, xmrig::IConfig::ThreadsKey        },
-    { "url",               1, nullptr, xmrig::IConfig::UrlKey            },
-    { "user",              1, nullptr, xmrig::IConfig::UserKey           },
-    { "user-agent",        1, nullptr, xmrig::IConfig::UserAgentKey      },
-    { "userpass",          1, nullptr, xmrig::IConfig::UserpassKey       },
-    { "rig-id",            1, nullptr, xmrig::IConfig::RigIdKey          },
-    { "version",           0, nullptr, xmrig::IConfig::VersionKey        },
+    { "algo",              1, nullptr, xtlrig::IConfig::AlgorithmKey      },
+    { "api-access-token",  1, nullptr, xtlrig::IConfig::ApiAccessTokenKey },
+    { "api-port",          1, nullptr, xtlrig::IConfig::ApiPort           },
+    { "api-worker-id",     1, nullptr, xtlrig::IConfig::ApiWorkerIdKey    },
+    { "api-ipv6",          0, nullptr, xtlrig::IConfig::ApiIPv6Key        },
+    { "api-no-restricted", 0, nullptr, xtlrig::IConfig::ApiRestrictedKey  },
+    { "av",                1, nullptr, xtlrig::IConfig::AVKey             },
+    { "background",        0, nullptr, xtlrig::IConfig::BackgroundKey     },
+    { "config",            1, nullptr, xtlrig::IConfig::ConfigKey         },
+    { "cpu-affinity",      1, nullptr, xtlrig::IConfig::CPUAffinityKey    },
+    { "cpu-priority",      1, nullptr, xtlrig::IConfig::CPUPriorityKey    },
+    { "donate-level",      1, nullptr, xtlrig::IConfig::DonateLevelKey    },
+    { "dry-run",           0, nullptr, xtlrig::IConfig::DryRunKey         },
+    { "help",              0, nullptr, xtlrig::IConfig::HelpKey           },
+    { "keepalive",         0, nullptr, xtlrig::IConfig::KeepAliveKey      },
+    { "log-file",          1, nullptr, xtlrig::IConfig::LogFileKey        },
+    { "max-cpu-usage",     1, nullptr, xtlrig::IConfig::MaxCPUUsageKey    },
+    { "nicehash",          0, nullptr, xtlrig::IConfig::NicehashKey       },
+    { "no-color",          0, nullptr, xtlrig::IConfig::ColorKey          },
+    { "no-huge-pages",     0, nullptr, xtlrig::IConfig::HugePagesKey      },
+    { "variant",           1, nullptr, xtlrig::IConfig::VariantKey        },
+    { "pass",              1, nullptr, xtlrig::IConfig::PasswordKey       },
+    { "print-time",        1, nullptr, xtlrig::IConfig::PrintTimeKey      },
+    { "retries",           1, nullptr, xtlrig::IConfig::RetriesKey        },
+    { "retry-pause",       1, nullptr, xtlrig::IConfig::RetryPauseKey     },
+    { "safe",              0, nullptr, xtlrig::IConfig::SafeKey           },
+    { "syslog",            0, nullptr, xtlrig::IConfig::SyslogKey         },
+    { "threads",           1, nullptr, xtlrig::IConfig::ThreadsKey        },
+    { "url",               1, nullptr, xtlrig::IConfig::UrlKey            },
+    { "user",              1, nullptr, xtlrig::IConfig::UserKey           },
+    { "user-agent",        1, nullptr, xtlrig::IConfig::UserAgentKey      },
+    { "userpass",          1, nullptr, xtlrig::IConfig::UserpassKey       },
+    { "rig-id",            1, nullptr, xtlrig::IConfig::RigIdKey          },
+    { "version",           0, nullptr, xtlrig::IConfig::VersionKey        },
     { 0, 0, 0, 0 }
 };
 
 
 static struct option const config_options[] = {
-    { "algo",          1, nullptr, xmrig::IConfig::AlgorithmKey   },
-    { "av",            1, nullptr, xmrig::IConfig::AVKey          },
-    { "background",    0, nullptr, xmrig::IConfig::BackgroundKey  },
-    { "colors",        0, nullptr, xmrig::IConfig::ColorKey       },
-    { "cpu-affinity",  1, nullptr, xmrig::IConfig::CPUAffinityKey },
-    { "cpu-priority",  1, nullptr, xmrig::IConfig::CPUPriorityKey },
-    { "donate-level",  1, nullptr, xmrig::IConfig::DonateLevelKey },
-    { "dry-run",       0, nullptr, xmrig::IConfig::DryRunKey      },
-    { "huge-pages",    0, nullptr, xmrig::IConfig::HugePagesKey   },
-    { "log-file",      1, nullptr, xmrig::IConfig::LogFileKey     },
-    { "max-cpu-usage", 1, nullptr, xmrig::IConfig::MaxCPUUsageKey },
-    { "print-time",    1, nullptr, xmrig::IConfig::PrintTimeKey   },
-    { "retries",       1, nullptr, xmrig::IConfig::RetriesKey     },
-    { "retry-pause",   1, nullptr, xmrig::IConfig::RetryPauseKey  },
-    { "safe",          0, nullptr, xmrig::IConfig::SafeKey        },
-    { "syslog",        0, nullptr, xmrig::IConfig::SyslogKey      },
-    { "threads",       1, nullptr, xmrig::IConfig::ThreadsKey     },
-    { "user-agent",    1, nullptr, xmrig::IConfig::UserAgentKey   },
-    { "hw-aes",        0, nullptr, xmrig::IConfig::HardwareAESKey },
+    { "algo",          1, nullptr, xtlrig::IConfig::AlgorithmKey   },
+    { "av",            1, nullptr, xtlrig::IConfig::AVKey          },
+    { "background",    0, nullptr, xtlrig::IConfig::BackgroundKey  },
+    { "colors",        0, nullptr, xtlrig::IConfig::ColorKey       },
+    { "cpu-affinity",  1, nullptr, xtlrig::IConfig::CPUAffinityKey },
+    { "cpu-priority",  1, nullptr, xtlrig::IConfig::CPUPriorityKey },
+    { "donate-level",  1, nullptr, xtlrig::IConfig::DonateLevelKey },
+    { "dry-run",       0, nullptr, xtlrig::IConfig::DryRunKey      },
+    { "huge-pages",    0, nullptr, xtlrig::IConfig::HugePagesKey   },
+    { "log-file",      1, nullptr, xtlrig::IConfig::LogFileKey     },
+    { "max-cpu-usage", 1, nullptr, xtlrig::IConfig::MaxCPUUsageKey },
+    { "print-time",    1, nullptr, xtlrig::IConfig::PrintTimeKey   },
+    { "retries",       1, nullptr, xtlrig::IConfig::RetriesKey     },
+    { "retry-pause",   1, nullptr, xtlrig::IConfig::RetryPauseKey  },
+    { "safe",          0, nullptr, xtlrig::IConfig::SafeKey        },
+    { "syslog",        0, nullptr, xtlrig::IConfig::SyslogKey      },
+    { "threads",       1, nullptr, xtlrig::IConfig::ThreadsKey     },
+    { "user-agent",    1, nullptr, xtlrig::IConfig::UserAgentKey   },
+    { "hw-aes",        0, nullptr, xtlrig::IConfig::HardwareAESKey },
     { 0, 0, 0, 0 }
 };
 
 
 static struct option const pool_options[] = {
-    { "url",           1, nullptr, xmrig::IConfig::UrlKey        },
-    { "pass",          1, nullptr, xmrig::IConfig::PasswordKey   },
-    { "user",          1, nullptr, xmrig::IConfig::UserKey       },
-    { "userpass",      1, nullptr, xmrig::IConfig::UserpassKey   },
-    { "nicehash",      0, nullptr, xmrig::IConfig::NicehashKey   },
-    { "keepalive",     2, nullptr, xmrig::IConfig::KeepAliveKey  },
-    { "variant",       1, nullptr, xmrig::IConfig::VariantKey    },
-    { "rig-id",        1, nullptr, xmrig::IConfig::RigIdKey      },
+    { "url",           1, nullptr, xtlrig::IConfig::UrlKey        },
+    { "pass",          1, nullptr, xtlrig::IConfig::PasswordKey   },
+    { "user",          1, nullptr, xtlrig::IConfig::UserKey       },
+    { "userpass",      1, nullptr, xtlrig::IConfig::UserpassKey   },
+    { "nicehash",      0, nullptr, xtlrig::IConfig::NicehashKey   },
+    { "keepalive",     2, nullptr, xtlrig::IConfig::KeepAliveKey  },
+    { "variant",       1, nullptr, xtlrig::IConfig::VariantKey    },
+    { "rig-id",        1, nullptr, xtlrig::IConfig::RigIdKey      },
     { 0, 0, 0, 0 }
 };
 
 
 static struct option const api_options[] = {
-    { "port",          1, nullptr, xmrig::IConfig::ApiPort           },
-    { "access-token",  1, nullptr, xmrig::IConfig::ApiAccessTokenKey },
-    { "worker-id",     1, nullptr, xmrig::IConfig::ApiWorkerIdKey    },
-    { "ipv6",          0, nullptr, xmrig::IConfig::ApiIPv6Key        },
-    { "restricted",    0, nullptr, xmrig::IConfig::ApiRestrictedKey  },
+    { "port",          1, nullptr, xtlrig::IConfig::ApiPort           },
+    { "access-token",  1, nullptr, xtlrig::IConfig::ApiAccessTokenKey },
+    { "worker-id",     1, nullptr, xtlrig::IConfig::ApiWorkerIdKey    },
+    { "ipv6",          0, nullptr, xtlrig::IConfig::ApiIPv6Key        },
+    { "restricted",    0, nullptr, xtlrig::IConfig::ApiRestrictedKey  },
     { 0, 0, 0, 0 }
 };
 
 
-} /* namespace xmrig */
+} /* namespace xtlrig */
 
 #endif /* __CONFIGLOADER_PLATFORM_H__ */
