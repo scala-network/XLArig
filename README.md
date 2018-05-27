@@ -1,28 +1,14 @@
-# XTLrig
+# XTLRig
 
-:warning: **If you mine Monero, Aeon, Sumokoin, Turtlecoin, Stellite, GRAFT, Haven Protocol, IPBC, [PLEASE READ](https://github.com/xtlrig/xtlrig/issues/482)!** :warning:
+XTLRig is a high performance Stellite (XTL) CPU miner, with official support for Windows.
 
-[![Github All Releases](https://img.shields.io/github/downloads/xtlrig/xtlrig/total.svg)](https://github.com/xtlrig/xtlrig/releases)
-[![GitHub release](https://img.shields.io/github/release/xtlrig/xtlrig/all.svg)](https://github.com/xtlrig/xtlrig/releases)
-[![GitHub Release Date](https://img.shields.io/github/release-date-pre/xtlrig/xtlrig.svg)](https://github.com/xtlrig/xtlrig/releases)
-[![GitHub license](https://img.shields.io/github/license/xtlrig/xtlrig.svg)](https://github.com/xtlrig/xtlrig/blob/master/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/xtlrig/xtlrig.svg)](https://github.com/xtlrig/xtlrig/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/xtlrig/xtlrig.svg)](https://github.com/xtlrig/xtlrig/network)
-
-XTLrig is a high performance Monero (XMR) CPU miner, with official support for Windows.
-Originally based on cpuminer-multi with heavy optimizations/rewrites and removing a lot of legacy code, since version 1.0.0 completely rewritten from scratch on C++.
-
-* This is the **CPU-mining** version, there is also a [NVIDIA GPU version](https://github.com/xtlrig/xtlrig-nvidia) and [AMD GPU version]( https://github.com/xtlrig/xtlrig-amd).
-* [Roadmap](https://github.com/xtlrig/xtlrig/issues/106) for next releases.
-
-<img src="http://i.imgur.com/OKZRVDh.png" width="619" >
+<img src="https://i.imgur.com/MIAgTEd.png" width="619" >
 
 #### Table of contents
 * [Features](#features)
 * [Download](#download)
 * [Usage](#usage)
 * [Algorithm variations](#algorithm-variations)
-* [Build](https://github.com/xtlrig/xtlrig/wiki/Build)
 * [Common Issues](#common-issues)
 * [Other information](#other-information)
 * [Donations](#donations)
@@ -37,15 +23,13 @@ Originally based on cpuminer-multi with heavy optimizations/rewrites and removin
 * Support for backup (failover) mining server.
 * keepalived support.
 * Command line options compatible with cpuminer.
-* CryptoNight-Lite support for AEON.
 * Smart automatic [CPU configuration](https://github.com/xtlrig/xtlrig/wiki/Threads).
-* Nicehash support
 * It's open source software.
 
 ## Download
 * Binary releases: https://github.com/xtlrig/xtlrig/releases
 * Git tree: https://github.com/xtlrig/xtlrig.git
-  * Clone with `git clone https://github.com/xtlrig/xtlrig.git` :hammer: [Build instructions](https://github.com/xtlrig/xtlrig/wiki/Build).
+  * Clone with `git clone https://github.com/xtlrig/xtlrig.git`.
 
 ## Usage
 Use [config.xtlrig.com](https://config.xtlrig.com/xtlrig) to generate, edit or share configurations.
@@ -95,13 +79,13 @@ Since version 0.8.0.
 
 ## Common Issues
 ### HUGE PAGES unavailable
-* Run XTLrig as Administrator.
-* Since version 0.8.0 XTLrig automatically enables SeLockMemoryPrivilege for current user, but reboot or sign out still required. [Manual instruction](https://msdn.microsoft.com/en-gb/library/ms190730.aspx).
+* Run XTLRig as Administrator.
+* Since version 0.8.0 XTLRig automatically enables SeLockMemoryPrivilege for current user, but reboot or sign out still required. [Manual instruction](https://msdn.microsoft.com/en-gb/library/ms190730.aspx).
 
 ## Other information
 * No HTTP support, only stratum protocol support.
 * No TLS support.
-* Default donation 5% (5 minutes in 100 minutes) can be reduced to 1% via command line option `--donate-level`.
+* Default donation 5% (5 minutes in 100 minutes) can be reduced to 1% via command line option `--donate-level`, a portion of the donated mining power will go to @xmrig who is the creator of xmrig.
 
 
 ### CPU mining performance
@@ -121,15 +105,6 @@ Please note performance is highly dependent on system load. The numbers above ar
 * XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
 * BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
 
-## Release checksums
-### SHA-256
-```
-f8e1957e8bfd7f281a76d1e42694049c67f39dea90ac36e9d589c14cdf8924bc xtlrig-2.6.1-xenial-amd64.tar.gz/xtlrig-2.6.1/xtlrig
-472c7aaf5aacc1212bfd3f2f96daca4f42d64e2d0db0872891328e7d8503d0c8 xtlrig-2.6.1-gcc-win32.zip/xtlrig.exe
-d53154cef24c884b2be539ac13bfb6e7dba6bbc53b62e91f2877637d43fa4b15 xtlrig-2.6.1-gcc-win64.zip/xtlrig.exe
-a253381b617463e6e1193d49b8afbf720a1c376621da7429d97f192668cd59ad xtlrig-2.6.1-msvc-win64.zip/xtlrig.exe
-```
-
 ## Contacts
-* support@xtlrig.com
-* [reddit](https://www.reddit.com/user/XTLrig/)
+* support@stellite.cash
+* [reddit](https://www.reddit.com/r/stellite)
