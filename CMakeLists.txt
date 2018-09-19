@@ -43,7 +43,7 @@ set(HEADERS
         src/common/Platform.h
         src/common/utils/c_str.h
         src/common/utils/mm_malloc.h
-        src/common/xmrig.h
+        src/common/xtlrig.h
         src/core/ConfigLoader_platform.h
         src/core/Controller.h
         src/Cpu.h
@@ -112,7 +112,7 @@ set(SOURCES
         src/workers/MultiWorker.cpp
         src/workers/Worker.cpp
         src/workers/Workers.cpp
-        src/xmrig.cpp
+        src/xtlrig.cpp
         )
 
 set(SOURCES_CRYPTO

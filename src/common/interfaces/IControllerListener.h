@@ -26,7 +26,7 @@
 #define __ICONTROLLERLISTENER_H__
 
 
-namespace xmrig {
+namespace xtlrig {
 
 
 class Config;
@@ -41,7 +41,7 @@ public:
 };
 
 
-} /* namespace xmrig */
+} /* namespace xtlrig */
 
 
 #endif // __ICONTROLLERLISTENER_H__

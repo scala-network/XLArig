@@ -30,7 +30,7 @@
 #include "rapidjson/fwd.h"
 
 
-namespace xmrig {
+namespace xtlrig {
 
 
 class IConfig
@@ -65,12 +65,12 @@ public:
         VersionKey        = 'V',
         WatchKey          = 1105,
 
-        // xmrig common
+        // common
         CPUPriorityKey    = 1021,
         NicehashKey       = 1006,
         PrintTimeKey      = 1007,
 
-        // xmrig cpu
+        // cpu
         AVKey             = 'v',
         CPUAffinityKey    = 1020,
         DryRunKey         = 5000,
@@ -82,13 +82,13 @@ public:
         SimpleSpeed       = 12002,
         HardwareAESKey    = 1011,
 
-        // xmrig amd
+        // amd
         OclPlatform       = 1400,
         OclAffinity       = 1401,
         OclDevices        = 1402,
         OclLaunch         = 1403,
 
-        // xmrig-proxy
+        // proxy
         AccessLogFileKey  = 'A',
         BindKey           = 'b',
         CoinKey           = 1104,
@@ -116,7 +116,7 @@ public:
 };
 
 
-} /* namespace xmrig */
+} /* namespace xtlrig */
 
 
 #endif // __ICONFIG_H__

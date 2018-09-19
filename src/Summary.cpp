@@ -43,13 +43,13 @@ static void print_versions(xtlrig::Config *config)
     char buf[16];
 
 printf(R"EOF(
- __   _________ _      _____  _____ _____ 
+ __   _________ _      _____  _____ _____
  \ \ / /__   __| |    |  __ \|_   _/ ____|
-  \ V /   | |  | |    | |__) | | || |  __ 
+  \ V /   | |  | |    | |__) | | || |  __
    > <    | |  | |    |  _  /  | || | |_ |
   / . \   | |  | |____| | \ \ _| || |__| |
  /_/ \_\  |_|  |______|_|  \_\_____\_____|
-                                          
+
 )EOF");
 
 #   if defined(__clang__)
@@ -102,7 +102,7 @@ static void print_cpu(xtlrig::Config *config) {
 
 
 static void print_threads(xtlrig::Config *config) {
-    if (config->threadsMode() != xmrig::Config::Advanced) {
+    if (config->threadsMode() != xtlrig::Config::Advanced) {
         char buf[32] = {0};
         if (config->affinity() != -1L) {
             snprintf(buf, sizeof buf, ", affinity=0x%" PRIX64, config->affinity());

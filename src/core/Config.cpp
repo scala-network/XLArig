@@ -44,7 +44,6 @@ static char affinity_tmp[20] = { 0 };
 xtlrig::Config::Config() : xtlrig::CommonConfig(),
     m_aesMode(AES_AUTO),
     m_algoVariant(AV_AUTO),
-    m_dryRun(false),
     m_hugePages(true),
     m_safe(false),
     m_maxCpuUsage(75),

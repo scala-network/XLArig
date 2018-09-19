@@ -26,7 +26,7 @@
 #define __IWATCHERLISTENER_H__
 
 
-namespace xmrig {
+namespace xtlrig {
 
 
 class IConfig;
@@ -41,7 +41,7 @@ public:
 };
 
 
-} /* namespace xmrig */
+} /* namespace xtlrig */
 
 
 #endif // __IWATCHERLISTENER_H__
