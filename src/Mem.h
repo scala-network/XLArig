@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #ifndef __MEM_H__
 #define __MEM_H__
 
@@ -30,7 +31,7 @@
 #include <stdint.h>
 
 
-#include "common/xtlrig.h"
+#include "common/xmrig.h"
 
 
 struct cryptonight_ctx;
@@ -55,7 +56,7 @@ public:
         Lock               = 4
     };
 
-    static MemInfo create(cryptonight_ctx **ctx, xtlrig::Algo algorithm, size_t count);
+    static MemInfo create(cryptonight_ctx **ctx, xmrig::Algo algorithm, size_t count);
     static void init(bool enabled);
     static void release(cryptonight_ctx **ctx, size_t count, MemInfo &info);
 

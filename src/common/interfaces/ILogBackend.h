@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,53 +22,36 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __HASHRATE_H__
-#define __HASHRATE_H__
+#ifndef __ILOGBACKEND_H__
+#define __ILOGBACKEND_H__
 
 
-#include <stdint.h>
-#include <uv.h>
+#include <stdarg.h>
+#include <stddef.h>
 
 
-namespace xtlrig {
-    class Controller;
-}
-
-
-class Hashrate
+class ILogBackend
 {
 public:
-    enum Intervals {
-        ShortInterval  = 2500,
-        MediumInterval = 60000,
-        LargeInterval  = 900000
+    enum Level {
+        ERR,
+        WARNING,
+        NOTICE,
+        INFO,
+        DEBUG
     };
 
-    Hashrate(size_t threads, xtlrig::Controller *controller);
-    double calc(size_t ms) const;
-    double calc(size_t threadId, size_t ms) const;
-    void add(size_t threadId, uint64_t count, uint64_t timestamp);
-    void print();
-    void stop();
-    void updateHighest();
+#   ifdef APP_DEBUG
+    constexpr static const size_t kBufferSize = 1024;
+#   else
+    constexpr static const size_t kBufferSize = 512;
+#   endif
 
-    inline double highest() const { return m_highest; }
-    inline size_t threads() const { return m_threads; }
+    virtual ~ILogBackend() {}
 
-private:
-    static void onReport(uv_timer_t *handle);
-
-    constexpr static size_t kBucketSize = 2 << 11;
-    constexpr static size_t kBucketMask = kBucketSize - 1;
-
-    double m_highest;
-    size_t m_threads;
-    uint32_t* m_top;
-    uint64_t** m_counts;
-    uint64_t** m_timestamps;
-    uv_timer_t m_timer;
-    xtlrig::Controller *m_controller;
+    virtual void message(Level level, const char* fmt, va_list args) = 0;
+    virtual void text(const char* fmt, va_list args)                 = 0;
 };
 
 
-#endif /* __HASHRATE_H__ */
+#endif // __ILOGBACKEND_H__

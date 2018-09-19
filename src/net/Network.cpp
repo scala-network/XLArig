@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -39,7 +40,6 @@
 #include "core/Config.h"
 #include "core/Controller.h"
 #include "net/Network.h"
-#include "net/strategies/DonateStrategy.h"
 #include "workers/Workers.h"
 
 
@@ -58,10 +58,6 @@ Network::Network(xtlrig::Controller *controller) :
     }
     else {
         m_strategy = new SinglePoolStrategy(pools.front(), controller->config()->retryPause(), controller->config()->retries(), this);
-    }
-
-    if (controller->config()->donateLevel() > 0) {
-        m_donate = new DonateStrategy(controller->config()->donateLevel(), controller->config()->pools().front().user(), controller->config()->algorithm().algo(), this);
     }
 
     m_timer.data = this;

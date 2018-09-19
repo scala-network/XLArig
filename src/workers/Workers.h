@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -52,21 +53,19 @@ public:
     static Job job();
     static size_t hugePages();
     static size_t threads();
-    static void printHashrate(bool detail);
     static void setEnabled(bool enabled);
     static void setJob(const Job &job, bool donate);
     static void start(xtlrig::Controller *controller);
     static void stop();
     static void submit(const JobResult &result);
+    static void calc();
 
     static inline bool isEnabled()                               { return m_enabled; }
     static inline bool isOutdated(uint64_t sequence)             { return m_sequence.load(std::memory_order_relaxed) != sequence; }
     static inline bool isPaused()                                { return m_paused.load(std::memory_order_relaxed) == 1; }
-    static inline Hashrate *hashrate()                           { return m_hashrate; }
     static inline uint64_t sequence()                            { return m_sequence.load(std::memory_order_relaxed); }
     static inline void pause()                                   { m_active = false; m_paused = 1; m_sequence++; }
     static inline void setListener(IJobResultListener *listener) { m_listener = listener; }
-
 #   ifndef XMRIG_NO_API
     static void threadsSummary(rapidjson::Document &doc);
 #   endif
@@ -101,7 +100,6 @@ private:
 
     static bool m_active;
     static bool m_enabled;
-    static Hashrate *m_hashrate;
     static IJobResultListener *m_listener;
     static Job m_job;
     static LaunchStatus m_status;
@@ -114,6 +112,7 @@ private:
     static uv_mutex_t m_mutex;
     static uv_rwlock_t m_rwlock;
     static uv_timer_t m_timer;
+    static xtlrig::Controller *m_controller;
 };
 
 

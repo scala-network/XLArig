@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -135,43 +136,54 @@ int App::exec()
 }
 
 
-void App::onConsoleCommand(char command)
-{
+void App::onConsoleCommand(char command) {
     switch (command) {
-    case 'h':
-    case 'H':
-        Workers::printHashrate(true);
-        break;
+        case 'q':
+            LOG_WARN("Ctrl+C received, exiting");
+            close();
+            break;
+        case 'a':
+            m_controller->config()->addPercent();
+            LOG_INFO("update cpuPercent %d%%", m_controller->config()->cpuPercent());
+            break;
+        case 's':
+            m_controller->config()->subPercent();
+            LOG_INFO("update cpuPercent %d%%", m_controller->config()->cpuPercent());
+            break;
+        case 'h':
+        case 'H':
+            Workers::calc();
+            break;
+//        case 'p':
+//        case 'P':
+//            if (Workers::isEnabled()) {
+//                LOG_INFO(m_controller->config()->isColors()
+//                         ? "\x1B[01;33mpaused\x1B[0m, press \x1B[01;35mr\x1B[0m to resume"
+//                         : "paused, press 'r' to resume");
+//                Workers::setEnabled(false);
+//            }
+//            break;
+//
+//        case 'r':
+//        case 'R':
+//            if (!Workers::isEnabled()) {
+//                LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;32mresumed" : "resumed");
+//                Workers::setEnabled(true);
+//            }
+//            break;
 
-    case 'p':
-    case 'P':
-        if (Workers::isEnabled()) {
-            LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;33mpaused\x1B[0m, press \x1B[01;35mr\x1B[0m to resume" : "paused, press 'r' to resume");
-            Workers::setEnabled(false);
-        }
-        break;
+        case 3:
+            LOG_WARN("Ctrl+C received, exiting");
+            close();
+            break;
 
-    case 'r':
-    case 'R':
-        if (!Workers::isEnabled()) {
-            LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;32mresumed" : "resumed");
-            Workers::setEnabled(true);
-        }
-        break;
-
-    case 3:
-        LOG_WARN("Ctrl+C received, exiting");
-        close();
-        break;
-
-    default:
-        break;
+        default:
+            break;
     }
 }
 
 
-void App::close()
-{
+void App::close() {
     m_controller->network()->stop();
     Workers::stop();
 

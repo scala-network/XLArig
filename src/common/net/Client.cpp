@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,9 +30,9 @@
 #include <utility>
 
 
+#include "common/interfaces/IClientListener.h"
 #include "common/log/Log.h"
 #include "common/net/Client.h"
-#include "interfaces/IClientListener.h"
 #include "net/JobResult.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -297,7 +298,7 @@ bool Client::parseJob(const rapidjson::Value &params, int *code)
         return true;
     }
 
-    if (m_jobs == 0) { // https://github.com/xtlrig/xtlrig/issues/459
+    if (m_jobs == 0) { // https://github.com/xmrig/xmrig/issues/459
         return false;
     }
 
@@ -513,7 +514,7 @@ void Client::parse(char *line, size_t len)
 
     if (len < 32 || line[0] != '{') {
         if (!isQuiet()) {
-            LOG_ERR("[%s] JSON decode failed", m_pool.url());
+            LOG_DEBUG("[%s] JSON decode failed", m_pool.url());
         }
 
         return;

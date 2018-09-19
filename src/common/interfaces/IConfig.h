@@ -4,7 +4,9 @@
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2018 XTLRig       <support@xtlrig.com>
+ * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,10 +26,11 @@
 #define __ICONFIG_H__
 
 
+#include "common/crypto/Algorithm.h"
 #include "rapidjson/fwd.h"
 
 
-namespace xtlrig {
+namespace xmrig {
 
 
 class IConfig
@@ -62,12 +65,12 @@ public:
         VersionKey        = 'V',
         WatchKey          = 1105,
 
-        // xtlrig common
+        // xmrig common
         CPUPriorityKey    = 1021,
         NicehashKey       = 1006,
         PrintTimeKey      = 1007,
 
-        // xtlrig cpu
+        // xmrig cpu
         AVKey             = 'v',
         CPUAffinityKey    = 1020,
         DryRunKey         = 5000,
@@ -75,9 +78,17 @@ public:
         MaxCPUUsageKey    = 1004,
         SafeKey           = 1005,
         ThreadsKey        = 't',
+        PercentKey        = 12001,
+        SimpleSpeed       = 12002,
         HardwareAESKey    = 1011,
 
-        // xtlrig-proxy
+        // xmrig amd
+        OclPlatform       = 1400,
+        OclAffinity       = 1401,
+        OclDevices        = 1402,
+        OclLaunch         = 1403,
+
+        // xmrig-proxy
         AccessLogFileKey  = 'A',
         BindKey           = 'b',
         CoinKey           = 1104,
@@ -97,6 +108,7 @@ public:
     virtual bool parseString(int key, const char *arg)     = 0;
     virtual bool parseUint64(int key, uint64_t arg)        = 0;
     virtual bool save()                                    = 0;
+    virtual const Algorithm &algorithm() const             = 0;
     virtual const char *fileName() const                   = 0;
     virtual void getJSON(rapidjson::Document &doc) const   = 0;
     virtual void parseJSON(const rapidjson::Document &doc) = 0;
@@ -104,7 +116,7 @@ public:
 };
 
 
-} /* namespace xtlrig */
+} /* namespace xmrig */
 
 
 #endif // __ICONFIG_H__
