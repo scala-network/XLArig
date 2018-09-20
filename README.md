@@ -115,4 +115,5 @@ Please note performance is highly dependent on system load. The numbers above ar
 ## Copyrights
 
 Copyright 2016-2018 XMRig                     <https://github.com/xmrig>, <support@xmrig.com>
+
 Copyright 2018 Stellitecoin                     <https://github.com/stellitecoin>, <support@stellite.cash>
