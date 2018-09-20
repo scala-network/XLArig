@@ -66,7 +66,9 @@ adb push xtlrig /data/local/tmp/xtlrig
  
  ## Issues
  1. I ran ```./xtlrig --help``` and menu doesn't come out but throws ```-bash: ./xtlrig: Permission denied```
+ 
  You might not have the binary as executed binary. Try running ```chmod +x xtlrig``` to make it executable.
  
  2. I ran ```./xtlrig --help``` and menu doesn't come out but throws ```-bash: ./xtlrig: cannot execute binary file```
+
 You might be using the wrong platform. Try other binaries compiled. 
