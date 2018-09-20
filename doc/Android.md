@@ -44,7 +44,7 @@ Below are pools that have low difficulty which is appropriate for mobile mining 
  
  3. By using adb put your selected xtlandrig binary into /data/local/tmp. You can do so as below
 ```
-adb push xtlandrig /data/local/tmp/xtlandrig
+adb push xtlrig /data/local/tmp/xtlrig
 ```
 
  4. Next execute the binary on your device. To do this you have to go to shell mode by 
@@ -52,14 +52,21 @@ adb push xtlandrig /data/local/tmp/xtlandrig
  adb shell
  ```
  
- 5. In shell mode go to your binary placed location ```cd /data/local/tmp``` and execute ```./xtlandrig --help```. If you see the menu then your miner is ready.
+ 5. In shell mode go to your binary placed location ```cd /data/local/tmp``` and execute ```./xtlrig --help```. If you see the menu then your miner is ready.
  
  6. Running the binary requires 3 major things. 
     * Pool
     * XTL Address
     * Password
     
-    Execute the binary ```./xtlandrig -o <pool address> -u <xtl_address> -p <your_worker_id>```
+    Execute the binary ```./xtlandrig -o <pool address> -u <xtl_address> -p <your_worker_id> --variant xtl```
     Where <pool address> is the full pool address and <xtl_address> is you full xtl address without < and >.
     Eg. 
-```./xtlandrig -o xtlpool.com:3333 -u Se4FFaA4n89epNPA7bXgzaFBup9a4wDABbYsEQXDWGiFNdbnwgmBoLgjXSX7ZHSnpCcie1uMmEZ7K2xaVbdsyxkc32AEBDr1p -p MyAndroid```
+```./xtlrig -o xtlpool.com:3333 -u Se4FFaA4n89epNPA7bXgzaFBup9a4wDABbYsEQXDWGiFNdbnwgmBoLgjXSX7ZHSnpCcie1uMmEZ7K2xaVbdsyxkc32AEBDr1p -p MyAndroid --variant xtl```
+ 
+ ## Issues
+ 1. I ran ```./xtlrig --help``` and menu doesn't come out but throws ```-bash: ./xtlrig: Permission denied```
+ You might not have the binary as executed binary. Try running ```chmod +x xtlrig``` to make it executable.
+ 
+ 2.I ran ```./xtlrig --help``` and menu doesn't come out but throws ```-bash: ./xtlrig: cannot execute binary file```
+You might be using the wrong platform. Try other binaries compiled. 
