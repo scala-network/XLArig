@@ -59,9 +59,12 @@ adb push xtlrig /data/local/tmp/xtlrig
     * XTL Address
     * Password
     
-    Execute the binary ```./xtlandrig -o <pool address> -u <xtl_address> -p <your_worker_id> --variant xtl```
+    Execute the binary ```./xtlrig -o <pool address> -u <xtl_address> -p <your_worker_id> --variant xtl```
+    
     Where <pool address> is the full pool address and <xtl_address> is you full xtl address without < and >.
+ 
     Eg. 
+    
 ```./xtlrig -o xtlpool.com:3333 -u Se4FFaA4n89epNPA7bXgzaFBup9a4wDABbYsEQXDWGiFNdbnwgmBoLgjXSX7ZHSnpCcie1uMmEZ7K2xaVbdsyxkc32AEBDr1p -p MyAndroid --variant xtl```
  
  ## Issues
