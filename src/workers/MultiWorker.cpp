@@ -5,6 +5,7 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
@@ -21,6 +22,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 
 #include <thread>
 #include <unistd.h>
@@ -97,6 +99,7 @@ bool MultiWorker<N>::selfTest() {
     return false;
 }
 
+
 template<size_t N>
 void MultiWorker<N>::start(xtlrig::Controller *controller) {
     if (m_usec <= 0) {
@@ -161,6 +164,7 @@ bool MultiWorker<N>::resume(const Job &job) {
     return false;
 }
 
+
 template<size_t N>
 bool MultiWorker<N>::verify(xtlrig::Variant variant, const uint8_t *referenceValue) {
 
@@ -212,32 +216,25 @@ void MultiWorker<N>::consumeJob() {
     for (size_t i = 0; i < N; ++i) {
         if (m_state.job.isNicehash()) {
             *nonce(i) = (*nonce(i) & 0xff000000U) + (0xffffffU / m_totalWays * (m_offset + i));
-        } else {
-            *nonce(i) = 0xffffffffU / m_totalWays * (m_offset + i);
+        }
+        else {
+           *nonce(i) = 0xffffffffU / m_totalWays * (m_offset + i);
         }
     }
 }
 
 
 template<size_t N>
-void MultiWorker<N>::save(const Job &job) {
+void MultiWorker<N>::save(const Job &job)
+{
     if (job.poolId() == -1 && m_state.job.poolId() >= 0) {
         m_pausedState = m_state;
     }
 }
 
 
-template
-class MultiWorker<1>;
-
-template
-class MultiWorker<2>;
-
-template
-class MultiWorker<3>;
-
-template
-class MultiWorker<4>;
-
-template
-class MultiWorker<5>;
+template class MultiWorker<1>;
+template class MultiWorker<2>;
+template class MultiWorker<3>;
+template class MultiWorker<4>;
+template class MultiWorker<5>;
