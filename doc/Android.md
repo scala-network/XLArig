@@ -4,7 +4,7 @@ XTLRig supports compilation and mining with an android cpu.  Please contact us v
 ## Build
 For android build make sure you have ndk installed. You can read about ndk [here](https://developer.android.com/ndk/).
 
-###Steps to build
+### Steps to build
 
 * Go to android folder
 * Run <NDK_ROOT>/ndk-build 
