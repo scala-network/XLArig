@@ -42,7 +42,7 @@ Below are pools that have low difficulty which is appropriate for mobile mining 
  adb devices
  ```
  
- 3. By using adb put your selected xtlandrig binary into /data/local/tmp. You can do so as below
+ 3. By using adb put your selected xtlrig binary into /data/local/tmp. You can do so as below
 ```
 adb push xtlrig /data/local/tmp/xtlrig
 ```
