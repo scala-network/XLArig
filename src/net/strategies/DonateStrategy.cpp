@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,18 +24,18 @@
 
 
 #include "common/crypto/keccak.h"
+#include "common/interfaces/IStrategyListener.h"
 #include "common/net/Client.h"
 #include "common/net/Job.h"
 #include "common/net/strategies/FailoverStrategy.h"
 #include "common/net/strategies/SinglePoolStrategy.h"
 #include "common/Platform.h"
 #include "common/xtlrig.h"
-#include "interfaces/IStrategyListener.h"
 #include "net/strategies/DonateStrategy.h"
 
 
-const static char *kDonatePool1   = "miner.fee.xtlrig.com";
-const static char *kDonatePool2   = "emergency.fee.xtlrig.com";
+const static char *kDonatePool1   = "donate.stellite.cash";
+const static char *kDonatePool2   = "stratum.xtlpool.com";
 
 
 static inline float randomf(float min, float max) {
@@ -55,15 +56,17 @@ DonateStrategy::DonateStrategy(int level, const char *user, xtlrig::Algo algo, I
     xtlrig::keccak(reinterpret_cast<const uint8_t *>(user), strlen(user), hash);
     Job::toHex(hash, 32, userId);
 
-    if (algo == xtlrig::CRYPTONIGHT && xtlrig::VARIANT_XTL) {
-        m_pools.push_back(Pool("donate.stellite.cash", 3333, nullptr, nullptr, false, true));
+    if (algo == xtlrig::CRYPTONIGHT) {
+        m_pools.push_back(Pool(kDonatePool1, 6666, userId, nullptr, false, true));
+        m_pools.push_back(Pool(kDonatePool1, 80,   userId, nullptr, false, true));
+        m_pools.push_back(Pool(kDonatePool2, 5555, "48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD", "emergency", false, false));
     }
     else if (algo == xtlrig::CRYPTONIGHT_HEAVY) {
-        m_pools.push_back(Pool("haven.ingest.cryptoknight.cc", 5531, "hvi1aCqoAZF19J8pijvqnrUkeAeP8Rvr4XyfDMGJcarhbL15KgYKM1hN7kiHMu3fer5k8JJ8YRLKCahDKFgLFgJMYAfnPuJpt7Z5pMft2EcxS", "emergency", false, false));
+        m_pools.push_back(Pool(kDonatePool1, 8888, userId, nullptr, false, true));
     }
     else {
         m_pools.push_back(Pool(kDonatePool1, 5555, userId, nullptr, false, true));
-     }
+    }
 
     for (Pool &pool : m_pools) {
         pool.adjust(algo);

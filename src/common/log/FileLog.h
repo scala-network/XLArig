@@ -4,8 +4,9 @@
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2017 XTLRig       <support@xtlrig.com>
- *
+ * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,7 +21,6 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #ifndef __FILELOG_H__
 #define __FILELOG_H__
 
@@ -28,15 +28,20 @@
 #include <uv.h>
 
 
-#include "interfaces/ILogBackend.h"
+#include "common/interfaces/ILogBackend.h"
+
+
+namespace xtlrig {
+    class Controller;
+}
 
 
 class FileLog : public ILogBackend
 {
 public:
-    FileLog(const char *fileName);
+    FileLog(xtlrig::Controller *controller, const char *fileName);
 
-    void message(int level, const char* fmt, va_list args) override;
+    void message(Level level, const char* fmt, va_list args) override;
     void text(const char* fmt, va_list args) override;
 
 private:
@@ -44,7 +49,9 @@ private:
 
     void write(char *data, size_t size);
 
+    char m_fmt[256];
     int m_file;
+    xtlrig::Controller *m_controller;
 };
 
 #endif /* __FILELOG_H__ */

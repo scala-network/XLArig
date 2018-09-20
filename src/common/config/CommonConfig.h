@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,81 +29,128 @@
 #include <vector>
 
 
+#include "common/interfaces/IConfig.h"
 #include "common/net/Pool.h"
 #include "common/utils/c_str.h"
 #include "common/xtlrig.h"
-#include "interfaces/IConfig.h"
 
 
 namespace xtlrig {
 
 
-class CommonConfig : public IConfig
-{
-public:
-    CommonConfig();
-    ~CommonConfig();
+    class CommonConfig : public IConfig {
+    public:
+        CommonConfig();
 
-    inline bool isApiIPv6() const                  { return m_apiIPv6; }
-    inline bool isApiRestricted() const            { return m_apiRestricted; }
-    inline bool isBackground() const               { return m_background; }
-    inline bool isColors() const                   { return m_colors; }
-    inline bool isSyslog() const                   { return m_syslog; }
-    inline const Algorithm &algorithm() const      { return m_algorithm; }
-    inline const char *apiToken() const            { return m_apiToken.data(); }
-    inline const char *apiWorkerId() const         { return m_apiWorkerId.data(); }
-    inline const char *logFile() const             { return m_logFile.data(); }
-    inline const char *userAgent() const           { return m_userAgent.data(); }
-    inline const std::vector<Pool> &pools() const  { return m_activePools; }
-    inline int apiPort() const                     { return m_apiPort; }
-    inline int donateLevel() const                 { return m_donateLevel; }
-    inline int printTime() const                   { return m_printTime; }
-    inline int retries() const                     { return m_retries; }
-    inline int retryPause() const                  { return m_retryPause; }
-    inline void setColors(bool colors)             { m_colors = colors; }
+        ~CommonConfig();
 
-    inline bool isWatch() const override           { return m_watch && !m_fileName.isNull(); }
-    inline const char *fileName() const override   { return m_fileName.data(); }
+        inline bool isApiIPv6() const { return m_apiIPv6; }
 
-protected:
-    enum State {
-        NoneState,
-        ReadyState,
-        ErrorState
+        inline bool isApiRestricted() const { return m_apiRestricted; }
+
+        inline bool isBackground() const { return m_background; }
+
+        inline bool isColors() const { return m_colors; }
+
+        inline bool isDryRun() const { return m_dryRun; }
+
+        inline bool isSyslog() const { return m_syslog; }
+
+        inline const char *apiToken() const { return m_apiToken.data(); }
+
+        inline const char *apiWorkerId() const { return m_apiWorkerId.data(); }
+
+        inline const char *logFile() const { return m_logFile.data(); }
+
+        inline const char *userAgent() const { return m_userAgent.data(); }
+
+        inline const std::vector<Pool> &pools() const { return m_activePools; }
+
+        inline int apiPort() const { return m_apiPort; }
+
+        inline int donateLevel() const { return m_donateLevel; }
+
+        inline int printTime() const { return m_printTime; }
+
+        inline int retries() const { return m_retries; }
+
+        inline int retryPause() const { return m_retryPause; }
+
+        inline void setColors(bool colors) { m_colors = colors; }
+
+        inline int cpuPercent() const { return m_percent; }
+
+        inline bool isSimpleSpeed() const { return m_simpleSpeed; }
+
+        inline void addPercent() {
+            if (m_percent < 90) {
+                m_percent += 10;
+            } else {
+                m_percent = 100;
+            }
+        }
+
+        inline void subPercent() {
+            if (m_percent > 20) {
+                m_percent -= 10;
+            } else {
+                m_percent = 10;
+            }
+        }
+
+        inline bool isWatch() const override { return m_watch && !m_fileName.isNull(); }
+
+        inline const Algorithm &algorithm() const override { return m_algorithm; }
+
+        inline const char *fileName() const override { return m_fileName.data(); }
+
+        bool save() override;
+
+    protected:
+        enum State {
+            NoneState,
+            ReadyState,
+            ErrorState
+        };
+
+        bool finalize() override;
+
+        bool parseBoolean(int key, bool enable) override;
+
+        bool parseString(int key, const char *arg) override;
+
+        bool parseUint64(int key, uint64_t arg) override;
+
+        void setFileName(const char *fileName) override;
+
+        Algorithm m_algorithm;
+        bool m_adjusted;
+        bool m_apiIPv6;
+        bool m_apiRestricted;
+        bool m_background;
+        bool m_colors;
+        bool m_dryRun;
+        bool m_syslog;
+        bool m_watch;
+        int m_apiPort;
+        int m_donateLevel;
+        int m_printTime;
+        int m_percent = 100;
+        bool m_simpleSpeed = false;
+        int m_retries;
+        int m_retryPause;
+        State m_state;
+        std::vector<Pool> m_activePools;
+        std::vector<Pool> m_pools;
+        xtlrig::c_str m_apiToken;
+        xtlrig::c_str m_apiWorkerId;
+        xtlrig::c_str m_fileName;
+        xtlrig::c_str m_logFile;
+        xtlrig::c_str m_userAgent;
+
+    private:
+        bool parseInt(int key, int arg);
     };
-
-    bool finalize() override;
-    bool parseBoolean(int key, bool enable) override;
-    bool parseString(int key, const char *arg) override;
-    bool parseUint64(int key, uint64_t arg) override;
-    bool save() override;
-    void setFileName(const char *fileName) override;
-
-    Algorithm m_algorithm;
-    bool m_adjusted;
-    bool m_apiIPv6;
-    bool m_apiRestricted;
-    bool m_background;
-    bool m_colors;
-    bool m_syslog;
-    bool m_watch;
-    int m_apiPort;
-    int m_donateLevel;
-    int m_printTime;
-    int m_retries;
-    int m_retryPause;
-    State m_state;
-    std::vector<Pool> m_activePools;
-    std::vector<Pool> m_pools;
-    xtlrig::c_str m_apiToken;
-    xtlrig::c_str m_apiWorkerId;
-    xtlrig::c_str m_fileName;
-    xtlrig::c_str m_logFile;
-    xtlrig::c_str m_userAgent;
-
-private:
-    bool parseInt(int key, int arg);
-};
 
 
 } /* namespace xtlrig */

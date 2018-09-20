@@ -17,19 +17,19 @@ XTLRig is a high performance Stellite (XTL) CPU miner, with official support for
 
 ## Features
 * High performance.
-* Official Windows support.
-* Small Windows executable, without dependencies.
-* x86/x64 support.
+* Official Windows / Linux / MacOsx and Android support.
+* Small Windows / Linux / MacOsx and Android executable, without dependencies.
+* x86/x64 and Armv7/Armv8 (android) support.
 * Support for backup (failover) mining server.
 * keepalived support.
 * Command line options compatible with cpuminer.
-* Smart automatic [CPU configuration](https://github.com/xtlrig/xtlrig/wiki/Threads).
+* Smart automatic [CPU configuration](https://github.com/stellitecoin/xtlrig/wiki/Threads).
 * It's open source software.
 
 ## Download
-* Binary releases: https://github.com/xtlrig/xtlrig/releases
-* Git tree: https://github.com/xtlrig/xtlrig.git
-  * Clone with `git clone https://github.com/xtlrig/xtlrig.git`.
+* Binary releases: https://github.com/stellitecoin/xtlrig/releases
+* Git tree: https://github.com/stellitecoin/xtlrig.git
+  * Clone with `git clone https://github.com/stellitecoin/xtlrig.git`.
 
 ## Usage
 Use [config.xtlrig.com](https://config.xtlrig.com/xtlrig) to generate, edit or share configurations.
@@ -64,6 +64,8 @@ Use [config.xtlrig.com](https://config.xtlrig.com/xtlrig) to generate, edit or s
       --api-port=N         port for the miner API
       --api-access-token=T access token for API
       --api-worker-id=ID   custom worker-id for API
+      --percent            set single cpu max percent
+      --simpleSpeed        simple show speed
   -h, --help               display this help and exit
   -V, --version            output version information and exit
 ```
@@ -104,6 +106,7 @@ Please note performance is highly dependent on system load. The numbers above ar
 ## Donations
 * XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
 * BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
+* XTL: `Se3dRf8ZTUXKYivaTFU4KYczPcmMcwPZWEQ5HZmj3RRviFJ3w1mNhtgCWkn6VsnQcMBX1hyCUjZVuSo8X7yJTSYj1joP84WoT`
 
 ## Contacts
 * support@stellite.cash
@@ -113,4 +116,4 @@ Please note performance is highly dependent on system load. The numbers above ar
 
 Copyright 2016-2018 XMRig                     <https://github.com/xmrig>, <support@xmrig.com>
 
-
+Copyright 2018 Stellitecoin                     <https://github.com/stellitecoin>, <support@stellite.cash>

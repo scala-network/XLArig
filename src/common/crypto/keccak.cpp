@@ -1,12 +1,12 @@
 /* XTLRig
- * Copyright 2010      Jeff Garzik               <jgarzik@pobox.com>
- * Copyright 2011      Markku-Juhani O. Saarinen <mjos@iki.fi>
- * Copyright 2012-2014 pooler                    <pooler@litecoinpool.org>
- * Copyright 2014      Lucas Jones               <https://github.com/lucasjones>
- * Copyright 2014-2016 Wolf9466                  <https://github.com/OhGodAPet>
- * Copyright 2016      Jay D Dee                 <jayddee246@gmail.com>
- * Copyright 2017-2018 XMR-Stak                  <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig                     <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
+ * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
+ * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
+ * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
+ * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
+ * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <stdint.h>
 #include <memory.h>
 
@@ -37,14 +36,14 @@
 #define ROTL64(x, y) (((x) << (y)) | ((x) >> (64 - (y))))
 #endif
 
-const uint64_t keccakf_rndc[24] = 
+const uint64_t keccakf_rndc[24] =
 {
     0x0000000000000001, 0x0000000000008082, 0x800000000000808a,
     0x8000000080008000, 0x000000000000808b, 0x0000000080000001,
     0x8000000080008081, 0x8000000000008009, 0x000000000000008a,
     0x0000000000000088, 0x0000000080008009, 0x000000008000000a,
     0x000000008000808b, 0x800000000000008b, 0x8000000000008089,
-    0x8000000000008003, 0x8000000000008002, 0x8000000000000080, 
+    0x8000000000008003, 0x8000000000008002, 0x8000000000000080,
     0x000000000000800a, 0x800000008000000a, 0x8000000080008081,
     0x8000000000008080, 0x0000000080000001, 0x8000000080008008
 };
@@ -155,7 +154,7 @@ void xtlrig::keccakf(uint64_t st[25], int rounds)
         st[j + 2] ^= (~bc[3]) & bc[4];
         st[j + 3] ^= (~bc[4]) & bc[0];
         st[j + 4] ^= (~bc[0]) & bc[1];
-        
+
         //  Iota
         st[0] ^= keccakf_rndc[round];
     }
@@ -173,7 +172,7 @@ void xtlrig::keccak(const uint8_t *in, int inlen, uint8_t *md, int mdlen)
 
     rsiz = sizeof(state_t) == mdlen ? HASH_DATA_AREA : 200 - 2 * mdlen;
     rsizw = rsiz / 8;
-    
+
     memset(st, 0, sizeof(st));
 
     for ( ; inlen >= rsiz; inlen -= rsiz, in += rsiz) {

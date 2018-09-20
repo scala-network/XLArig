@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
+ 
 #ifndef __XMRIG_H__
 #define __XMRIG_H__
 
@@ -61,8 +62,17 @@ enum Variant {
     VARIANT_AUTO = -1, // Autodetect
     VARIANT_0    = 0,  // Original CryptoNight or CryptoNight-Heavy
     VARIANT_1    = 1,  // CryptoNight variant 1 also known as Monero7 and CryptoNightV7
-    VARIANT_IPBC = 2,  // CryptoNight Lite variant 1 with XOR (IPBC only)
-    VARIANT_XTL  = 3   // CryptoNight variant 1 (Stellite only)
+    VARIANT_IPBC = 2,  // Modified CryptoNight Lite variant 1 with XOR (IPBC/TUBE only)
+    VARIANT_XTL  = 3,  // Modified CryptoNight variant 1 (Stellite only)
+    VARIANT_MSR  = 4,  // Modified CryptoNight variant 1 (Masari only)
+    VARIANT_XHV  = 5,  // Modified CryptoNight-Heavy (Haven Protocol only)
+    VARIANT_MAX
+};
+
+
+enum AlgoVerify {
+    VERIFY_HW_AES   = 1,
+    VERIFY_SOFT_AES = 2
 };
 
 

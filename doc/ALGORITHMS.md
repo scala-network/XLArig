@@ -1,6 +1,6 @@
 # Algorithms
 
-XTLRig uses a different way to specify algorithms, compared to other miners.
+XMRig uses a different way to specify algorithms, compared to other miners.
 
 Algorithm selection splitted to 2 parts:
 
@@ -38,7 +38,7 @@ Variants:
 In all other cases base algorithm is `cryptonight`.
 
 ### Mining algorithm negotiation
-If your pool support [mining algorithm negotiation](https://github.com/xtlrig/xtlrig-proxy/issues/168) miner will choice proper variant automaticaly and if you choice wrong base algorithm you will see error message.
+If your pool support [mining algorithm negotiation](https://github.com/xmrig/xmrig-proxy/issues/168) miner will choice proper variant automaticaly and if you choice wrong base algorithm you will see error message.
 
 Pools with mining algorithm negotiation support.
  * [www.hashvault.pro](https://www.hashvault.pro/)

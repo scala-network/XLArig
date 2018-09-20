@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -78,6 +79,7 @@ public:
     bool setUserpass(const char *userpass);
     rapidjson::Value toJSON(rapidjson::Document &doc) const;
     void adjust(xtlrig::Algo algorithm);
+    void setAlgo(const xtlrig::Algorithm &algorithm);
 
 #   ifdef APP_DEBUG
     void print() const;
@@ -86,6 +88,7 @@ public:
 private:
     bool parseIPv6(const char *addr);
     void addVariant(xtlrig::Variant variant);
+    void rebuild();
 
     bool m_nicehash;
     int m_keepAlive;

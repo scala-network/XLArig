@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,7 +22,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <limits.h>
 #include <stdio.h>
 #include <uv.h>
@@ -34,12 +34,12 @@
 
 #include "common/config/ConfigLoader.h"
 #include "common/config/ConfigWatcher.h"
+#include "common/interfaces/IConfig.h"
+#include "common/interfaces/IWatcherListener.h"
 #include "common/net/Pool.h"
 #include "common/Platform.h"
 #include "core/ConfigCreator.h"
 #include "core/ConfigLoader_platform.h"
-#include "interfaces/IConfig.h"
-#include "interfaces/IWatcherListener.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
@@ -170,7 +170,13 @@ xtlrig::IConfig *xtlrig::ConfigLoader::load(int argc, char **argv, IConfigCreato
     }
 
     if (!config->finalize()) {
-        fprintf(stderr, "No valid configuration found. Exiting.\n");
+        if (!config->algorithm().isValid()) {
+            fprintf(stderr, "No valid algorithm specified. Exiting.\n");
+        }
+        else {
+            fprintf(stderr, "No valid configuration found. Exiting.\n");
+        }
+
         delete config;
         return nullptr;
     }

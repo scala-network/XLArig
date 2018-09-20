@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -100,6 +101,12 @@ bool Pool::isCompatible(const xtlrig::Algorithm &algorithm) const
             return true;
         }
     }
+
+#   ifdef XMRIG_PROXY_PROJECT
+    if (m_algorithm.algo() == xtlrig::CRYPTONIGHT && algorithm.algo() == xtlrig::CRYPTONIGHT && m_algorithm.variant() == xtlrig::VARIANT_XTL) {
+        return true;
+    }
+#   endif
 
     return false;
 }
@@ -227,7 +234,10 @@ void Pool::adjust(xtlrig::Algo algorithm)
         m_algorithm.setAlgo(algorithm);
 
         if (m_algorithm.variant() == xtlrig::VARIANT_AUTO) {
-            if (algorithm == xtlrig::CRYPTONIGHT)  {
+            if (algorithm == xtlrig::CRYPTONIGHT_HEAVY)  {
+                m_algorithm.setVariant(xtlrig::VARIANT_0);
+            }
+            else {
                 m_algorithm.setVariant(xtlrig::VARIANT_1);
             }
         }
@@ -247,17 +257,15 @@ void Pool::adjust(xtlrig::Algo algorithm)
         m_algorithm.setVariant(xtlrig::VARIANT_1);
     }
 
-    m_algorithms.push_back(m_algorithm);
+    rebuild();
+}
 
-#   ifndef XMRIG_PROXY_PROJECT
-    if (m_algorithm.algo() != xtlrig::CRYPTONIGHT_HEAVY) {
-        addVariant(xtlrig::VARIANT_1);
-        addVariant(xtlrig::VARIANT_0);
-        addVariant(xtlrig::VARIANT_XTL);
-        addVariant(xtlrig::VARIANT_IPBC);
-        addVariant(xtlrig::VARIANT_AUTO);
-    }
-#   endif
+
+void Pool::setAlgo(const xtlrig::Algorithm &algorithm)
+{
+    m_algorithm = algorithm;
+
+    rebuild();
 }
 
 
@@ -308,4 +316,21 @@ void Pool::addVariant(xtlrig::Variant variant)
     }
 
     m_algorithms.push_back(algorithm);
+}
+
+
+void Pool::rebuild()
+{
+    m_algorithms.clear();
+    m_algorithms.push_back(m_algorithm);
+
+#   ifndef XMRIG_PROXY_PROJECT
+    addVariant(xtlrig::VARIANT_1);
+    addVariant(xtlrig::VARIANT_0);
+    addVariant(xtlrig::VARIANT_XTL);
+    addVariant(xtlrig::VARIANT_IPBC);
+    addVariant(xtlrig::VARIANT_MSR);
+    addVariant(xtlrig::VARIANT_XHV);
+    addVariant(xtlrig::VARIANT_AUTO);
+#   endif
 }

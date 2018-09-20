@@ -1,2 +1,4 @@
 /.project
 build/
+android/libs
+android/obj

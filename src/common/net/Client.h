@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,6 +31,7 @@
 #include <vector>
 
 
+#include "common/crypto/Algorithm.h"
 #include "common/net/Id.h"
 #include "common/net/Job.h"
 #include "common/net/Pool.h"
@@ -66,16 +68,17 @@ public:
     void setPool(const Pool &pool);
     void tick(uint64_t now);
 
-    inline bool isReady() const              { return m_state == ConnectedState && m_failures == 0; }
-    inline const char *host() const          { return m_pool.host(); }
-    inline const char *ip() const            { return m_ip; }
-    inline const Job &job() const            { return m_job; }
-    inline int id() const                    { return m_id; }
-    inline SocketState state() const         { return m_state; }
-    inline uint16_t port() const             { return m_pool.port(); }
-    inline void setQuiet(bool quiet)         { m_quiet = quiet; }
-    inline void setRetries(int retries)      { m_retries = retries; }
-    inline void setRetryPause(int ms)        { m_retryPause = ms; }
+    inline bool isReady() const                       { return m_state == ConnectedState && m_failures == 0; }
+    inline const char *host() const                   { return m_pool.host(); }
+    inline const char *ip() const                     { return m_ip; }
+    inline const Job &job() const                     { return m_job; }
+    inline int id() const                             { return m_id; }
+    inline SocketState state() const                  { return m_state; }
+    inline uint16_t port() const                      { return m_pool.port(); }
+    inline void setAlgo(const xtlrig::Algorithm &algo) { m_pool.setAlgo(algo); }
+    inline void setQuiet(bool quiet)                  { m_quiet = quiet; }
+    inline void setRetries(int retries)               { m_retries = retries; }
+    inline void setRetryPause(int ms)                 { m_retryPause = ms; }
 
 private:
     enum Extensions {
