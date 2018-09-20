@@ -1,5 +1,5 @@
 # Android
-XTLRig supports compilation and mining with an android cp.  Please contact us via discord https://discord.gg/DVPJ5uD for any issues. 
+XTLRig supports compilation and mining with an android cpu.  Please contact us via discord https://discord.gg/DVPJ5uD for any issues. 
 
 ## Build
 For android build make sure you have ndk installed. You can read about ndk [here](https://developer.android.com/ndk/).
