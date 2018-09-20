@@ -10,7 +10,7 @@ XTLRIG_SRC_PATH := ../../
 
 LOCAL_SRC_FILES :=    \
    $(XTLRIG_SRC_PATH)/src/api/NetworkState.cpp \
-    $(XTLRIG_SRC_PATH)/src/App.cpp \
+    $(XTLRIG_SRC_PATH)/src/android/App.cpp \
     $(XTLRIG_SRC_PATH)/src/common/config/CommonConfig.cpp \
     $(XTLRIG_SRC_PATH)/src/common/config/ConfigLoader.cpp \
     $(XTLRIG_SRC_PATH)/src/common/config/ConfigWatcher.cpp \
@@ -31,12 +31,13 @@ LOCAL_SRC_FILES :=    \
     $(XTLRIG_SRC_PATH)/src/core/Controller.cpp \
     $(XTLRIG_SRC_PATH)/src/Mem.cpp \
     $(XTLRIG_SRC_PATH)/src/net/Network.cpp \
+		$(XTLRIG_SRC_PATH)/src/net/strategies/DonateStrategy.cpp \
     $(XTLRIG_SRC_PATH)/src/Summary.cpp \
     $(XTLRIG_SRC_PATH)/src/workers/CpuThread.cpp \
     $(XTLRIG_SRC_PATH)/src/workers/Handle.cpp \
-    $(XTLRIG_SRC_PATH)/src/workers/MultiWorker.cpp \
-    $(XTLRIG_SRC_PATH)/src/workers/Worker.cpp \
-    $(XTLRIG_SRC_PATH)/src/workers/Workers.cpp \
+    $(XTLRIG_SRC_PATH)/src/android/workers/MultiWorker.cpp \
+    $(XTLRIG_SRC_PATH)/src/android/workers/Worker.cpp \
+    $(XTLRIG_SRC_PATH)/src/android/workers/Workers.cpp \
     $(XTLRIG_SRC_PATH)/src/xtlrig.cpp \
     $(XTLRIG_SRC_PATH)/src/App_unix.cpp \
     $(XTLRIG_SRC_PATH)/src/common/Platform_unix.cpp \

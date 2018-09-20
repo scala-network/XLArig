@@ -45,7 +45,11 @@ public:
 
 protected:
     bool selfTest() override;
-    void start(xtlrig::Controller *controller) override;
+    #ifdef __ANDROID__
+        void start(xtlrig::Controller *controller) override;
+    #else
+        void start() override;
+    #endif
 
 private:
     bool resume(const Job &job);

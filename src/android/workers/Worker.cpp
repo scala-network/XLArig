@@ -23,30 +23,40 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __IWORKER_H__
-#define __IWORKER_H__
+
+#include <chrono>
 
 
-#include <stdint.h>
-#ifdef __ANDROID__
-  #include <core/Controller.h>
-#endif
+#include "common/Platform.h"
+#include "Cpu.h"
+#include "workers/CpuThread.h"
+#include "workers/Handle.h"
+#include "workers/Worker.h"
 
-class IWorker
+
+Worker::Worker(Handle *handle) :
+    m_id(handle->threadId()),
+    m_totalWays(handle->totalWays()),
+    m_offset(handle->offset()),
+    m_hashCount(0),
+    m_timestamp(0),
+    m_count(0),
+    m_sequence(0),
+    m_thread(static_cast<xtlrig::CpuThread *>(handle->config()))
 {
-public:
-    virtual ~IWorker() {}
+    if (Cpu::threads() > 1 && m_thread->affinity() != -1L) {
+        Platform::setThreadAffinity(m_thread->affinity());
+    }
 
-    virtual bool selfTest()            = 0;
-    virtual size_t id() const          = 0;
-    virtual uint64_t hashCount() const = 0;
-    virtual uint64_t timestamp() const = 0;
-    #ifdef __ANDROID__
-      virtual void start(xtlrig::Controller *controller) = 0;
-    #else
-      virtual void start()  = 0;
-    #endif
-};
+    Platform::setThreadPriority(m_thread->priority());
+}
 
 
-#endif // __IWORKER_H__
+void Worker::storeStats()
+{
+    using namespace std::chrono;
+
+    const uint64_t timestamp = time_point_cast<milliseconds>(high_resolution_clock::now()).time_since_epoch().count();
+    m_hashCount.store(m_count, std::memory_order_relaxed);
+    m_timestamp.store(timestamp, std::memory_order_relaxed);
+}

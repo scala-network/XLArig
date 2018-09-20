@@ -6,6 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018       cyynf       <https://github.com/cyynf>
  * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -51,11 +52,9 @@
 App *App::m_self = nullptr;
 
 
-
 App::App(int argc, char **argv) :
-    m_console(nullptr),
-    m_httpd(nullptr)
-{
+        m_console(nullptr),
+        m_httpd(nullptr) {
     m_self = this;
 
     m_controller = new xtlrig::Controller();
@@ -73,8 +72,7 @@ App::App(int argc, char **argv) :
 }
 
 
-App::~App()
-{
+App::~App() {
     uv_tty_reset_mode();
 
     delete m_console;
@@ -86,14 +84,13 @@ App::~App()
 }
 
 
-int App::exec()
-{
+int App::exec() {
     if (!m_controller->isReady()) {
         return 2;
     }
 
-    uv_signal_start(&m_sigHUP,  App::onSignal, SIGHUP);
-    uv_signal_start(&m_sigINT,  App::onSignal, SIGINT);
+    uv_signal_start(&m_sigHUP, App::onSignal, SIGHUP);
+    uv_signal_start(&m_sigINT, App::onSignal, SIGINT);
     uv_signal_start(&m_sigTERM, App::onSignal, SIGTERM);
 
     background();
@@ -136,43 +133,54 @@ int App::exec()
 }
 
 
-void App::onConsoleCommand(char command)
-{
+void App::onConsoleCommand(char command) {
     switch (command) {
-    case 'h':
-    case 'H':
-        Workers::printHashrate(true);
-        break;
+        case 'q':
+            LOG_WARN("Ctrl+C received, exiting");
+            close();
+            break;
+        case 'a':
+            m_controller->config()->addPercent();
+            LOG_INFO("update cpuPercent %d%%", m_controller->config()->cpuPercent());
+            break;
+        case 's':
+            m_controller->config()->subPercent();
+            LOG_INFO("update cpuPercent %d%%", m_controller->config()->cpuPercent());
+            break;
+        case 'h':
+        case 'H':
+            Workers::calc();
+            break;
+//        case 'p':
+//        case 'P':
+//            if (Workers::isEnabled()) {
+//                LOG_INFO(m_controller->config()->isColors()
+//                         ? "\x1B[01;33mpaused\x1B[0m, press \x1B[01;35mr\x1B[0m to resume"
+//                         : "paused, press 'r' to resume");
+//                Workers::setEnabled(false);
+//            }
+//            break;
+//
+//        case 'r':
+//        case 'R':
+//            if (!Workers::isEnabled()) {
+//                LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;32mresumed" : "resumed");
+//                Workers::setEnabled(true);
+//            }
+//            break;
 
-    case 'p':
-    case 'P':
-        if (Workers::isEnabled()) {
-            LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;33mpaused\x1B[0m, press \x1B[01;35mr\x1B[0m to resume" : "paused, press 'r' to resume");
-            Workers::setEnabled(false);
-        }
-        break;
+        case 3:
+            LOG_WARN("Ctrl+C received, exiting");
+            close();
+            break;
 
-    case 'r':
-    case 'R':
-        if (!Workers::isEnabled()) {
-            LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;32mresumed" : "resumed");
-            Workers::setEnabled(true);
-        }
-        break;
-
-    case 3:
-        LOG_WARN("Ctrl+C received, exiting");
-        close();
-        break;
-
-    default:
-        break;
+        default:
+            break;
     }
 }
 
 
-void App::close()
-{
+void App::close() {
     m_controller->network()->stop();
     Workers::stop();
 
@@ -180,29 +188,26 @@ void App::close()
 }
 
 
-void App::release()
-{
+void App::release() {
 }
 
 
-void App::onSignal(uv_signal_t *handle, int signum)
-{
-    switch (signum)
-    {
-    case SIGHUP:
-        LOG_WARN("SIGHUP received, exiting");
-        break;
+void App::onSignal(uv_signal_t *handle, int signum) {
+    switch (signum) {
+        case SIGHUP:
+            LOG_WARN("SIGHUP received, exiting");
+            break;
 
-    case SIGTERM:
-        LOG_WARN("SIGTERM received, exiting");
-        break;
+        case SIGTERM:
+            LOG_WARN("SIGTERM received, exiting");
+            break;
 
-    case SIGINT:
-        LOG_WARN("SIGINT received, exiting");
-        break;
+        case SIGINT:
+            LOG_WARN("SIGINT received, exiting");
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 
     uv_signal_stop(handle);

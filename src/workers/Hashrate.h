@@ -6,7 +6,6 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
- * Copyright 2018       cyynf       <https://github.com/cyynf>
  * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -22,31 +21,55 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __IWORKER_H__
-#define __IWORKER_H__
+#ifndef __HASHRATE_H__
+#define __HASHRATE_H__
 
 
 #include <stdint.h>
-#ifdef __ANDROID__
-  #include <core/Controller.h>
-#endif
+#include <uv.h>
 
-class IWorker
+
+namespace xtlrig {
+    class Controller;
+}
+
+
+class Hashrate
 {
 public:
-    virtual ~IWorker() {}
+    enum Intervals {
+        ShortInterval  = 10000,
+        MediumInterval = 60000,
+        LargeInterval  = 900000
+    };
 
-    virtual bool selfTest()            = 0;
-    virtual size_t id() const          = 0;
-    virtual uint64_t hashCount() const = 0;
-    virtual uint64_t timestamp() const = 0;
-    #ifdef __ANDROID__
-      virtual void start(xtlrig::Controller *controller) = 0;
-    #else
-      virtual void start()  = 0;
-    #endif
+    Hashrate(size_t threads, xtlrig::Controller *controller);
+    double calc(size_t ms) const;
+    double calc(size_t threadId, size_t ms) const;
+    void add(size_t threadId, uint64_t count, uint64_t timestamp);
+    void print() const;
+    void stop();
+    void updateHighest();
+
+    inline double highest() const { return m_highest; }
+    inline size_t threads() const { return m_threads; }
+
+    static const char *format(double h, char *buf, size_t size);
+
+private:
+    static void onReport(uv_timer_t *handle);
+
+    constexpr static size_t kBucketSize = 2 << 11;
+    constexpr static size_t kBucketMask = kBucketSize - 1;
+
+    double m_highest;
+    size_t m_threads;
+    uint32_t* m_top;
+    uint64_t** m_counts;
+    uint64_t** m_timestamps;
+    uv_timer_t m_timer;
+    xtlrig::Controller *m_controller;
 };
 
 
-#endif // __IWORKER_H__
+#endif /* __HASHRATE_H__ */

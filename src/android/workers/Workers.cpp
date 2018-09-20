@@ -6,6 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018       cyynf       <https://github.com/cyynf>
  * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -37,21 +38,19 @@
 #include "Mem.h"
 #include "rapidjson/document.h"
 #include "workers/Handle.h"
-#include "workers/Hashrate.h"
 #include "workers/MultiWorker.h"
 #include "workers/Workers.h"
 
 
 bool Workers::m_active = false;
 bool Workers::m_enabled = true;
-Hashrate *Workers::m_hashrate = nullptr;
 IJobResultListener *Workers::m_listener = nullptr;
 Job Workers::m_job;
 Workers::LaunchStatus Workers::m_status;
 std::atomic<int> Workers::m_paused;
 std::atomic<uint64_t> Workers::m_sequence;
 std::list<JobResult> Workers::m_queue;
-std::vector<Handle*> Workers::m_workers;
+std::vector<Handle *> Workers::m_workers;
 uint64_t Workers::m_ticks = 0;
 uv_async_t Workers::m_async;
 uv_mutex_t Workers::m_mutex;
@@ -60,8 +59,7 @@ uv_timer_t Workers::m_timer;
 xtlrig::Controller *Workers::m_controller = nullptr;
 
 
-Job Workers::job()
-{
+Job Workers::job() {
     uv_rwlock_rdlock(&m_rwlock);
     Job job = m_job;
     uv_rwlock_rdunlock(&m_rwlock);
@@ -70,8 +68,7 @@ Job Workers::job()
 }
 
 
-size_t Workers::hugePages()
-{
+size_t Workers::hugePages() {
     uv_mutex_lock(&m_mutex);
     const size_t hugePages = m_status.hugePages;
     uv_mutex_unlock(&m_mutex);
@@ -80,8 +77,7 @@ size_t Workers::hugePages()
 }
 
 
-size_t Workers::threads()
-{
+size_t Workers::threads() {
     uv_mutex_lock(&m_mutex);
     const size_t threads = m_status.threads;
     uv_mutex_unlock(&m_mutex);
@@ -89,42 +85,7 @@ size_t Workers::threads()
     return threads;
 }
 
-
-void Workers::printHashrate(bool detail)
-{
-    assert(m_controller != nullptr);
-    if (!m_controller) {
-        return;
-    }
-
-    if (detail) {
-        const bool isColors = m_controller->config()->isColors();
-        char num1[8] = { 0 };
-        char num2[8] = { 0 };
-        char num3[8] = { 0 };
-
-        Log::i()->text("%s| THREAD | AFFINITY | 10s H/s | 60s H/s | 15m H/s |", isColors ? "\x1B[1;37m" : "");
-
-        size_t i = 0;
-        for (const xtlrig::IThread *thread : m_controller->config()->threads()) {
-             Log::i()->text("| %6zu | %8" PRId64 " | %7s | %7s | %7s |",
-                            thread->index(),
-                            thread->affinity(),
-                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::ShortInterval),  num1, sizeof num1),
-                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::MediumInterval), num2, sizeof num2),
-                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::LargeInterval),  num3, sizeof num3)
-                            );
-
-             i++;
-        }
-    }
-
-    m_hashrate->print();
-}
-
-
-void Workers::setEnabled(bool enabled)
-{
+void Workers::setEnabled(bool enabled) {
     if (m_enabled == enabled) {
         return;
     }
@@ -139,8 +100,7 @@ void Workers::setEnabled(bool enabled)
 }
 
 
-void Workers::setJob(const Job &job, bool donate)
-{
+void Workers::setJob(const Job &job, bool donate) {
     uv_rwlock_wrlock(&m_rwlock);
     m_job = job;
 
@@ -158,31 +118,44 @@ void Workers::setJob(const Job &job, bool donate)
     m_paused = 0;
 }
 
+bool isStop;
+time_t startTime;
+time_t nowTime;
 
-void Workers::start(xtlrig::Controller *controller)
-{
+void Workers::start(xtlrig::Controller *controller) {
     m_controller = controller;
 
     const std::vector<xtlrig::IThread *> &threads = controller->config()->threads();
-    m_status.algo    = controller->config()->algorithm().algo();
-    m_status.colors  = controller->config()->isColors();
+    m_status.algo = controller->config()->algorithm().algo();
+    m_status.colors = controller->config()->isColors();
     m_status.threads = threads.size();
 
     for (const xtlrig::IThread *thread : threads) {
-       m_status.ways += thread->multiway();
+        m_status.ways += thread->multiway();
     }
-
-    m_hashrate = new Hashrate(threads.size(), controller);
 
     uv_mutex_init(&m_mutex);
     uv_rwlock_init(&m_rwlock);
 
     m_sequence = 1;
-    m_paused   = 1;
+    m_paused = 1;
 
     uv_async_init(uv_default_loop(), &m_async, Workers::onResult);
     uv_timer_init(uv_default_loop(), &m_timer);
-    uv_timer_start(&m_timer, Workers::onTick, 500, 500);
+
+    const int printTime = controller->config()->printTime();
+
+//    LOG_INFO("percent:%d",controller->config()->sleepTimes());
+
+    if (printTime > 0) {
+        uv_timer_start(&m_timer, Workers::onTick, 2000, printTime * 1000);
+    } else {
+        uv_timer_start(&m_timer, Workers::onTick, 2000, 10000);
+    }
+
+    startTime = time(&startTime);
+
+    isStop = false;
 
     uint32_t offset = 0;
 
@@ -196,13 +169,11 @@ void Workers::start(xtlrig::Controller *controller)
 }
 
 
-void Workers::stop()
-{
+void Workers::stop() {
     uv_timer_stop(&m_timer);
-    m_hashrate->stop();
-
-    uv_close(reinterpret_cast<uv_handle_t*>(&m_async), nullptr);
-    m_paused   = 0;
+    isStop = true;
+    uv_close(reinterpret_cast<uv_handle_t *>(&m_async), nullptr);
+    m_paused = 0;
     m_sequence = 0;
 
     for (size_t i = 0; i < m_workers.size(); ++i) {
@@ -211,8 +182,7 @@ void Workers::stop()
 }
 
 
-void Workers::submit(const JobResult &result)
-{
+void Workers::submit(const JobResult &result) {
     uv_mutex_lock(&m_mutex);
     m_queue.push_back(result);
     uv_mutex_unlock(&m_mutex);
@@ -241,35 +211,34 @@ void Workers::threadsSummary(rapidjson::Document &doc)
 #endif
 
 
-void Workers::onReady(void *arg)
-{
-    auto handle = static_cast<Handle*>(arg);
+void Workers::onReady(void *arg) {
+    auto handle = static_cast<Handle *>(arg);
 
     IWorker *worker = nullptr;
 
     switch (handle->config()->multiway()) {
-    case 1:
-        worker = new MultiWorker<1>(handle);
-        break;
+        case 1:
+            worker = new MultiWorker<1>(handle);
+            break;
 
-    case 2:
-        worker = new MultiWorker<2>(handle);
-        break;
+        case 2:
+            worker = new MultiWorker<2>(handle);
+            break;
 
-    case 3:
-        worker = new MultiWorker<3>(handle);
-        break;
+        case 3:
+            worker = new MultiWorker<3>(handle);
+            break;
 
-    case 4:
-        worker = new MultiWorker<4>(handle);
-        break;
+        case 4:
+            worker = new MultiWorker<4>(handle);
+            break;
 
-    case 5:
-        worker = new MultiWorker<5>(handle);
-        break;
+        case 5:
+            worker = new MultiWorker<5>(handle);
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 
     handle->setWorker(worker);
@@ -284,8 +253,7 @@ void Workers::onReady(void *arg)
 }
 
 
-void Workers::onResult(uv_async_t *handle)
-{
+void Workers::onResult(uv_async_t *handle) {
     std::list<JobResult> results;
 
     uv_mutex_lock(&m_mutex);
@@ -302,49 +270,120 @@ void Workers::onResult(uv_async_t *handle)
     results.clear();
 }
 
+#include <unistd.h>
 
-void Workers::onTick(uv_timer_t *handle)
-{
+uint64_t startCount = 0;
+uint64_t count = 0;
+double highHash = 0.0;
+
+void Workers::onTick(uv_timer_t *handle) {
+
+    calc();
+
+}
+
+inline const char *format(double h, char *buf, size_t size) {
+    if (std::isnormal(h)) {
+        snprintf(buf, size, "%03.1f", h);
+        return buf;
+    }
+
+    return "n/a";
+}
+
+void Workers::calc() {
+    if (isStop || !m_active) {
+        return;
+    }
+
+    count = 0;
+
     for (Handle *handle : m_workers) {
         if (!handle->worker()) {
             return;
         }
 
-        m_hashrate->add(handle->threadId(), handle->worker()->hashCount(), handle->worker()->timestamp());
+        count += handle->worker()->hashCount();
     }
 
-    if ((m_ticks++ & 0xF) == 0)  {
-        m_hashrate->updateHighest();
+    time(&nowTime);
+
+    char num1[8];
+    char num3[8];
+
+    double hash;
+
+    if (nowTime - startTime > 0) {
+        hash = (count - startCount) / (nowTime - startTime);
+    } else {
+        hash = 0;
     }
+
+    char *res;
+
+    if (std::isnormal(hash)) {
+        snprintf(num1, sizeof(num1), "%03.1f", hash);
+        res = num1;
+    } else {
+        sleep(1);
+        calc();
+        return;
+    }
+
+    if (hash > highHash) {
+        highHash = hash;
+    }
+
+    if (m_controller->config()->isSimpleSpeed()) {
+        LOG_INFO(m_controller->config()->isColors()
+                 ? "\x1B[01;37mspeed\x1B[0m \x1B[01;36m%s H/s\x1B[0m max: \x1B[01;36m%s H/s"
+                 : "speed %s H/s max: %s H/s", res, format(highHash, num3, sizeof(num3))
+        );
+    } else {
+        LOG_INFO(m_controller->config()->isColors()
+                 ? "\x1B[01;37mspeed\x1B[0m 2.5s/10s/30s \x1B[01;36m%s \x1B[22;36m%s %s \x1B[01;36mH/s\x1B[0m max: \x1B[01;36m%s H/s"
+                 : "speed 2.5s/10s/30s %s %s %s H/s max: %s H/s", res, res, res, format(highHash, num3, sizeof(num3))
+        );
+    }
+
+    startCount = count;
+    time(&startTime);
 }
 
 
-void Workers::start(IWorker *worker)
-{
+void Workers::start(IWorker *worker) {
     const Worker *w = static_cast<const Worker *>(worker);
 
     uv_mutex_lock(&m_mutex);
     m_status.started++;
-    m_status.pages     += w->memory().pages;
+    m_status.pages += w->memory().pages;
     m_status.hugePages += w->memory().hugePages;
 
     if (m_status.started == m_status.threads) {
         const double percent = (double) m_status.hugePages / m_status.pages * 100.0;
-        const size_t memory  = m_status.ways * xtlrig::cn_select_memory(m_status.algo) / 1048576;
+        const size_t memory = m_status.ways * xtlrig::cn_select_memory(m_status.algo) / 1048576;
 
         if (m_status.colors) {
-            LOG_INFO(GREEN_BOLD("READY (CPU)") " threads " CYAN_BOLD("%zu(%zu)") " huge pages %s%zu/%zu %1.0f%%\x1B[0m memory " CYAN_BOLD("%zu.0 MB") "",
-                     m_status.threads, m_status.ways,
-                     (m_status.hugePages == m_status.pages ? "\x1B[1;32m" : (m_status.hugePages == 0 ? "\x1B[1;31m" : "\x1B[1;33m")),
+            LOG_INFO(GREEN_BOLD("READY (CPU)")
+                             " threads "
+                             CYAN_BOLD("%zu(%zu)")
+                             " percent "
+                             CYAN_BOLD("%zu%%")
+                             " huge pages %s%zu/%zu %1.0f%%\x1B[0m memory "
+                             CYAN_BOLD("%zu.0 MB")
+                             "",
+                     m_status.threads, m_status.ways, m_controller->config()->cpuPercent(),
+                     (m_status.hugePages == m_status.pages ? "\x1B[1;32m" : (m_status.hugePages == 0 ? "\x1B[1;31m"
+                                                                                                     : "\x1B[1;33m")),
                      m_status.hugePages, m_status.pages, percent, memory);
-        }
-        else {
-            LOG_INFO("READY (CPU) threads %zu(%zu) huge pages %zu/%zu %1.0f%% memory %zu.0 MB",
-                     m_status.threads, m_status.ways, m_status.hugePages, m_status.pages, percent, memory);
+        } else {
+            LOG_INFO("READY (CPU) threads %zu(%zu) percent %zu%% huge pages %zu/%zu %1.0f%% memory %zu.0 MB",
+                     m_status.threads, m_status.ways, m_controller->config()->cpuPercent(), m_status.hugePages,
+                     m_status.pages, percent, memory);
         }
     }
 
     uv_mutex_unlock(&m_mutex);
 
-    worker->start();
+    worker->start(m_controller);
 }

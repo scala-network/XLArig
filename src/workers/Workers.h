@@ -53,19 +53,28 @@ public:
     static Job job();
     static size_t hugePages();
     static size_t threads();
+
     static void setEnabled(bool enabled);
     static void setJob(const Job &job, bool donate);
     static void start(xtlrig::Controller *controller);
     static void stop();
     static void submit(const JobResult &result);
-    static void calc();
 
     static inline bool isEnabled()                               { return m_enabled; }
     static inline bool isOutdated(uint64_t sequence)             { return m_sequence.load(std::memory_order_relaxed) != sequence; }
     static inline bool isPaused()                                { return m_paused.load(std::memory_order_relaxed) == 1; }
+
+    #ifndef __ANDROID__
+      static inline Hashrate *hashrate()                           { return m_hashrate; }
+      static void printHashrate(bool detail);
+    #else
+      static void calc();
+    #endif
+
     static inline uint64_t sequence()                            { return m_sequence.load(std::memory_order_relaxed); }
     static inline void pause()                                   { m_active = false; m_paused = 1; m_sequence++; }
     static inline void setListener(IJobResultListener *listener) { m_listener = listener; }
+
 #   ifndef XMRIG_NO_API
     static void threadsSummary(rapidjson::Document &doc);
 #   endif
@@ -100,6 +109,9 @@ private:
 
     static bool m_active;
     static bool m_enabled;
+    #ifndef __ANDROID__
+      static Hashrate *m_hashrate;
+    #endif
     static IJobResultListener *m_listener;
     static Job m_job;
     static LaunchStatus m_status;
