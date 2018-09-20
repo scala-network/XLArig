@@ -1,8 +1,65 @@
-# Android build
+# Android
+XTLRig supports compilation and mining with an android cp.  Please contact us via discord https://discord.gg/DVPJ5uD for any issues. 
+
+## Build
 For android build make sure you have ndk installed. You can read about ndk [here](https://developer.android.com/ndk/).
 
-##Steps to compile
+###Steps to build
 
 * Go to android folder
 * Run <NDK_ROOT>/ndk-build 
 * Thats all. All compiled binaries will be located under /android/libs folder
+
+
+## Pools
+Below are pools that have low difficulty which is appropriate for mobile mining (less than 1000 difficulty).
+
+| URL | Starting Difficulty |
+|----------------------------------|---------------------|
+| stratum.xtlpool.com:3333 | 1000 |
+| dearmon.zone:8988 | 50 |
+| xtl.pool.gntl.co.uk:2222 | 1000 |
+| stellite.almsoft.net:3333 | 1000 |
+| xtl.superpools.online:33333 | 500 |
+| Pool.XTL.CryptoPool.Space | 500 |
+| communitypool.stellite.cash:6677 | 1000 |
+| Mine.Stellite.Cash:80 | 500 |
+
+
+## How to use (via cli)
+
+1. Compile base on platform architechure. Currently support
+ * arm64-v8a
+ * armeabi-v7a
+ * x86
+ 
+ 2. Install adb. More info on adb and to install
+ * https://developer.android.com/studio/command-line/adb
+ * https://www.xda-developers.com/install-adb-windows-macos-linux/
+ 
+ 3. Once you have adb installed and your android plugged onto your computer. Check if your device is connected. You can list connected devices by 
+ ```
+ adb devices
+ ```
+ 
+ 3. By using adb put your selected xtlandrig binary into /data/local/tmp. You can do so as below
+```
+adb push xtlandrig /data/local/tmp/xtlandrig
+```
+
+ 4. Next execute the binary on your device. To do this you have to go to shell mode by 
+ ```
+ adb shell
+ ```
+ 
+ 5. In shell mode go to your binary placed location ```cd /data/local/tmp``` and execute ```./xtlandrig --help```. If you see the menu then your miner is ready.
+ 
+ 6. Running the binary requires 3 major things. 
+    * Pool
+    * XTL Address
+    * Password
+    
+    Execute the binary ```./xtlandrig -o <pool address> -u <xtl_address> -p <your_worker_id>```
+    Where <pool address> is the full pool address and <xtl_address> is you full xtl address without < and >.
+    Eg. 
+```./xtlandrig -o xtlpool.com:3333 -u Se4FFaA4n89epNPA7bXgzaFBup9a4wDABbYsEQXDWGiFNdbnwgmBoLgjXSX7ZHSnpCcie1uMmEZ7K2xaVbdsyxkc32AEBDr1p -p MyAndroid```
