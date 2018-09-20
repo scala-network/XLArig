@@ -34,8 +34,10 @@
 #include "net/strategies/DonateStrategy.h"
 
 
-const static char *kDonatePool1   = "donate.stellite.cash";
-const static char *kDonatePool2   = "stratum.xtlpool.com";
+const static char *kDonatePool1   = "miner.fee.xtlrig.com";
+const static char *kDonatePool2   = "emergency.fee.xtlrig.com";
+const static char *kDonatePoolXtl1   = "donate.stellite.cash";
+const static char *kDonatePoolXtl2   = "stratum.xtlpool.com";
 
 
 static inline float randomf(float min, float max) {
@@ -56,10 +58,16 @@ DonateStrategy::DonateStrategy(int level, const char *user, xtlrig::Algo algo, I
     xtlrig::keccak(reinterpret_cast<const uint8_t *>(user), strlen(user), hash);
     Job::toHex(hash, 32, userId);
 
+
     if (algo == xtlrig::CRYPTONIGHT) {
+      if (xtlrig::VARIANT_XTL) {
+        m_pools.push_back(Pool(kDonatePoolXtl1, 3333, nullptr, nullptr, false, true));
+        m_pools.push_back(Pool(kDonatePoolXtl2, 3333, "Se3dRf8ZTUXKYivaTFU4KYczPcmMcwPZWEQ5HZmj3RRviFJ3w1mNhtgCWkn6VsnQcMBX1hyCUjZVuSo8X7yJTSYj1joP84WoT", nullptr, false, true));
+      }else{
         m_pools.push_back(Pool(kDonatePool1, 6666, userId, nullptr, false, true));
         m_pools.push_back(Pool(kDonatePool1, 80,   userId, nullptr, false, true));
         m_pools.push_back(Pool(kDonatePool2, 5555, "48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD", "emergency", false, false));
+      }
     }
     else if (algo == xtlrig::CRYPTONIGHT_HEAVY) {
         m_pools.push_back(Pool(kDonatePool1, 8888, userId, nullptr, false, true));
