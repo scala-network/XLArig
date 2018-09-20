@@ -17,9 +17,9 @@ XTLRig is a high performance Stellite (XTL) CPU miner, with official support for
 
 ## Features
 * High performance.
-* Official Windows support.
-* Small Windows executable, without dependencies.
-* x86/x64 support.
+* Official Windows / Linux / MacOsx and Android support.
+* Small Windows / Linux / MacOsx and Android executable, without dependencies.
+* x86/x64 and Armv7/Armv8 (android) support.
 * Support for backup (failover) mining server.
 * keepalived support.
 * Command line options compatible with cpuminer.
