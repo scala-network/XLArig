@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -403,14 +404,15 @@ static inline void cryptonight_monero_tweak(uint64_t* mem_out, __m128i tmp)
 }
 
 
-template<xtlrig::Algo ALGO, bool SOFT_AES, int VARIANT>
+template<xtlrig::Algo ALGO, bool SOFT_AES, xtlrig::Variant VARIANT>
 inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t size, uint8_t *__restrict__ output, cryptonight_ctx **__restrict__ ctx)
 {
     constexpr size_t MASK       = xtlrig::cn_select_mask<ALGO>();
-    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO>();
+    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO, VARIANT>();
     constexpr size_t MEM        = xtlrig::cn_select_memory<ALGO>();
+    constexpr bool IS_MONERO    = xtlrig::cn_is_monero<VARIANT>();
 
-    if (VARIANT > 0 && size < 43) {
+    if (IS_MONERO && size < 43) {
         memset(output, 0, 32);
         return;
     }
@@ -436,12 +438,12 @@ inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t si
         if (SOFT_AES) {
             cx = soft_aesenc((uint32_t*)&l0[idx0 & MASK], _mm_set_epi64x(ah0, al0));
         }
-        else {  
+        else {
             cx = _mm_load_si128((__m128i *) &l0[idx0 & MASK]);
             cx = _mm_aesenc_si128(cx, _mm_set_epi64x(ah0, al0));
         }
 
-        if (VARIANT > 0) {
+        if (IS_MONERO) {
             cryptonight_monero_tweak<VARIANT == xtlrig::VARIANT_XTL ? 4 : 3>((uint64_t*)&l0[idx0 & MASK], _mm_xor_si128(bx0, cx));
         } else {
             _mm_store_si128((__m128i *)&l0[idx0 & MASK], _mm_xor_si128(bx0, cx));
@@ -460,7 +462,7 @@ inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t si
 
         ((uint64_t*)&l0[idx0 & MASK])[0] = al0;
 
-        if (VARIANT > 0) {
+        if (IS_MONERO) {
             if (VARIANT == xtlrig::VARIANT_IPBC) {
                 ((uint64_t*)&l0[idx0 & MASK])[1] = ah0 ^ tweak1_2_0 ^ al0;
             }
@@ -477,12 +479,18 @@ inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t si
         idx0 = al0;
 
         if (ALGO == xtlrig::CRYPTONIGHT_HEAVY) {
-            int64_t n  = ((int64_t*)&l0[idx0 & MASK])[0];
-            int32_t d  = ((int32_t*)&l0[idx0 & MASK])[2];
+            int64_t n = ((int64_t*)&l0[idx0 & MASK])[0];
+            int32_t d = ((int32_t*)&l0[idx0 & MASK])[2];
             int64_t q = n / (d | 0x5);
 
             ((int64_t*)&l0[idx0 & MASK])[0] = n ^ q;
-            idx0 = d ^ q;
+
+            if (VARIANT == xtlrig::VARIANT_XHV) {
+                idx0 = (~d) ^ q;
+            }
+            else {
+                idx0 = d ^ q;
+            }
         }
     }
 
@@ -493,14 +501,15 @@ inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t si
 }
 
 
-template<xtlrig::Algo ALGO, bool SOFT_AES, int VARIANT>
+template<xtlrig::Algo ALGO, bool SOFT_AES, xtlrig::Variant VARIANT>
 inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t size, uint8_t *__restrict__ output, cryptonight_ctx **__restrict__ ctx)
 {
     constexpr size_t MASK       = xtlrig::cn_select_mask<ALGO>();
-    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO>();
+    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO, VARIANT>();
     constexpr size_t MEM        = xtlrig::cn_select_memory<ALGO>();
+    constexpr bool IS_MONERO    = xtlrig::cn_is_monero<VARIANT>();
 
-    if (VARIANT > 0 && size < 43) {
+    if (IS_MONERO && size < 43) {
         memset(output, 0, 64);
         return;
     }
@@ -544,7 +553,7 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
             cx1 = _mm_aesenc_si128(cx1, _mm_set_epi64x(ah1, al1));
         }
 
-        if (VARIANT > 0) {
+        if (IS_MONERO) {
             cryptonight_monero_tweak<VARIANT == xtlrig::VARIANT_XTL ? 4 : 3>((uint64_t*)&l0[idx0 & MASK], _mm_xor_si128(bx0, cx0));
             cryptonight_monero_tweak<VARIANT == xtlrig::VARIANT_XTL ? 4 : 3>((uint64_t*)&l1[idx1 & MASK], _mm_xor_si128(bx1, cx1));
         } else {
@@ -568,7 +577,7 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
 
         ((uint64_t*)&l0[idx0 & MASK])[0] = al0;
 
-        if (VARIANT > 0) {
+        if (IS_MONERO) {
             if (VARIANT == xtlrig::VARIANT_IPBC) {
                 ((uint64_t*)&l0[idx0 & MASK])[1] = ah0 ^ tweak1_2_0 ^ al0;
             }
@@ -585,12 +594,18 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
         idx0 = al0;
 
         if (ALGO == xtlrig::CRYPTONIGHT_HEAVY) {
-            int64_t n  = ((int64_t*)&l0[idx0 & MASK])[0];
-            int32_t d  = ((int32_t*)&l0[idx0 & MASK])[2];
+            int64_t n = ((int64_t*)&l0[idx0 & MASK])[0];
+            int32_t d = ((int32_t*)&l0[idx0 & MASK])[2];
             int64_t q = n / (d | 0x5);
 
             ((int64_t*)&l0[idx0 & MASK])[0] = n ^ q;
-            idx0 = d ^ q;
+
+            if (VARIANT == xtlrig::VARIANT_XHV) {
+                idx0 = (~d) ^ q;
+            }
+            else {
+                idx0 = d ^ q;
+            }
         }
 
         cl = ((uint64_t*) &l1[idx1 & MASK])[0];
@@ -602,7 +617,7 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
 
         ((uint64_t*)&l1[idx1 & MASK])[0] = al1;
 
-        if (VARIANT > 0) {
+        if (IS_MONERO) {
             if (VARIANT == xtlrig::VARIANT_IPBC) {
                 ((uint64_t*)&l1[idx1 & MASK])[1] = ah1 ^ tweak1_2_1 ^ al1;
             }
@@ -619,12 +634,18 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
         idx1 = al1;
 
         if (ALGO == xtlrig::CRYPTONIGHT_HEAVY) {
-            int64_t n  = ((int64_t*)&l1[idx1 & MASK])[0];
-            int32_t d  = ((int32_t*)&l1[idx1 & MASK])[2];
+            int64_t n = ((int64_t*)&l1[idx1 & MASK])[0];
+            int32_t d = ((int32_t*)&l1[idx1 & MASK])[2];
             int64_t q = n / (d | 0x5);
 
             ((int64_t*)&l1[idx1 & MASK])[0] = n ^ q;
-            idx1 = d ^ q;
+
+            if (VARIANT == xtlrig::VARIANT_XHV) {
+                idx1 = (~d) ^ q;
+            }
+            else {
+                idx1 = d ^ q;
+            }
         }
     }
 
@@ -653,7 +674,7 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
                                                                        \
     b = _mm_xor_si128(b, c);                                           \
                                                                        \
-    if (VARIANT > 0) {                                                 \
+    if (IS_MONERO) {                                                 \
         cryptonight_monero_tweak<VARIANT == xtlrig::VARIANT_XTL ? 4 : 3>(reinterpret_cast<uint64_t*>(ptr), b); \
     } else {                                                           \
         _mm_store_si128(ptr, b);                                       \
@@ -670,7 +691,7 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
     lo = __umul128(idx, EXTRACT64(b), &hi);             \
     a = _mm_add_epi64(a, _mm_set_epi64x(lo, hi));       \
                                                         \
-    if (VARIANT > 0) {                                  \
+    if (IS_MONERO) {                                  \
         _mm_store_si128(ptr, _mm_xor_si128(a, mc));     \
                                                         \
         if (VARIANT == xtlrig::VARIANT_IPBC) {           \
@@ -688,26 +709,32 @@ inline void cryptonight_double_hash(const uint8_t *__restrict__ input, size_t si
         int32_t d = ((int32_t*)&l[idx & MASK])[2];      \
         int64_t q = n / (d | 0x5);                      \
         ((int64_t*)&l[idx & MASK])[0] = n ^ q;          \
-        idx = d ^ q;                                    \
+        if (VARIANT == xtlrig::VARIANT_XHV) {            \
+            idx = (~d) ^ q;                            \
+        }                                               \
+        else {                                          \
+            idx = d ^ q;                               \
+        }                                               \
     }
 
 
 #define CONST_INIT(ctx, n)                                                                       \
     __m128i mc##n;                                                                               \
-    if (VARIANT > 0) {                                                                           \
+    if (IS_MONERO) {                                                                           \
         mc##n = _mm_set_epi64x(*reinterpret_cast<const uint64_t*>(input + n * size + 35) ^       \
                                *(reinterpret_cast<const uint64_t*>((ctx)->state) + 24), 0);      \
     }
 
 
-template<xtlrig::Algo ALGO, bool SOFT_AES, int VARIANT>
+template<xtlrig::Algo ALGO, bool SOFT_AES, xtlrig::Variant VARIANT>
 inline void cryptonight_triple_hash(const uint8_t *__restrict__ input, size_t size, uint8_t *__restrict__ output, cryptonight_ctx **__restrict__ ctx)
 {
     constexpr size_t MASK       = xtlrig::cn_select_mask<ALGO>();
-    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO>();
+    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO, VARIANT>();
     constexpr size_t MEM        = xtlrig::cn_select_memory<ALGO>();
+    constexpr bool IS_MONERO    = xtlrig::cn_is_monero<VARIANT>();
 
-    if (VARIANT > 0 && size < 43) {
+    if (IS_MONERO && size < 43) {
         memset(output, 0, 32 * 3);
         return;
     }
@@ -790,14 +817,15 @@ inline void cryptonight_triple_hash(const uint8_t *__restrict__ input, size_t si
 }
 
 
-template<xtlrig::Algo ALGO, bool SOFT_AES, int VARIANT>
+template<xtlrig::Algo ALGO, bool SOFT_AES, xtlrig::Variant VARIANT>
 inline void cryptonight_quad_hash(const uint8_t *__restrict__ input, size_t size, uint8_t *__restrict__ output, cryptonight_ctx **__restrict__ ctx)
 {
     constexpr size_t MASK       = xtlrig::cn_select_mask<ALGO>();
-    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO>();
+    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO, VARIANT>();
     constexpr size_t MEM        = xtlrig::cn_select_memory<ALGO>();
+    constexpr bool IS_MONERO    = xtlrig::cn_is_monero<VARIANT>();
 
-    if (VARIANT > 0 && size < 43) {
+    if (IS_MONERO && size < 43) {
         memset(output, 0, 32 * 4);
         return;
     }
@@ -896,14 +924,15 @@ inline void cryptonight_quad_hash(const uint8_t *__restrict__ input, size_t size
 }
 
 
-template<xtlrig::Algo ALGO, bool SOFT_AES, int VARIANT>
+template<xtlrig::Algo ALGO, bool SOFT_AES, xtlrig::Variant VARIANT>
 inline void cryptonight_penta_hash(const uint8_t *__restrict__ input, size_t size, uint8_t *__restrict__ output, cryptonight_ctx **__restrict__ ctx)
 {
     constexpr size_t MASK       = xtlrig::cn_select_mask<ALGO>();
-    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO>();
+    constexpr size_t ITERATIONS = xtlrig::cn_select_iter<ALGO, VARIANT>();
     constexpr size_t MEM        = xtlrig::cn_select_memory<ALGO>();
+    constexpr bool IS_MONERO    = xtlrig::cn_is_monero<VARIANT>();
 
-    if (VARIANT > 0 && size < 43) {
+    if (IS_MONERO && size < 43) {
         memset(output, 0, 32 * 5);
         return;
     }

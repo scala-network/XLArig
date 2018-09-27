@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,7 +21,6 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #ifndef __HASHRATE_H__
 #define __HASHRATE_H__
 
@@ -38,7 +38,7 @@ class Hashrate
 {
 public:
     enum Intervals {
-        ShortInterval  = 2500,
+        ShortInterval  = 10000,
         MediumInterval = 60000,
         LargeInterval  = 900000
     };
@@ -47,12 +47,14 @@ public:
     double calc(size_t ms) const;
     double calc(size_t threadId, size_t ms) const;
     void add(size_t threadId, uint64_t count, uint64_t timestamp);
-    void print();
+    void print() const;
     void stop();
     void updateHighest();
 
     inline double highest() const { return m_highest; }
     inline size_t threads() const { return m_threads; }
+
+    static const char *format(double h, char *buf, size_t size);
 
 private:
     static void onReport(uv_timer_t *handle);

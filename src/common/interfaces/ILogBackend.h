@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,29 +22,36 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ISTRATEGYLISTENER_H__
-#define __ISTRATEGYLISTENER_H__
+#ifndef __ILOGBACKEND_H__
+#define __ILOGBACKEND_H__
 
 
-#include <stdint.h>
+#include <stdarg.h>
+#include <stddef.h>
 
 
-class Client;
-class IStrategy;
-class Job;
-class SubmitResult;
-
-
-class IStrategyListener
+class ILogBackend
 {
 public:
-    virtual ~IStrategyListener() {}
+    enum Level {
+        ERR,
+        WARNING,
+        NOTICE,
+        INFO,
+        DEBUG
+    };
 
-    virtual void onActive(IStrategy *strategy, Client *client)                                                        = 0;
-    virtual void onJob(IStrategy *strategy, Client *client, const Job &job)                                           = 0;
-    virtual void onPause(IStrategy *strategy)                                                                         = 0;
-    virtual void onResultAccepted(IStrategy *strategy, Client *client, const SubmitResult &result, const char *error) = 0;
+#   ifdef APP_DEBUG
+    constexpr static const size_t kBufferSize = 1024;
+#   else
+    constexpr static const size_t kBufferSize = 512;
+#   endif
+
+    virtual ~ILogBackend() {}
+
+    virtual void message(Level level, const char* fmt, va_list args) = 0;
+    virtual void text(const char* fmt, va_list args)                 = 0;
 };
 
 
-#endif // __ISTRATEGYLISTENER_H__
+#endif // __ILOGBACKEND_H__

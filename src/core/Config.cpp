@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -43,7 +44,6 @@ static char affinity_tmp[20] = { 0 };
 xtlrig::Config::Config() : xtlrig::CommonConfig(),
     m_aesMode(AES_AUTO),
     m_algoVariant(AV_AUTO),
-    m_dryRun(false),
     m_hugePages(true),
     m_safe(false),
     m_maxCpuUsage(75),
@@ -116,7 +116,7 @@ void xtlrig::Config::getJSON(rapidjson::Document &doc) const
         Value threads(kArrayType);
 
         for (const IThread *thread : m_threads.list) {
-            threads.PushBack(thread->toConfig(doc), doc.GetAllocator());
+            threads.PushBack(thread->toConfig(doc), allocator);
         }
 
         doc.AddMember("threads", threads, allocator);
@@ -192,19 +192,15 @@ bool xtlrig::Config::parseBoolean(int key, bool enable)
     }
 
     switch (key) {
-    case IConfig::SafeKey: /* --safe */
+    case SafeKey: /* --safe */
         m_safe = enable;
         break;
 
-    case IConfig::HugePagesKey: /* --no-huge-pages */
+    case HugePagesKey: /* --no-huge-pages */
         m_hugePages = enable;
         break;
 
-    case IConfig::DryRunKey: /* --dry-run */
-        m_dryRun = enable;
-        break;
-
-    case IConfig::HardwareAESKey: /* hw-aes config only */
+    case HardwareAESKey: /* hw-aes config only */
         m_aesMode = enable ? AES_HW : AES_SOFT;
         break;
 
@@ -223,19 +219,18 @@ bool xtlrig::Config::parseString(int key, const char *arg)
     }
 
     switch (key) {
-    case xtlrig::IConfig::AVKey:          /* --av */
-    case xtlrig::IConfig::MaxCPUUsageKey: /* --max-cpu-usage */
-    case xtlrig::IConfig::CPUPriorityKey: /* --cpu-priority */
+    case AVKey:          /* --av */
+    case MaxCPUUsageKey: /* --max-cpu-usage */
+    case CPUPriorityKey: /* --cpu-priority */
         return parseUint64(key, strtol(arg, nullptr, 10));
 
-    case xtlrig::IConfig::SafeKey:   /* --safe */
-    case xtlrig::IConfig::DryRunKey: /* --dry-run */
+    case SafeKey: /* --safe */
         return parseBoolean(key, true);
 
-    case xtlrig::IConfig::HugePagesKey: /* --no-huge-pages */
+    case HugePagesKey: /* --no-huge-pages */
         return parseBoolean(key, false);
 
-    case xtlrig::IConfig::ThreadsKey:  /* --threads */
+    case ThreadsKey:  /* --threads */
         if (strncmp(arg, "all", 3) == 0) {
             m_threads.count = Cpu::threads();
             return true;
@@ -243,7 +238,7 @@ bool xtlrig::Config::parseString(int key, const char *arg)
 
         return parseUint64(key, strtol(arg, nullptr, 10));
 
-    case xtlrig::IConfig::CPUAffinityKey: /* --cpu-affinity */
+    case CPUAffinityKey: /* --cpu-affinity */
         {
             const char *p  = strstr(arg, "0x");
             return parseUint64(key, p ? strtoull(p, nullptr, 16) : strtoull(arg, nullptr, 10));
@@ -264,7 +259,7 @@ bool xtlrig::Config::parseUint64(int key, uint64_t arg)
     }
 
     switch (key) {
-    case xtlrig::IConfig::CPUAffinityKey: /* --cpu-affinity */
+    case CPUAffinityKey: /* --cpu-affinity */
         if (arg) {
             m_threads.mask = arg;
         }
@@ -303,25 +298,25 @@ void xtlrig::Config::parseJSON(const rapidjson::Document &doc)
 bool xtlrig::Config::parseInt(int key, int arg)
 {
     switch (key) {
-    case xtlrig::IConfig::ThreadsKey: /* --threads */
+    case ThreadsKey: /* --threads */
         if (arg >= 0 && arg < 1024) {
             m_threads.count = arg;
         }
         break;
 
-    case xtlrig::IConfig::AVKey: /* --av */
+    case AVKey: /* --av */
         if (arg >= AV_AUTO && arg < AV_MAX) {
             m_algoVariant = static_cast<AlgoVariant>(arg);
         }
         break;
 
-    case xtlrig::IConfig::MaxCPUUsageKey: /* --max-cpu-usage */
+    case MaxCPUUsageKey: /* --max-cpu-usage */
         if (m_maxCpuUsage > 0 && arg <= 100) {
             m_maxCpuUsage = arg;
         }
         break;
 
-    case xtlrig::IConfig::CPUPriorityKey: /* --cpu-priority */
+    case CPUPriorityKey: /* --cpu-priority */
         if (arg >= 0 && arg <= 5) {
             m_priority = arg;
         }

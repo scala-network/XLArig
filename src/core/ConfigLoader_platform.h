@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
- *
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@
 #endif
 
 
+#include "common/interfaces/IConfig.h"
 #include "version.h"
-#include "interfaces/IConfig.h"
 
 
 namespace xtlrig {
@@ -90,6 +90,8 @@ Options:\n\
       --api-no-restricted  enable full remote access (only if API token set)\n\
   -h, --help               display this help and exit\n\
   -V, --version            output version information and exit\n\
+      --percent            set single cpu max percent\n\
+      --simpleSpeed        simple show speed\n\
 ";
 
 
@@ -131,6 +133,8 @@ static struct option const options[] = {
     { "userpass",          1, nullptr, xtlrig::IConfig::UserpassKey       },
     { "rig-id",            1, nullptr, xtlrig::IConfig::RigIdKey          },
     { "version",           0, nullptr, xtlrig::IConfig::VersionKey        },
+    { "percent",           1, nullptr, xtlrig::IConfig::PercentKey        },
+    { "simpleSpeed",       0, nullptr, xtlrig::IConfig::SimpleSpeed       },
     { 0, 0, 0, 0 }
 };
 
@@ -155,6 +159,8 @@ static struct option const config_options[] = {
     { "threads",       1, nullptr, xtlrig::IConfig::ThreadsKey     },
     { "user-agent",    1, nullptr, xtlrig::IConfig::UserAgentKey   },
     { "hw-aes",        0, nullptr, xtlrig::IConfig::HardwareAESKey },
+    { "percent",       1, nullptr, xtlrig::IConfig::PercentKey     },
+    { "simpleSpeed",   0, nullptr, xtlrig::IConfig::SimpleSpeed    },
     { 0, 0, 0, 0 }
 };
 

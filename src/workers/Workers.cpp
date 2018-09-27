@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,6 +23,7 @@
  */
 
 #include <cmath>
+#include <inttypes.h>
 #include <thread>
 
 
@@ -55,6 +57,7 @@ uv_async_t Workers::m_async;
 uv_mutex_t Workers::m_mutex;
 uv_rwlock_t Workers::m_rwlock;
 uv_timer_t Workers::m_timer;
+xtlrig::Controller *Workers::m_controller = nullptr;
 
 
 Job Workers::job()
@@ -89,6 +92,33 @@ size_t Workers::threads()
 
 void Workers::printHashrate(bool detail)
 {
+    assert(m_controller != nullptr);
+    if (!m_controller) {
+        return;
+    }
+
+    if (detail) {
+        const bool isColors = m_controller->config()->isColors();
+        char num1[8] = { 0 };
+        char num2[8] = { 0 };
+        char num3[8] = { 0 };
+
+        Log::i()->text("%s| THREAD | AFFINITY | 10s H/s | 60s H/s | 15m H/s |", isColors ? "\x1B[1;37m" : "");
+
+        size_t i = 0;
+        for (const xtlrig::IThread *thread : m_controller->config()->threads()) {
+             Log::i()->text("| %6zu | %8" PRId64 " | %7s | %7s | %7s |",
+                            thread->index(),
+                            thread->affinity(),
+                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::ShortInterval),  num1, sizeof num1),
+                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::MediumInterval), num2, sizeof num2),
+                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::LargeInterval),  num3, sizeof num3)
+                            );
+
+             i++;
+        }
+    }
+
     m_hashrate->print();
 }
 
@@ -131,6 +161,8 @@ void Workers::setJob(const Job &job, bool donate)
 
 void Workers::start(xtlrig::Controller *controller)
 {
+    m_controller = controller;
+
     const std::vector<xtlrig::IThread *> &threads = controller->config()->threads();
     m_status.algo    = controller->config()->algorithm().algo();
     m_status.colors  = controller->config()->isColors();

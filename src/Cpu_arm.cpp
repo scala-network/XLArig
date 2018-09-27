@@ -5,7 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -47,8 +48,11 @@ void Cpu::initCommon()
 {
     memcpy(m_brand, "Unknown", 7);
 
-#   if defined(XMRIG_ARMv8)
+#   if defined (__arm64__) || defined (__aarch64__)
     m_flags |= X86_64;
+#   endif
+
+#   if __ARM_FEATURE_CRYPTO
     m_flags |= AES;
 #   endif
 }

@@ -5,7 +5,9 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018       cyynf       <https://github.com/cyynf>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,7 +28,9 @@
 
 
 #include <stdint.h>
-
+#ifdef __ANDROID__
+  #include <core/Controller.h>
+#endif
 
 class IWorker
 {
@@ -37,7 +41,11 @@ public:
     virtual size_t id() const          = 0;
     virtual uint64_t hashCount() const = 0;
     virtual uint64_t timestamp() const = 0;
-    virtual void start()               = 0;
+    #ifdef __ANDROID__
+      virtual void start(xtlrig::Controller *controller) = 0;
+    #else
+      virtual void start()  = 0;
+    #endif
 };
 
 

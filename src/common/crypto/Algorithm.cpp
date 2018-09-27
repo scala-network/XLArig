@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -57,9 +57,11 @@ static AlgoData const algorithms[] = {
     { "cryptonight/0",         "cn/0",         xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_0    },
     { "cryptonight/1",         "cn/1",         xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_1    },
     { "cryptonight/xtl",       "cn/xtl",       xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_XTL  },
+    { "cryptonight/msr",       "cn/msr",       xtlrig::CRYPTONIGHT,       xtlrig::VARIANT_MSR  },
 
 #   ifndef XMRIG_NO_AEON
     { "cryptonight-lite",      "cn-lite",      xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_AUTO },
+    { "cryptonight-light",     "cn-light",     xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_AUTO },
     { "cryptonight-lite/0",    "cn-lite/0",    xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_0    },
     { "cryptonight-lite/1",    "cn-lite/1",    xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_1    },
     { "cryptonight-lite/ipbc", "cn-lite/ipbc", xtlrig::CRYPTONIGHT_LITE,  xtlrig::VARIANT_IPBC },
@@ -67,6 +69,8 @@ static AlgoData const algorithms[] = {
 
 #   ifndef XMRIG_NO_SUMO
     { "cryptonight-heavy",     "cn-heavy",     xtlrig::CRYPTONIGHT_HEAVY, xtlrig::VARIANT_0    },
+    { "cryptonight-heavy/0",   "cn-heavy/0",   xtlrig::CRYPTONIGHT_HEAVY, xtlrig::VARIANT_0    },
+    { "cryptonight-heavy/xhv", "cn-heavy/xhv", xtlrig::CRYPTONIGHT_HEAVY, xtlrig::VARIANT_XHV  },
 #   endif
 };
 
@@ -88,7 +92,9 @@ static const char *variants[] = {
     "0",
     "1",
     "ipbc",
-    "xtl"
+    "xtl",
+    "msr",
+    "xhv"
 };
 
 
@@ -144,11 +150,6 @@ void xtlrig::Algorithm::parseAlgorithm(const char *algo)
 
 void xtlrig::Algorithm::parseVariant(const char *variant)
 {
-    if (m_algo == CRYPTONIGHT_HEAVY) {
-        m_variant = VARIANT_0;
-        return;
-    }
-
     m_variant = VARIANT_AUTO;
 
     for (size_t i = 0; i < ARRAY_SIZE(variants); i++) {
@@ -162,7 +163,7 @@ void xtlrig::Algorithm::parseVariant(const char *variant)
 
 void xtlrig::Algorithm::parseVariant(int variant)
 {
-    if (variant >= VARIANT_AUTO && variant <= VARIANT_XTL) {
+    if (variant >= VARIANT_AUTO && variant < VARIANT_MAX) {
        m_variant = static_cast<Variant>(variant);
     }
     else {
@@ -174,10 +175,6 @@ void xtlrig::Algorithm::parseVariant(int variant)
 void xtlrig::Algorithm::setAlgo(Algo algo)
 {
     m_algo = algo;
-
-    if (m_algo == CRYPTONIGHT_HEAVY) {
-        m_variant = VARIANT_0;
-    }
 }
 
 

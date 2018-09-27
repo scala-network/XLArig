@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018 XTLRig       <https://github.com/stellitecoin>, <support@stellite.cash>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -50,39 +51,29 @@ MultiWorker<N>::~MultiWorker()
 template<size_t N>
 bool MultiWorker<N>::selfTest()
 {
-    if (m_thread->fn(xtlrig::VARIANT_0) == nullptr) {
-        return false;
-    }
-
-    m_thread->fn(xtlrig::VARIANT_0)(test_input, 76, m_hash, m_ctx);
-
-    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT && memcmp(m_hash, test_output_v0, sizeof m_hash) == 0) {
-        m_thread->fn(xtlrig::VARIANT_1)(test_input, 76, m_hash, m_ctx);
-        if (memcmp(m_hash, test_output_v1, sizeof m_hash) != 0) {
-            return false;
-        }
-
-        m_thread->fn(xtlrig::VARIANT_XTL)(test_input, 76, m_hash, m_ctx);
-        return memcmp(m_hash, test_output_xtl, sizeof m_hash) == 0;
+    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT) {
+        return verify(xtlrig::VARIANT_0,   test_output_v0) &&
+               verify(xtlrig::VARIANT_1,   test_output_v1) &&
+               verify(xtlrig::VARIANT_XTL, test_output_xtl) &&
+               verify(xtlrig::VARIANT_MSR, test_output_msr);
     }
 
 #   ifndef XMRIG_NO_AEON
-    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT_LITE && memcmp(m_hash, test_output_v0_lite, sizeof m_hash) == 0) {
-        m_thread->fn(xtlrig::VARIANT_1)(test_input, 76, m_hash, m_ctx);
-        if (memcmp(m_hash, test_output_v1_lite, sizeof m_hash) != 0) {
-            return false;
-        }
-
-        m_thread->fn(xtlrig::VARIANT_IPBC)(test_input, 76, m_hash, m_ctx);
-        return memcmp(m_hash, test_output_ipbc_lite, sizeof m_hash) == 0;
+    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT_LITE) {
+        return verify(xtlrig::VARIANT_0,    test_output_v0_lite) &&
+               verify(xtlrig::VARIANT_1,    test_output_v1_lite) &&
+               verify(xtlrig::VARIANT_IPBC, test_output_ipbc_lite);
     }
 #   endif
 
 #   ifndef XMRIG_NO_SUMO
-    return m_thread->algorithm() == xtlrig::CRYPTONIGHT_HEAVY && memcmp(m_hash, test_output_heavy, sizeof m_hash) == 0;
-#   else
-    return false;
+    if (m_thread->algorithm() == xtlrig::CRYPTONIGHT_HEAVY) {
+        return verify(xtlrig::VARIANT_0,   test_output_v0_heavy) &&
+               verify(xtlrig::VARIANT_XHV, test_output_xhv_heavy);
+    }
 #   endif
+
+    return false;
 }
 
 
@@ -137,6 +128,20 @@ bool MultiWorker<N>::resume(const Job &job)
     }
 
     return false;
+}
+
+
+template<size_t N>
+bool MultiWorker<N>::verify(xtlrig::Variant variant, const uint8_t *referenceValue)
+{
+
+    xtlrig::CpuThread::cn_hash_fun func = m_thread->fn(variant);
+    if (!func) {
+        return false;
+    }
+
+    func(test_input, 76, m_hash, m_ctx);
+    return memcmp(m_hash, referenceValue, sizeof m_hash) == 0;
 }
 
 
