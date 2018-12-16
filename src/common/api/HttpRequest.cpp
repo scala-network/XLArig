@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #endif
 
 
-xtlrig::HttpRequest::HttpRequest(MHD_Connection *connection, const char *url, const char *method, const char *uploadData, size_t *uploadSize, void **cls) :
+xmrig::HttpRequest::HttpRequest(MHD_Connection *connection, const char *url, const char *method, const char *uploadData, size_t *uploadSize, void **cls) :
     m_fulfilled(true),
     m_restricted(true),
     m_uploadData(uploadData),
@@ -58,7 +58,7 @@ xtlrig::HttpRequest::HttpRequest(MHD_Connection *connection, const char *url, co
 }
 
 
-xtlrig::HttpRequest::~HttpRequest()
+xmrig::HttpRequest::~HttpRequest()
 {
     if (m_fulfilled) {
         delete m_body;
@@ -66,13 +66,13 @@ xtlrig::HttpRequest::~HttpRequest()
 }
 
 
-bool xtlrig::HttpRequest::match(const char *path) const
+bool xmrig::HttpRequest::match(const char *path) const
 {
     return strcmp(m_url, path) == 0;
 }
 
 
-bool xtlrig::HttpRequest::process(const char *accessToken, bool restricted, xtlrig::HttpReply &reply)
+bool xmrig::HttpRequest::process(const char *accessToken, bool restricted, xmrig::HttpReply &reply)
 {
     m_restricted = restricted || !accessToken;
 
@@ -114,7 +114,7 @@ bool xtlrig::HttpRequest::process(const char *accessToken, bool restricted, xtlr
         return false;
     }
 
-    m_body      = new xtlrig::HttpBody();
+    m_body      = new xmrig::HttpBody();
     m_fulfilled = false;
     *m_cls      = m_body;
 
@@ -122,13 +122,13 @@ bool xtlrig::HttpRequest::process(const char *accessToken, bool restricted, xtlr
 }
 
 
-const char *xtlrig::HttpRequest::body() const
+const char *xmrig::HttpRequest::body() const
 {
     return m_body ? m_body->data() : nullptr;
 }
 
 
-int xtlrig::HttpRequest::end(const HttpReply &reply)
+int xmrig::HttpRequest::end(const HttpReply &reply)
 {
     if (reply.buf) {
         return end(reply.status, MHD_create_response_from_buffer(reply.size ? reply.size : strlen(reply.buf), (void*) reply.buf, MHD_RESPMEM_MUST_FREE));
@@ -138,7 +138,7 @@ int xtlrig::HttpRequest::end(const HttpReply &reply)
 }
 
 
-int xtlrig::HttpRequest::end(int status, MHD_Response *rsp)
+int xmrig::HttpRequest::end(int status, MHD_Response *rsp)
 {
     if (!rsp) {
         rsp = MHD_create_response_from_buffer(0, nullptr, MHD_RESPMEM_PERSISTENT);
@@ -147,7 +147,7 @@ int xtlrig::HttpRequest::end(int status, MHD_Response *rsp)
     MHD_add_response_header(rsp, "Content-Type", "application/json");
     MHD_add_response_header(rsp, "Access-Control-Allow-Origin", "*");
     MHD_add_response_header(rsp, "Access-Control-Allow-Methods", "GET, PUT");
-    MHD_add_response_header(rsp, "Access-Control-Allow-Headers", "Authorization");
+    MHD_add_response_header(rsp, "Access-Control-Allow-Headers", "Authorization, Content-Type");
 
     const int ret = MHD_queue_response(m_connection, status, rsp);
     MHD_destroy_response(rsp);
@@ -155,7 +155,7 @@ int xtlrig::HttpRequest::end(int status, MHD_Response *rsp)
 }
 
 
-int xtlrig::HttpRequest::auth(const char *accessToken)
+int xmrig::HttpRequest::auth(const char *accessToken)
 {
     if (!accessToken) {
         return MHD_HTTP_OK;

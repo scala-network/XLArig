@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@
 #include "workers/Workers.h"
 
 
-Network::Network(xtlrig::Controller *controller) :
+Network::Network(xmrig::Controller *controller) :
     m_donate(nullptr),
     m_controller(controller)
 {
@@ -101,7 +101,15 @@ void Network::onActive(IStrategy *strategy, Client *client)
 
     m_state.setPool(client->host(), client->port(), client->ip());
 
-    LOG_INFO(isColors() ? "\x1B[01;37muse pool \x1B[01;36m%s:%d \x1B[01;30m%s" : "use pool %s:%d %s", client->host(), client->port(), client->ip());
+    const char *tlsVersion = client->tlsVersion();
+    LOG_INFO(isColors() ? WHITE_BOLD("use pool ") CYAN_BOLD("%s:%d ") GREEN_BOLD("%s") " \x1B[1;30m%s "
+                        : "use pool %s:%d %s %s",
+             client->host(), client->port(), tlsVersion ? tlsVersion : "", client->ip());
+
+    const char *fingerprint = client->tlsFingerprint();
+    if (fingerprint != nullptr) {
+        LOG_INFO("%sfingerprint (SHA-256): \"%s\"", isColors() ? "\x1B[1;30m" : "", fingerprint);
+    }
 }
 
 

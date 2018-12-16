@@ -1,10 +1,10 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2017 XTLRig       <support@xtlrig.com>
+ * Copyright 2016-2017 XMRig       <support@xmrig.com>
  *
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -26,11 +26,17 @@
 #include <uv.h>
 
 
+#ifndef XMRIG_NO_TLS
+#   include <openssl/ssl.h>
+#   include <openssl/err.h>
+#endif
+
+
 #include "Platform.h"
 
 
 char Platform::m_defaultConfigName[520] = { 0 };
-xtlrig::c_str Platform::m_userAgent;
+xmrig::c_str Platform::m_userAgent;
 
 
 const char *Platform::defaultConfigName()
@@ -60,4 +66,24 @@ const char *Platform::defaultConfigName()
 
     *m_defaultConfigName = '\0';
     return nullptr;
+}
+
+
+void Platform::init(const char *userAgent)
+{
+#   ifndef XMRIG_NO_TLS
+    SSL_library_init();
+    SSL_load_error_strings();
+    ERR_load_BIO_strings();
+    ERR_load_crypto_strings();
+    SSL_load_error_strings();
+    OpenSSL_add_all_digests();
+#   endif
+
+    if (userAgent) {
+        m_userAgent = userAgent;
+    }
+    else {
+        m_userAgent = createUserAgent();
+    }
 }

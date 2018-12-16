@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include "workers/Hashrate.h"
 
 
-inline const char *format(double h, char* buf, size_t size)
+inline static const char *format(double h, char *buf, size_t size)
 {
     if (isnormal(h)) {
         snprintf(buf, size, "%03.1f", h);
@@ -46,7 +46,7 @@ inline const char *format(double h, char* buf, size_t size)
 }
 
 
-Hashrate::Hashrate(size_t threads, xtlrig::Controller *controller) :
+Hashrate::Hashrate(size_t threads, xmrig::Controller *controller) :
     m_highest(0.0),
     m_threads(threads),
     m_controller(controller)
@@ -91,6 +91,9 @@ double Hashrate::calc(size_t ms) const
 double Hashrate::calc(size_t threadId, size_t ms) const
 {
     assert(threadId < m_threads);
+    if (threadId >= m_threads) {
+        return nan("");
+    }
 
     using namespace std::chrono;
     const uint64_t now = time_point_cast<milliseconds>(high_resolution_clock::now()).time_since_epoch().count();
@@ -149,14 +152,15 @@ void Hashrate::add(size_t threadId, uint64_t count, uint64_t timestamp)
 }
 
 
-void Hashrate::print()
+void Hashrate::print() const
 {
     char num1[8] = { 0 };
     char num2[8] = { 0 };
     char num3[8] = { 0 };
     char num4[8] = { 0 };
 
-    LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;37mspeed\x1B[0m 2.5s/60s/15m \x1B[01;36m%s \x1B[22;36m%s %s \x1B[01;36mH/s\x1B[0m max: \x1B[01;36m%s H/s" : "speed 2.5s/60s/15m %s %s %s H/s max: %s H/s",
+    LOG_INFO(m_controller->config()->isColors() ? WHITE_BOLD("speed") " 10s/60s/15m " CYAN_BOLD("%s") CYAN(" %s %s ") CYAN_BOLD("H/s") " max " CYAN_BOLD("%s H/s")
+                                                : "speed 10s/60s/15m %s %s %s H/s max %s H/s",
              format(calc(ShortInterval),  num1, sizeof(num1)),
              format(calc(MediumInterval), num2, sizeof(num2)),
              format(calc(LargeInterval),  num3, sizeof(num3)),
@@ -177,6 +181,12 @@ void Hashrate::updateHighest()
    if (isnormal(highest) && highest > m_highest) {
        m_highest = highest;
    }
+}
+
+
+const char *Hashrate::format(double h, char *buf, size_t size)
+{
+    return ::format(h, buf, size);
 }
 
 

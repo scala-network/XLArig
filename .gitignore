@@ -1,2 +1,4 @@
 /.project
 build/
+/build
+/CMakeLists.txt.user

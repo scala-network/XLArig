@@ -1,4 +1,4 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2018      SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -58,6 +59,7 @@ static inline char hf_bin2hex(unsigned char c)
 
 
 Job::Job() :
+    m_autoVariant(false),
     m_nicehash(false),
     m_poolId(-2),
     m_threadId(-1),
@@ -69,7 +71,8 @@ Job::Job() :
 }
 
 
-Job::Job(int poolId, bool nicehash, xtlrig::Algorithm algorithm, const xtlrig::Id &clientId) :
+Job::Job(int poolId, bool nicehash, const xmrig::Algorithm &algorithm, const xmrig::Id &clientId) :
+    m_autoVariant(algorithm.variant() == xmrig::VARIANT_AUTO),
     m_nicehash(nicehash),
     m_poolId(poolId),
     m_threadId(-1),
@@ -110,6 +113,10 @@ bool Job::setBlob(const char *blob)
 
     if (*nonce() != 0 && !m_nicehash) {
         m_nicehash = true;
+    }
+
+    if (m_autoVariant) {
+        m_algorithm.setVariant(variant());
     }
 
 #   ifdef XMRIG_PROXY_PROJECT
@@ -163,25 +170,13 @@ bool Job::setTarget(const char *target)
 }
 
 
-xtlrig::Variant Job::variant() const
+void Job::setAlgorithm(const char *algo)
 {
-    if (m_algorithm.algo() == xtlrig::CRYPTONIGHT_HEAVY) {
-        return xtlrig::VARIANT_0;
+    m_algorithm.parseAlgorithm(algo);
+
+    if (m_algorithm.variant() == xmrig::VARIANT_AUTO) {
+        m_algorithm.setVariant(variant());
     }
-
-    if (m_algorithm.variant() == xtlrig::VARIANT_XTL && m_blob[0] < 4) {
-        return xtlrig::VARIANT_1;
-    }
-
-    if (m_algorithm.variant() == xtlrig::VARIANT_AUTO) {
-        if (m_algorithm.algo() == xtlrig::CRYPTONIGHT) {
-            return xtlrig::VARIANT_1;
-        }
-
-        return (m_blob[0] > 6 ? xtlrig::VARIANT_1 : xtlrig::VARIANT_0);
-    }
-
-    return m_algorithm.variant();
 }
 
 
@@ -228,4 +223,26 @@ bool Job::operator==(const Job &other) const
 bool Job::operator!=(const Job &other) const
 {
     return m_id != other.m_id || memcmp(m_blob, other.m_blob, sizeof(m_blob)) != 0;
+}
+
+
+xmrig::Variant Job::variant() const
+{
+    using namespace xmrig;
+
+    switch (m_algorithm.algo()) {
+    case CRYPTONIGHT:
+        return (m_blob[0] >= 8) ? VARIANT_2 : VARIANT_1;
+
+    case CRYPTONIGHT_LITE:
+        return VARIANT_1;
+
+    case CRYPTONIGHT_HEAVY:
+        return VARIANT_0;
+
+    default:
+        break;
+    }
+
+    return m_algorithm.variant();
 }

@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,10 +28,10 @@
 #include <uv.h>
 
 
-#include "interfaces/ILogBackend.h"
+#include "common/interfaces/ILogBackend.h"
 
 
-namespace xtlrig {
+namespace xmrig {
     class Controller;
 }
 
@@ -39,21 +39,21 @@ namespace xtlrig {
 class ConsoleLog : public ILogBackend
 {
 public:
-    ConsoleLog(xtlrig::Controller *controller);
+    ConsoleLog(xmrig::Controller *controller);
 
-    void message(int level, const char *fmt, va_list args) override;
+    void message(Level level, const char *fmt, va_list args) override;
     void text(const char *fmt, va_list args) override;
 
 private:
     bool isWritable() const;
     void print(va_list args);
 
-    char m_buf[512];
+    char m_buf[kBufferSize];
     char m_fmt[256];
     uv_buf_t m_uvBuf;
     uv_stream_t *m_stream;
     uv_tty_t m_tty;
-    xtlrig::Controller *m_controller;
+    xmrig::Controller *m_controller;
 };
 
 #endif /* __CONSOLELOG_H__ */

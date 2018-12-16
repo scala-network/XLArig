@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -32,22 +32,27 @@
 #endif
 
 
+#ifndef XMRIG_NO_TLS
+#   include <openssl/opensslv.h>
+#endif
+
+
 #include "common/config/ConfigLoader.h"
 #include "common/config/ConfigWatcher.h"
+#include "common/interfaces/IConfig.h"
+#include "common/interfaces/IWatcherListener.h"
 #include "common/net/Pool.h"
 #include "common/Platform.h"
 #include "core/ConfigCreator.h"
 #include "core/ConfigLoader_platform.h"
-#include "interfaces/IConfig.h"
-#include "interfaces/IWatcherListener.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
 
 
-xtlrig::ConfigWatcher *xtlrig::ConfigLoader::m_watcher     = nullptr;
-xtlrig::IConfigCreator *xtlrig::ConfigLoader::m_creator    = nullptr;
-xtlrig::IWatcherListener *xtlrig::ConfigLoader::m_listener = nullptr;
+xmrig::ConfigWatcher *xmrig::ConfigLoader::m_watcher     = nullptr;
+xmrig::IConfigCreator *xmrig::ConfigLoader::m_creator    = nullptr;
+xmrig::IWatcherListener *xmrig::ConfigLoader::m_listener = nullptr;
 
 
 #ifndef ARRAY_SIZE
@@ -55,7 +60,7 @@ xtlrig::IWatcherListener *xtlrig::ConfigLoader::m_listener = nullptr;
 #endif
 
 
-bool xtlrig::ConfigLoader::loadFromFile(xtlrig::IConfig *config, const char *fileName)
+bool xmrig::ConfigLoader::loadFromFile(xmrig::IConfig *config, const char *fileName)
 {
     rapidjson::Document doc;
     if (!getJSON(fileName, doc)) {
@@ -68,7 +73,7 @@ bool xtlrig::ConfigLoader::loadFromFile(xtlrig::IConfig *config, const char *fil
 }
 
 
-bool xtlrig::ConfigLoader::loadFromJSON(xtlrig::IConfig *config, const char *json)
+bool xmrig::ConfigLoader::loadFromJSON(xmrig::IConfig *config, const char *json)
 {
     rapidjson::Document doc;
     doc.Parse(json);
@@ -81,7 +86,7 @@ bool xtlrig::ConfigLoader::loadFromJSON(xtlrig::IConfig *config, const char *jso
 }
 
 
-bool xtlrig::ConfigLoader::loadFromJSON(xtlrig::IConfig *config, const rapidjson::Document &doc)
+bool xmrig::ConfigLoader::loadFromJSON(xmrig::IConfig *config, const rapidjson::Document &doc)
 {
     for (size_t i = 0; i < ARRAY_SIZE(config_options); i++) {
         parseJSON(config, &config_options[i], doc);
@@ -113,9 +118,9 @@ bool xtlrig::ConfigLoader::loadFromJSON(xtlrig::IConfig *config, const rapidjson
 }
 
 
-bool xtlrig::ConfigLoader::reload(xtlrig::IConfig *oldConfig, const char *json)
+bool xmrig::ConfigLoader::reload(xmrig::IConfig *oldConfig, const char *json)
 {
-    xtlrig::IConfig *config = m_creator->create();
+    xmrig::IConfig *config = m_creator->create();
     if (!loadFromJSON(config, json)) {
         delete config;
 
@@ -136,12 +141,12 @@ bool xtlrig::ConfigLoader::reload(xtlrig::IConfig *oldConfig, const char *json)
 }
 
 
-xtlrig::IConfig *xtlrig::ConfigLoader::load(int argc, char **argv, IConfigCreator *creator, IWatcherListener *listener)
+xmrig::IConfig *xmrig::ConfigLoader::load(int argc, char **argv, IConfigCreator *creator, IWatcherListener *listener)
 {
     m_creator  = creator;
     m_listener = listener;
 
-    xtlrig::IConfig *config = m_creator->create();
+    xmrig::IConfig *config = m_creator->create();
     int key;
 
     while (1) {
@@ -170,20 +175,26 @@ xtlrig::IConfig *xtlrig::ConfigLoader::load(int argc, char **argv, IConfigCreato
     }
 
     if (!config->finalize()) {
-        fprintf(stderr, "No valid configuration found. Exiting.\n");
+        if (!config->algorithm().isValid()) {
+            fprintf(stderr, "No valid algorithm specified. Exiting.\n");
+        }
+        else {
+            fprintf(stderr, "No valid configuration found. Exiting.\n");
+        }
+
         delete config;
         return nullptr;
     }
 
     if (config->isWatch()) {
-        m_watcher = new xtlrig::ConfigWatcher(config->fileName(), creator, listener);
+        m_watcher = new xmrig::ConfigWatcher(config->fileName(), creator, listener);
     }
 
     return config;
 }
 
 
-void xtlrig::ConfigLoader::release()
+void xmrig::ConfigLoader::release()
 {
     delete m_watcher;
     delete m_creator;
@@ -193,7 +204,7 @@ void xtlrig::ConfigLoader::release()
 }
 
 
-bool xtlrig::ConfigLoader::getJSON(const char *fileName, rapidjson::Document &doc)
+bool xmrig::ConfigLoader::getJSON(const char *fileName, rapidjson::Document &doc)
 {
     uv_fs_t req;
     const int fd = uv_fs_open(uv_default_loop(), &req, fileName, O_RDONLY, 0644, nullptr);
@@ -222,18 +233,18 @@ bool xtlrig::ConfigLoader::getJSON(const char *fileName, rapidjson::Document &do
 }
 
 
-bool xtlrig::ConfigLoader::parseArg(xtlrig::IConfig *config, int key, const char *arg)
+bool xmrig::ConfigLoader::parseArg(xmrig::IConfig *config, int key, const char *arg)
 {
     switch (key) {
-    case xtlrig::IConfig::VersionKey: /* --version */
+    case xmrig::IConfig::VersionKey: /* --version */
         showVersion();
         return false;
 
-    case xtlrig::IConfig::HelpKey: /* --help */
+    case xmrig::IConfig::HelpKey: /* --help */
         showUsage();
         return false;
 
-    case xtlrig::IConfig::ConfigKey: /* --config */
+    case xmrig::IConfig::ConfigKey: /* --config */
         loadFromFile(config, arg);
         break;
 
@@ -245,7 +256,7 @@ bool xtlrig::ConfigLoader::parseArg(xtlrig::IConfig *config, int key, const char
 }
 
 
-void xtlrig::ConfigLoader::parseJSON(xtlrig::IConfig *config, const struct option *option, const rapidjson::Value &object)
+void xmrig::ConfigLoader::parseJSON(xmrig::IConfig *config, const struct option *option, const rapidjson::Value &object)
 {
     if (!option->name || !object.HasMember(option->name)) {
         return;
@@ -270,13 +281,13 @@ void xtlrig::ConfigLoader::parseJSON(xtlrig::IConfig *config, const struct optio
 }
 
 
-void xtlrig::ConfigLoader::showUsage()
+void xmrig::ConfigLoader::showUsage()
 {
     printf(usage);
 }
 
 
-void xtlrig::ConfigLoader::showVersion()
+void xmrig::ConfigLoader::showVersion()
 {
     printf(APP_NAME " " APP_VERSION "\n built on " __DATE__
 
@@ -307,6 +318,13 @@ void xtlrig::ConfigLoader::showVersion()
     printf("\nlibuv/%s\n", uv_version_string());
 
 #   ifndef XMRIG_NO_HTTPD
-    printf("libmicrohttpd/%s\n", MHD_get_version());
+    printf("microhttpd/%s\n", MHD_get_version());
+#   endif
+
+#   if !defined(XMRIG_NO_TLS) && defined(OPENSSL_VERSION_TEXT)
+    {
+        constexpr const char *v = OPENSSL_VERSION_TEXT + 8;
+        printf("OpenSSL/%.*s\n", static_cast<int>(strchr(v, ' ') - v), v);
+    }
 #   endif
 }

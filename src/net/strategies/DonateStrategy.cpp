@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,18 +23,14 @@
 
 
 #include "common/crypto/keccak.h"
+#include "common/interfaces/IStrategyListener.h"
 #include "common/net/Client.h"
 #include "common/net/Job.h"
 #include "common/net/strategies/FailoverStrategy.h"
 #include "common/net/strategies/SinglePoolStrategy.h"
 #include "common/Platform.h"
-#include "common/xtlrig.h"
-#include "interfaces/IStrategyListener.h"
+#include "common/xmrig.h"
 #include "net/strategies/DonateStrategy.h"
-
-
-const static char *kDonatePool1   = "miner.fee.xtlrig.com";
-const static char *kDonatePool2   = "emergency.fee.xtlrig.com";
 
 
 static inline float randomf(float min, float max) {
@@ -42,7 +38,7 @@ static inline float randomf(float min, float max) {
 }
 
 
-DonateStrategy::DonateStrategy(int level, const char *user, xtlrig::Algo algo, IStrategyListener *listener) :
+DonateStrategy::DonateStrategy(int level, const char *user, xmrig::Algo algo, IStrategyListener *listener) :
     m_active(false),
     m_donateTime(level * 60 * 1000),
     m_idleTime((100 - level) * 60 * 1000),
@@ -52,21 +48,17 @@ DonateStrategy::DonateStrategy(int level, const char *user, xtlrig::Algo algo, I
     uint8_t hash[200];
     char userId[65] = { 0 };
 
-    xtlrig::keccak(reinterpret_cast<const uint8_t *>(user), strlen(user), hash);
+    xmrig::keccak(reinterpret_cast<const uint8_t *>(user), strlen(user), hash);
     Job::toHex(hash, 32, userId);
 
-    if (algo == xtlrig::CRYPTONIGHT && xtlrig::VARIANT_XTL) {
-        m_pools.push_back(Pool("donate.stellite.cash", 3333, nullptr, nullptr, false, true));
-    }
-    else if (algo == xtlrig::CRYPTONIGHT_HEAVY) {
-        m_pools.push_back(Pool("haven.ingest.cryptoknight.cc", 5531, "hvi1aCqoAZF19J8pijvqnrUkeAeP8Rvr4XyfDMGJcarhbL15KgYKM1hN7kiHMu3fer5k8JJ8YRLKCahDKFgLFgJMYAfnPuJpt7Z5pMft2EcxS", "emergency", false, false));
-    }
-    else {
-        m_pools.push_back(Pool(kDonatePool1, 5555, userId, nullptr, false, true));
-     }
+#   ifndef XMRIG_NO_TLS
+    m_pools.push_back(Pool("donate.ssl.xmrig.com", 443, userId, nullptr, false, true, true));
+#   endif
+
+    m_pools.push_back(Pool("donate.stellite.cash", 3333, userId, nullptr, false, true));
 
     for (Pool &pool : m_pools) {
-        pool.adjust(algo);
+        pool.adjust(xmrig::Algorithm(algo, xmrig::VARIANT_AUTO));
     }
 
     if (m_pools.size() > 1) {

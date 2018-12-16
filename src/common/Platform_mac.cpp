@@ -1,10 +1,10 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2017 XTLRig       <support@xtlrig.com>
+ * Copyright 2016-2017 XMRig       <support@xmrig.com>
  *
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@
 #endif
 
 
-static inline char *createUserAgent()
+char *Platform::createUserAgent()
 {
     const size_t max = 160;
 
@@ -62,17 +62,6 @@ bool Platform::setThreadAffinity(uint64_t cpu_id)
     mach_thread = pthread_mach_thread_np(pthread_self());
 
     return thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, 1) == KERN_SUCCESS;
-}
-
-
-void Platform::init(const char *userAgent)
-{
-    if (userAgent) {
-        m_userAgent = userAgent;
-    }
-    else {
-        m_userAgent = createUserAgent();
-    }
 }
 
 

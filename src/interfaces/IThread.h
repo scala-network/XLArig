@@ -1,10 +1,10 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2018 XTLRig       <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,18 +20,18 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ITHREAD_H__
-#define __ITHREAD_H__
+#ifndef XMRIG_ITHREAD_H
+#define XMRIG_ITHREAD_H
 
 
 #include <stdint.h>
 
 
-#include "common/xtlrig.h"
+#include "common/xmrig.h"
 #include "rapidjson/fwd.h"
 
 
-namespace xtlrig {
+namespace xmrig {
 
 
 class IThread
@@ -64,10 +64,14 @@ public:
 #   ifndef XMRIG_NO_API
     virtual rapidjson::Value toAPI(rapidjson::Document &doc) const = 0;
 #   endif
+
+#   ifdef APP_DEBUG
+    virtual void print() const = 0;
+#   endif
 };
 
 
-} /* namespace xtlrig */
+} /* namespace xmrig */
 
 
-#endif // __ITHREAD_H__
+#endif // XMRIG_ITHREAD_H

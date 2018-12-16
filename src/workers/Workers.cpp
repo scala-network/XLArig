@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
  */
 
 #include <cmath>
+#include <inttypes.h>
 #include <thread>
 
 
@@ -55,6 +56,7 @@ uv_async_t Workers::m_async;
 uv_mutex_t Workers::m_mutex;
 uv_rwlock_t Workers::m_rwlock;
 uv_timer_t Workers::m_timer;
+xmrig::Controller *Workers::m_controller = nullptr;
 
 
 Job Workers::job()
@@ -89,6 +91,33 @@ size_t Workers::threads()
 
 void Workers::printHashrate(bool detail)
 {
+    assert(m_controller != nullptr);
+    if (!m_controller) {
+        return;
+    }
+
+    if (detail) {
+        const bool isColors = m_controller->config()->isColors();
+        char num1[8] = { 0 };
+        char num2[8] = { 0 };
+        char num3[8] = { 0 };
+
+        Log::i()->text("%s| THREAD | AFFINITY | 10s H/s | 60s H/s | 15m H/s |", isColors ? "\x1B[1;37m" : "");
+
+        size_t i = 0;
+        for (const xmrig::IThread *thread : m_controller->config()->threads()) {
+             Log::i()->text("| %6zu | %8" PRId64 " | %7s | %7s | %7s |",
+                            thread->index(),
+                            thread->affinity(),
+                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::ShortInterval),  num1, sizeof num1),
+                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::MediumInterval), num2, sizeof num2),
+                            Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::LargeInterval),  num3, sizeof num3)
+                            );
+
+             i++;
+        }
+    }
+
     m_hashrate->print();
 }
 
@@ -129,14 +158,24 @@ void Workers::setJob(const Job &job, bool donate)
 }
 
 
-void Workers::start(xtlrig::Controller *controller)
+void Workers::start(xmrig::Controller *controller)
 {
-    const std::vector<xtlrig::IThread *> &threads = controller->config()->threads();
+#   ifdef APP_DEBUG
+    LOG_NOTICE("THREADS ------------------------------------------------------------------");
+    for (const xmrig::IThread *thread : controller->config()->threads()) {
+        thread->print();
+    }
+    LOG_NOTICE("--------------------------------------------------------------------------");
+#   endif
+
+    m_controller = controller;
+
+    const std::vector<xmrig::IThread *> &threads = controller->config()->threads();
     m_status.algo    = controller->config()->algorithm().algo();
     m_status.colors  = controller->config()->isColors();
     m_status.threads = threads.size();
 
-    for (const xtlrig::IThread *thread : threads) {
+    for (const xmrig::IThread *thread : threads) {
        m_status.ways += thread->multiway();
     }
 
@@ -154,12 +193,16 @@ void Workers::start(xtlrig::Controller *controller)
 
     uint32_t offset = 0;
 
-    for (xtlrig::IThread *thread : threads) {
+    for (xmrig::IThread *thread : threads) {
         Handle *handle = new Handle(thread, offset, m_status.ways);
         offset += thread->multiway();
 
         m_workers.push_back(handle);
         handle->start(Workers::onReady);
+    }
+
+    if (controller->config()->isShouldSave()) {
+        controller->config()->save();
     }
 }
 
@@ -194,7 +237,7 @@ void Workers::threadsSummary(rapidjson::Document &doc)
 {
     uv_mutex_lock(&m_mutex);
     const uint64_t pages[2] = { m_status.hugePages, m_status.pages };
-    const uint64_t memory   = m_status.ways * xtlrig::cn_select_memory(m_status.algo);
+    const uint64_t memory   = m_status.ways * xmrig::cn_select_memory(m_status.algo);
     uv_mutex_unlock(&m_mutex);
 
     auto &allocator = doc.GetAllocator();
@@ -241,13 +284,13 @@ void Workers::onReady(void *arg)
     }
 
     handle->setWorker(worker);
-
+/*
     if (!worker->selfTest()) {
         LOG_ERR("thread %zu error: \"hash self-test failed\".", handle->worker()->id());
 
         return;
     }
-
+*/
     start(worker);
 }
 
@@ -298,7 +341,7 @@ void Workers::start(IWorker *worker)
 
     if (m_status.started == m_status.threads) {
         const double percent = (double) m_status.hugePages / m_status.pages * 100.0;
-        const size_t memory  = m_status.ways * xtlrig::cn_select_memory(m_status.algo) / 1048576;
+        const size_t memory  = m_status.ways * xmrig::cn_select_memory(m_status.algo) / 1048576;
 
         if (m_status.colors) {
             LOG_INFO(GREEN_BOLD("READY (CPU)") " threads " CYAN_BOLD("%zu(%zu)") " huge pages %s%zu/%zu %1.0f%%\x1B[0m memory " CYAN_BOLD("%zu.0 MB") "",

@@ -1,10 +1,10 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2017 XTLRig       <support@xtlrig.com>
+ * Copyright 2016-2017 XMRig       <support@xmrig.com>
  *
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __PLATFORM_H__
-#define __PLATFORM_H__
+#ifndef XMRIG_PLATFORM_H
+#define XMRIG_PLATFORM_H
 
 
 #include <stdint.h>
@@ -43,9 +43,11 @@ public:
     static inline const char *userAgent() { return m_userAgent.data(); }
 
 private:
+    static char *createUserAgent();
+
     static char m_defaultConfigName[520];
-    static xtlrig::c_str m_userAgent;
+    static xmrig::c_str m_userAgent;
 };
 
 
-#endif /* __PLATFORM_H__ */
+#endif /* XMRIG_PLATFORM_H */

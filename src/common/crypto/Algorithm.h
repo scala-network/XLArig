@@ -1,4 +1,4 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2018      SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,17 +23,17 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ALGORITHM_H__
-#define __ALGORITHM_H__
+#ifndef XMRIG_ALGORITHM_H
+#define XMRIG_ALGORITHM_H
 
 
 #include <vector>
 
 
-#include "common/xtlrig.h"
+#include "common/xmrig.h"
 
 
-namespace xtlrig {
+namespace xmrig {
 
 
 class Algorithm
@@ -83,9 +84,9 @@ private:
 };
 
 
-typedef std::vector<xtlrig::Algorithm> Algorithms;
+typedef std::vector<xmrig::Algorithm> Algorithms;
 
 
-} /* namespace xtlrig */
+} /* namespace xmrig */
 
 #endif /* __ALGORITHM_H__ */

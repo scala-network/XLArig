@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef XMRIG_CONFIG_H
+#define XMRIG_CONFIG_H
 
 
 #include <stdint.h>
@@ -30,7 +30,7 @@
 
 
 #include "common/config/CommonConfig.h"
-#include "common/xtlrig.h"
+#include "common/xmrig.h"
 #include "rapidjson/fwd.h"
 #include "workers/CpuThread.h"
 
@@ -39,7 +39,7 @@ class Addr;
 class Url;
 
 
-namespace xtlrig {
+namespace xmrig {
 
 
 class ConfigLoader;
@@ -69,7 +69,6 @@ public:
 
 
     Config();
-    ~Config();
 
     bool reload(const char *json);
 
@@ -77,8 +76,9 @@ public:
 
     inline AesMode aesMode() const                       { return m_aesMode; }
     inline AlgoVariant algoVariant() const               { return m_algoVariant; }
-    inline bool isDryRun() const                         { return m_dryRun; }
+    inline Assembly assembly() const                     { return m_assembly; }
     inline bool isHugePages() const                      { return m_hugePages; }
+    inline bool isShouldSave() const                     { return m_shouldSave && isAutoSave(); }
     inline const std::vector<IThread *> &threads() const { return m_threads.list; }
     inline int priority() const                          { return m_priority; }
     inline int threadsCount() const                      { return m_threads.list.size(); }
@@ -117,15 +117,16 @@ private:
 
     AesMode m_aesMode;
     AlgoVariant m_algoVariant;
-    bool m_dryRun;
+    Assembly m_assembly;
     bool m_hugePages;
     bool m_safe;
+    bool m_shouldSave;
     int m_maxCpuUsage;
     int m_priority;
     Threads m_threads;
 };
 
 
-} /* namespace xtlrig */
+} /* namespace xmrig */
 
-#endif /* __CONFIG_H__ */
+#endif /* XMRIG_CONFIG_H */

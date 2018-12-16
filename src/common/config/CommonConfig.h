@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,34 +21,35 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __COMMONCONFIG_H__
-#define __COMMONCONFIG_H__
+#ifndef XMRIG_COMMONCONFIG_H
+#define XMRIG_COMMONCONFIG_H
 
 
 #include <vector>
 
 
+#include "common/interfaces/IConfig.h"
 #include "common/net/Pool.h"
 #include "common/utils/c_str.h"
-#include "common/xtlrig.h"
-#include "interfaces/IConfig.h"
+#include "common/xmrig.h"
 
 
-namespace xtlrig {
+namespace xmrig {
 
 
 class CommonConfig : public IConfig
 {
 public:
     CommonConfig();
-    ~CommonConfig();
 
     inline bool isApiIPv6() const                  { return m_apiIPv6; }
     inline bool isApiRestricted() const            { return m_apiRestricted; }
+    inline bool isAutoSave() const                 { return m_autoSave; }
     inline bool isBackground() const               { return m_background; }
     inline bool isColors() const                   { return m_colors; }
+    inline bool isDryRun() const                   { return m_dryRun; }
     inline bool isSyslog() const                   { return m_syslog; }
-    inline const Algorithm &algorithm() const      { return m_algorithm; }
+    inline const char *apiId() const               { return m_apiId.data(); }
     inline const char *apiToken() const            { return m_apiToken.data(); }
     inline const char *apiWorkerId() const         { return m_apiWorkerId.data(); }
     inline const char *logFile() const             { return m_logFile.data(); }
@@ -61,8 +62,15 @@ public:
     inline int retryPause() const                  { return m_retryPause; }
     inline void setColors(bool colors)             { m_colors = colors; }
 
-    inline bool isWatch() const override           { return m_watch && !m_fileName.isNull(); }
-    inline const char *fileName() const override   { return m_fileName.data(); }
+    inline bool isWatch() const override               { return m_watch && !m_fileName.isNull(); }
+    inline const Algorithm &algorithm() const override { return m_algorithm; }
+    inline const char *fileName() const override       { return m_fileName.data(); }
+
+    bool save() override;
+
+    void printAPI();
+    void printPools();
+    void printVersions();
 
 protected:
     enum State {
@@ -75,15 +83,16 @@ protected:
     bool parseBoolean(int key, bool enable) override;
     bool parseString(int key, const char *arg) override;
     bool parseUint64(int key, uint64_t arg) override;
-    bool save() override;
     void setFileName(const char *fileName) override;
 
     Algorithm m_algorithm;
     bool m_adjusted;
     bool m_apiIPv6;
     bool m_apiRestricted;
+    bool m_autoSave;
     bool m_background;
     bool m_colors;
+    bool m_dryRun;
     bool m_syslog;
     bool m_watch;
     int m_apiPort;
@@ -94,17 +103,18 @@ protected:
     State m_state;
     std::vector<Pool> m_activePools;
     std::vector<Pool> m_pools;
-    xtlrig::c_str m_apiToken;
-    xtlrig::c_str m_apiWorkerId;
-    xtlrig::c_str m_fileName;
-    xtlrig::c_str m_logFile;
-    xtlrig::c_str m_userAgent;
+    xmrig::c_str m_apiId;
+    xmrig::c_str m_apiToken;
+    xmrig::c_str m_apiWorkerId;
+    xmrig::c_str m_fileName;
+    xmrig::c_str m_logFile;
+    xmrig::c_str m_userAgent;
 
 private:
     bool parseInt(int key, int arg);
 };
 
 
-} /* namespace xtlrig */
+} /* namespace xmrig */
 
 #endif /* __COMMONCONFIG_H__ */

@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,14 +26,14 @@
 
 
 #include "common/config/ConfigLoader.h"
+#include "common/cpu/Cpu.h"
+#include "common/interfaces/IControllerListener.h"
 #include "common/log/ConsoleLog.h"
 #include "common/log/FileLog.h"
 #include "common/log/Log.h"
 #include "common/Platform.h"
 #include "core/Config.h"
 #include "core/Controller.h"
-#include "Cpu.h"
-#include "interfaces/IControllerListener.h"
 #include "net/Network.h"
 
 
@@ -42,7 +42,7 @@
 #endif
 
 
-class xtlrig::ControllerPrivate
+class xmrig::ControllerPrivate
 {
 public:
     inline ControllerPrivate() :
@@ -59,18 +59,18 @@ public:
 
 
     Network *network;
-    std::vector<xtlrig::IControllerListener *> listeners;
-    xtlrig::Config *config;
+    std::vector<xmrig::IControllerListener *> listeners;
+    xmrig::Config *config;
 };
 
 
-xtlrig::Controller::Controller()
+xmrig::Controller::Controller()
     : d_ptr(new ControllerPrivate())
 {
 }
 
 
-xtlrig::Controller::~Controller()
+xmrig::Controller::~Controller()
 {
     ConfigLoader::release();
 
@@ -78,13 +78,13 @@ xtlrig::Controller::~Controller()
 }
 
 
-bool xtlrig::Controller::isReady() const
+bool xmrig::Controller::isReady() const
 {
     return d_ptr->config && d_ptr->network;
 }
 
 
-xtlrig::Config *xtlrig::Controller::config() const
+xmrig::Config *xmrig::Controller::config() const
 {
     assert(d_ptr->config != nullptr);
 
@@ -92,11 +92,11 @@ xtlrig::Config *xtlrig::Controller::config() const
 }
 
 
-int xtlrig::Controller::init(int argc, char **argv)
+int xmrig::Controller::init(int argc, char **argv)
 {
     Cpu::init();
 
-    d_ptr->config = xtlrig::Config::load(argc, argv, this);
+    d_ptr->config = xmrig::Config::load(argc, argv, this);
     if (!d_ptr->config) {
         return 1;
     }
@@ -110,7 +110,7 @@ int xtlrig::Controller::init(int argc, char **argv)
     }
 
     if (config()->logFile()) {
-        Log::add(new FileLog(config()->logFile()));
+        Log::add(new FileLog(this, config()->logFile()));
     }
 
 #   ifdef HAVE_SYSLOG_H
@@ -124,7 +124,7 @@ int xtlrig::Controller::init(int argc, char **argv)
 }
 
 
-Network *xtlrig::Controller::network() const
+Network *xmrig::Controller::network() const
 {
     assert(d_ptr->network != nullptr);
 
@@ -132,18 +132,18 @@ Network *xtlrig::Controller::network() const
 }
 
 
-void xtlrig::Controller::addListener(IControllerListener *listener)
+void xmrig::Controller::addListener(IControllerListener *listener)
 {
     d_ptr->listeners.push_back(listener);
 }
 
 
-void xtlrig::Controller::onNewConfig(IConfig *config)
+void xmrig::Controller::onNewConfig(IConfig *config)
 {
     Config *previousConfig = d_ptr->config;
     d_ptr->config = static_cast<Config*>(config);
 
-    for (xtlrig::IControllerListener *listener : d_ptr->listeners) {
+    for (xmrig::IControllerListener *listener : d_ptr->listeners) {
         listener->onConfigChanged(d_ptr->config, previousConfig);
     }
 

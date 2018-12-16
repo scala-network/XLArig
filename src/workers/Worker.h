@@ -1,11 +1,11 @@
-/* XTLRig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XTLRig       <https://github.com/xtlrig>, <support@xtlrig.com>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WORKER_H__
-#define __WORKER_H__
+#ifndef XMRIG_WORKER_H
+#define XMRIG_WORKER_H
 
 
 #include <atomic>
@@ -33,11 +33,10 @@
 #include "Mem.h"
 
 
-struct cryptonight_ctx;
 class Handle;
 
 
-namespace xtlrig {
+namespace xmrig {
     class CpuThread;
 }
 
@@ -63,8 +62,8 @@ protected:
     std::atomic<uint64_t> m_timestamp;
     uint64_t m_count;
     uint64_t m_sequence;
-    xtlrig::CpuThread *m_thread;
+    xmrig::CpuThread *m_thread;
 };
 
 
-#endif /* __WORKER_H__ */
+#endif /* XMRIG_WORKER_H */
