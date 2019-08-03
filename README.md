@@ -3,7 +3,7 @@
 
 XLArig is a high performance Scala (XLA) CPU miner, with official support for Windows. Forked from XMRig for Monero and other cryptonight currencies.
 
-<img src="http://i.imgur.com/Ymumes5.png" width="670" >
+<img src="https://i.imgur.com/g4DrWXl.png" width="670" >
 
 #### Table of contents
 
