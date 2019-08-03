@@ -1,4 +1,4 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,9 +24,13 @@
  */
 
 
-#include "common/utils/mm_malloc.h"
-#include "crypto/CryptoNight.h"
-#include "crypto/CryptoNight_constants.h"
+#include <limits>
+
+
+#include "crypto/cn/CryptoNight_constants.h"
+#include "crypto/cn/CryptoNight.h"
+#include "crypto/common/portable/mm_malloc.h"
+#include "crypto/common/VirtualMemory.h"
 #include "Mem.h"
 
 
@@ -33,25 +38,26 @@ bool Mem::m_enabled = true;
 int Mem::m_flags    = 0;
 
 
-
-MemInfo Mem::create(cryptonight_ctx **ctx, xmrig::Algo algorithm, size_t count)
+MemInfo Mem::create(cryptonight_ctx **ctx, xlarig::Algo algorithm, size_t count)
 {
-    using namespace xmrig;
+    using namespace xlarig;
 
     MemInfo info;
     info.size = cn_select_memory(algorithm) * count;
 
-#   ifndef XMRIG_NO_AEON
-    info.size += info.size % cn_select_memory<CRYPTONIGHT>();
-#   endif
-
-    info.pages = info.size / cn_select_memory<CRYPTONIGHT>();
+    constexpr const size_t align_size = 2 * 1024 * 1024;
+    info.size  = ((info.size + align_size - 1) / align_size) * align_size;
+    info.pages = info.size / align_size;
 
     allocate(info, m_enabled);
 
     for (size_t i = 0; i < count; ++i) {
         cryptonight_ctx *c = static_cast<cryptonight_ctx *>(_mm_malloc(sizeof(cryptonight_ctx), 4096));
         c->memory          = info.memory + (i * cn_select_memory(algorithm));
+
+        c->generated_code              = reinterpret_cast<cn_mainloop_fun_ms_abi>(xlarig::VirtualMemory::allocateExecutableMemory(0x4000));
+        c->generated_code_data.variant = xlarig::VARIANT_MAX;
+        c->generated_code_data.height  = std::numeric_limits<uint64_t>::max();
 
         ctx[i] = c;
     }
@@ -62,6 +68,10 @@ MemInfo Mem::create(cryptonight_ctx **ctx, xmrig::Algo algorithm, size_t count)
 
 void Mem::release(cryptonight_ctx **ctx, size_t count, MemInfo &info)
 {
+    if (info.memory == nullptr) {
+        return;
+    }
+
     release(info);
 
     for (size_t i = 0; i < count; ++i) {

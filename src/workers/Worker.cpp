@@ -1,11 +1,11 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,11 +27,11 @@
 #include "common/cpu/Cpu.h"
 #include "common/Platform.h"
 #include "workers/CpuThread.h"
-#include "workers/Handle.h"
+#include "workers/ThreadHandle.h"
 #include "workers/Worker.h"
 
 
-Worker::Worker(Handle *handle) :
+Worker::Worker(ThreadHandle *handle) :
     m_id(handle->threadId()),
     m_totalWays(handle->totalWays()),
     m_offset(handle->offset()),
@@ -39,9 +39,9 @@ Worker::Worker(Handle *handle) :
     m_timestamp(0),
     m_count(0),
     m_sequence(0),
-    m_thread(static_cast<xmrig::CpuThread *>(handle->config()))
+    m_thread(static_cast<xlarig::CpuThread *>(handle->config()))
 {
-    if (xmrig::Cpu::info()->threads() > 1 && m_thread->affinity() != -1L) {
+    if (xlarig::Cpu::info()->threads() > 1 && m_thread->affinity() != -1L) {
         Platform::setThreadAffinity(m_thread->affinity());
     }
 

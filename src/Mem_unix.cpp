@@ -1,4 +1,4 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,11 +28,17 @@
 #include <sys/mman.h>
 
 
-#include "common/log/Log.h"
-#include "common/utils/mm_malloc.h"
-#include "common/xmrig.h"
-#include "crypto/CryptoNight.h"
+#include "base/io/log/Log.h"
+#include "common/xlarig.h"
+#include "crypto/common/portable/mm_malloc.h"
+#include "crypto/common/VirtualMemory.h"
+#include "crypto/cn/CryptoNight.h"
 #include "Mem.h"
+
+
+#if defined(__APPLE__)
+#   include <mach/vm_statistics.h>
+#endif
 
 
 void Mem::init(bool enabled)
@@ -50,15 +57,8 @@ void Mem::allocate(MemInfo &info, bool enabled)
         return;
     }
 
-#   if defined(__APPLE__)
-    info.memory = static_cast<uint8_t*>(mmap(0, info.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, VM_FLAGS_SUPERPAGE_SIZE_2MB, 0));
-#   elif defined(__FreeBSD__)
-    info.memory = static_cast<uint8_t*>(mmap(0, info.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_ALIGNED_SUPER | MAP_PREFAULT_READ, -1, 0));
-#   else
-    info.memory = static_cast<uint8_t*>(mmap(0, info.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_POPULATE, 0, 0));
-#   endif
-
-    if (info.memory == MAP_FAILED) {
+    info.memory = static_cast<uint8_t*>(xlarig::VirtualMemory::allocateLargePagesMemory(info.size));
+    if (!info.memory) {
         return allocate(info, false);;
     }
 
@@ -81,7 +81,7 @@ void Mem::release(MemInfo &info)
             munlock(info.memory, info.size);
         }
 
-        munmap(info.memory, info.size);
+        xlarig::VirtualMemory::freeLargePagesMemory(info.memory, info.size);
     }
     else {
         _mm_free(info.memory);

@@ -1,11 +1,12 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,14 +26,14 @@
 #define XMRIG_CPUTHREAD_H
 
 
-#include "common/xmrig.h"
+#include "common/xlarig.h"
 #include "interfaces/IThread.h"
 
 
 struct cryptonight_ctx;
 
 
-namespace xmrig {
+namespace xlarig {
 
 
 class CpuThread : public IThread
@@ -59,7 +60,12 @@ public:
 
     CpuThread(size_t index, Algo algorithm, AlgoVariant av, Multiway multiway, int64_t affinity, int priority, bool softAES, bool prefetch, Assembly assembly);
 
-    typedef void (*cn_hash_fun)(const uint8_t *input, size_t size, uint8_t *output, cryptonight_ctx **ctx);
+    typedef void (*cn_hash_fun)(const uint8_t *input, size_t size, uint8_t *output, cryptonight_ctx **ctx, uint64_t height);
+    typedef void (*cn_mainloop_fun)(cryptonight_ctx **ctx);
+
+#   ifndef XMRIG_NO_ASM
+    static void patchAsmVariants();
+#   endif
 
     static bool isSoftAES(AlgoVariant av);
     static cn_hash_fun fn(Algo algorithm, AlgoVariant av, Variant variant, Assembly assembly);
@@ -84,15 +90,13 @@ protected:
     void print() const override;
 #   endif
 
-#   ifndef XMRIG_NO_API
+#   ifdef XMRIG_FEATURE_API
     rapidjson::Value toAPI(rapidjson::Document &doc) const override;
 #   endif
 
     rapidjson::Value toConfig(rapidjson::Document &doc) const override;
 
 private:
-    static size_t fnIndex(Algo algorithm, AlgoVariant av, Variant variant, Assembly assembly);
-
     const Algo m_algorithm;
     const AlgoVariant m_av;
     const Assembly m_assembly;
@@ -105,7 +109,7 @@ private:
 };
 
 
-} /* namespace xmrig */
+} /* namespace xlarig */
 
 
 #endif /* XMRIG_CPUTHREAD_H */

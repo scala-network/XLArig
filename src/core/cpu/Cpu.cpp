@@ -1,10 +1,10 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2017 XMRig       <support@xmrig.com>
+ * Copyright 2016-2017 XLArig       <support@xlarig.com>
  *
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -33,10 +33,10 @@
 #endif
 
 
-static xmrig::ICpuInfo *cpuInfo = nullptr;
+static xlarig::ICpuInfo *cpuInfo = nullptr;
 
 
-xmrig::ICpuInfo *xmrig::Cpu::info()
+xlarig::ICpuInfo *xlarig::Cpu::info()
 {
     assert(cpuInfo != nullptr);
 
@@ -44,7 +44,7 @@ xmrig::ICpuInfo *xmrig::Cpu::info()
 }
 
 
-void xmrig::Cpu::init()
+void xlarig::Cpu::init()
 {
     assert(cpuInfo == nullptr);
 
@@ -52,7 +52,7 @@ void xmrig::Cpu::init()
 }
 
 
-void xmrig::Cpu::release()
+void xlarig::Cpu::release()
 {
     assert(cpuInfo != nullptr);
 

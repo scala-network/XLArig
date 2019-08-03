@@ -1,8 +1,0 @@
-For static builds of the miner, here are some notes from micmac. I'm adding it here until we find a proper place for it - donovan
-
-here is the trick :
-libmicrohttpd-0.9.59$ ./configure --enable-https=no
-and build it
-by make
-cmake .. -DMHD_INCLUDE_DIR=~/tmp/libmicrohttpd-0.9.59/src/include/ -DMHD_LIBRARY=~/tmp/libmicrohttpd-0.9.59/src/microhttpd/.libs/libmicrohttpd.a
-in xtlrig

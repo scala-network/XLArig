@@ -1,11 +1,12 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,8 +22,8 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WORKERS_H__
-#define __WORKERS_H__
+#ifndef XMRIG_WORKERS_H
+#define XMRIG_WORKERS_H
 
 
 #include <atomic>
@@ -30,45 +31,54 @@
 #include <uv.h>
 #include <vector>
 
-#include "common/net/Job.h"
+#ifdef XMRIG_ALGO_RANDOMX
+#   include <defyx.h>
+#endif
+
+#include "base/net/stratum/Job.h"
 #include "net/JobResult.h"
 #include "rapidjson/fwd.h"
 
 
-class Handle;
 class Hashrate;
-class IJobResultListener;
 class IWorker;
+class ThreadHandle;
 
 
-namespace xmrig {
+namespace xlarig {
     class Controller;
+    class IJobResultListener;
 }
 
 
 class Workers
 {
 public:
-    static Job job();
+    static xlarig::Job job();
     static size_t hugePages();
     static size_t threads();
     static void printHashrate(bool detail);
     static void setEnabled(bool enabled);
-    static void setJob(const Job &job, bool donate);
-    static void start(xmrig::Controller *controller);
+    static void setJob(const xlarig::Job &job, bool donate);
+    static void start(xlarig::Controller *controller);
     static void stop();
-    static void submit(const JobResult &result);
+    static void submit(const xlarig::JobResult &result);
 
-    static inline bool isEnabled()                               { return m_enabled; }
-    static inline bool isOutdated(uint64_t sequence)             { return m_sequence.load(std::memory_order_relaxed) != sequence; }
-    static inline bool isPaused()                                { return m_paused.load(std::memory_order_relaxed) == 1; }
-    static inline Hashrate *hashrate()                           { return m_hashrate; }
-    static inline uint64_t sequence()                            { return m_sequence.load(std::memory_order_relaxed); }
-    static inline void pause()                                   { m_active = false; m_paused = 1; m_sequence++; }
-    static inline void setListener(IJobResultListener *listener) { m_listener = listener; }
+    static inline bool isEnabled()                                      { return m_enabled; }
+    static inline bool isOutdated(uint64_t sequence)                    { return m_sequence.load(std::memory_order_relaxed) != sequence; }
+    static inline bool isPaused()                                       { return m_paused.load(std::memory_order_relaxed) == 1; }
+    static inline Hashrate *hashrate()                                  { return m_hashrate; }
+    static inline uint64_t sequence()                                   { return m_sequence.load(std::memory_order_relaxed); }
+    static inline void pause()                                          { m_active = false; m_paused = 1; m_sequence++; }
+    static inline void setListener(xlarig::IJobResultListener *listener) { m_listener = listener; }
 
-#   ifndef XMRIG_NO_API
+#   ifdef XMRIG_FEATURE_API
     static void threadsSummary(rapidjson::Document &doc);
+#   endif
+
+#   ifdef XMRIG_ALGO_RANDOMX
+    static void updateDataset(const uint8_t* seed_hash, uint32_t num_threads);
+    static defyx_dataset* getDataset();
 #   endif
 
 private:
@@ -81,41 +91,49 @@ private:
     {
     public:
         inline LaunchStatus() :
-            colors(true),
             hugePages(0),
             pages(0),
             started(0),
             threads(0),
             ways(0),
-            algo(xmrig::CRYPTONIGHT)
+            algo(xlarig::CRYPTONIGHT),
+            variant(xlarig::VARIANT_AUTO)
         {}
 
-        bool colors;
         size_t hugePages;
         size_t pages;
         size_t started;
         size_t threads;
         size_t ways;
-        xmrig::Algo algo;
+        xlarig::Algo algo;
+        xlarig::Variant variant;
     };
 
     static bool m_active;
     static bool m_enabled;
     static Hashrate *m_hashrate;
-    static IJobResultListener *m_listener;
-    static Job m_job;
+    static xlarig::IJobResultListener *m_listener;
+    static xlarig::Job m_job;
     static LaunchStatus m_status;
     static std::atomic<int> m_paused;
     static std::atomic<uint64_t> m_sequence;
-    static std::list<JobResult> m_queue;
-    static std::vector<Handle*> m_workers;
+    static std::list<xlarig::JobResult> m_queue;
+    static std::vector<ThreadHandle*> m_workers;
     static uint64_t m_ticks;
-    static uv_async_t m_async;
+    static uv_async_t *m_async;
     static uv_mutex_t m_mutex;
     static uv_rwlock_t m_rwlock;
-    static uv_timer_t m_timer;
-    static xmrig::Controller *m_controller;
+    static uv_timer_t *m_timer;
+    static xlarig::Controller *m_controller;
+
+#   ifdef XMRIG_ALGO_RANDOMX
+    static uv_rwlock_t m_rx_dataset_lock;
+    static defyx_cache *m_rx_cache;
+    static defyx_dataset *m_rx_dataset;
+    static uint8_t m_rx_seed_hash[32];
+    static std::atomic<uint32_t> m_rx_dataset_init_thread_counter;
+#   endif
 };
 
 
-#endif /* __WORKERS_H__ */
+#endif /* XMRIG_WORKERS_H */

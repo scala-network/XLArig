@@ -1,11 +1,12 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,15 +22,15 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __HASHRATE_H__
-#define __HASHRATE_H__
+#ifndef XMRIG_HASHRATE_H
+#define XMRIG_HASHRATE_H
 
 
 #include <stdint.h>
 #include <uv.h>
 
 
-namespace xmrig {
+namespace xlarig {
     class Controller;
 }
 
@@ -43,7 +44,7 @@ public:
         LargeInterval  = 900000
     };
 
-    Hashrate(size_t threads, xmrig::Controller *controller);
+    Hashrate(size_t threads, xlarig::Controller *controller);
     double calc(size_t ms) const;
     double calc(size_t threadId, size_t ms) const;
     void add(size_t threadId, uint64_t count, uint64_t timestamp);
@@ -67,9 +68,8 @@ private:
     uint32_t* m_top;
     uint64_t** m_counts;
     uint64_t** m_timestamps;
-    uv_timer_t m_timer;
-    xmrig::Controller *m_controller;
+    uv_timer_t *m_timer;
 };
 
 
-#endif /* __HASHRATE_H__ */
+#endif /* XMRIG_HASHRATE_H */

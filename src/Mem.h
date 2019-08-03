@@ -1,4 +1,4 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,15 +23,15 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MEM_H__
-#define __MEM_H__
+#ifndef XMRIG_MEM_H
+#define XMRIG_MEM_H
 
 
 #include <stddef.h>
 #include <stdint.h>
 
 
-#include "common/xmrig.h"
+#include "common/xlarig.h"
 
 
 struct cryptonight_ctx;
@@ -38,11 +39,11 @@ struct cryptonight_ctx;
 
 struct MemInfo
 {
-    alignas(16) uint8_t *memory;
+    alignas(16) uint8_t *memory = nullptr;
 
-    size_t hugePages;
-    size_t pages;
-    size_t size;
+    size_t hugePages = 0;
+    size_t pages     = 0;
+    size_t size      = 0;
 };
 
 
@@ -55,7 +56,7 @@ public:
         Lock               = 4
     };
 
-    static MemInfo create(cryptonight_ctx **ctx, xmrig::Algo algorithm, size_t count);
+    static MemInfo create(cryptonight_ctx **ctx, xlarig::Algo algorithm, size_t count);
     static void init(bool enabled);
     static void release(cryptonight_ctx **ctx, size_t count, MemInfo &info);
 
@@ -70,4 +71,4 @@ private:
 };
 
 
-#endif /* __MEM_H__ */
+#endif /* XMRIG_MEM_H */

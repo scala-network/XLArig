@@ -1,4 +1,4 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,8 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2018      SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,12 @@
 #define XMRIG_MULTIWORKER_H
 
 
-#include "common/net/Job.h"
+#ifdef XMRIG_ALGO_RANDOMX
+#   include <defyx.h>
+#endif
+
+
+#include "base/net/stratum/Job.h"
 #include "Mem.h"
 #include "net/JobResult.h"
 #include "workers/Worker.h"
@@ -40,7 +45,7 @@ template<size_t N>
 class MultiWorker : public Worker
 {
 public:
-    MultiWorker(Handle *handle);
+    MultiWorker(ThreadHandle *handle);
     ~MultiWorker();
 
 protected:
@@ -48,10 +53,15 @@ protected:
     void start() override;
 
 private:
-    bool resume(const Job &job);
-    bool verify(xmrig::Variant variant, const uint8_t *referenceValue);
+#   ifdef XMRIG_ALGO_RANDOMX
+    void allocateRandomX_VM();
+#   endif
+
+    bool resume(const xlarig::Job &job);
+    bool verify(xlarig::Variant variant, const uint8_t *referenceValue);
+    bool verify2(xlarig::Variant variant, const uint8_t *referenceValue);
     void consumeJob();
-    void save(const Job &job);
+    void save(const xlarig::Job &job);
 
     inline uint32_t *nonce(size_t index)
     {
@@ -60,8 +70,8 @@ private:
 
     struct State
     {
-        alignas(16) uint8_t blob[96 * N];
-        Job job;
+        alignas(16) uint8_t blob[xlarig::Job::kMaxBlobSize * N];
+        xlarig::Job job;
     };
 
 
@@ -69,6 +79,10 @@ private:
     State m_pausedState;
     State m_state;
     uint8_t m_hash[N * 32];
+
+#   ifdef XMRIG_ALGO_RANDOMX
+    defyx_vm *m_rx_vm = nullptr;
+#   endif
 };
 
 

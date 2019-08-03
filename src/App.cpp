@@ -1,11 +1,13 @@
-/* XMRig
+/* XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
+ * Copyright 2018      SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,13 +30,13 @@
 
 #include "api/Api.h"
 #include "App.h"
-#include "common/Console.h"
+#include "base/io/Console.h"
+#include "base/io/log/Log.h"
+#include "base/kernel/Signals.h"
 #include "common/cpu/Cpu.h"
-#include "common/log/Log.h"
 #include "common/Platform.h"
-#include "core/Config.h"
+#include "core/config/Config.h"
 #include "core/Controller.h"
-#include "crypto/CryptoNight.h"
 #include "Mem.h"
 #include "net/Network.h"
 #include "Summary.h"
@@ -42,58 +44,36 @@
 #include "workers/Workers.h"
 
 
-#ifndef XMRIG_NO_HTTPD
-#   include "common/api/Httpd.h"
-#endif
-
-
-App *App::m_self = nullptr;
-
-
-
-App::App(int argc, char **argv) :
+xlarig::App::App(Process *process) :
     m_console(nullptr),
-    m_httpd(nullptr)
+    m_signals(nullptr)
 {
-    m_self = this;
-
-    m_controller = new xmrig::Controller();
-    if (m_controller->init(argc, argv) != 0) {
+    m_controller = new Controller(process);
+    if (m_controller->init() != 0) {
         return;
     }
 
     if (!m_controller->config()->isBackground()) {
         m_console = new Console(this);
     }
-
-    uv_signal_init(uv_default_loop(), &m_sigHUP);
-    uv_signal_init(uv_default_loop(), &m_sigINT);
-    uv_signal_init(uv_default_loop(), &m_sigTERM);
 }
 
 
-App::~App()
+xlarig::App::~App()
 {
-    uv_tty_reset_mode();
-
+    delete m_signals;
     delete m_console;
     delete m_controller;
-
-#   ifndef XMRIG_NO_HTTPD
-    delete m_httpd;
-#   endif
 }
 
 
-int App::exec()
+int xlarig::App::exec()
 {
     if (!m_controller->isReady()) {
         return 2;
     }
 
-    uv_signal_start(&m_sigHUP,  App::onSignal, SIGHUP);
-    uv_signal_start(&m_sigINT,  App::onSignal, SIGINT);
-    uv_signal_start(&m_sigTERM, App::onSignal, SIGTERM);
+    m_signals = new Signals(this);
 
     background();
 
@@ -103,39 +83,22 @@ int App::exec()
 
     if (m_controller->config()->isDryRun()) {
         LOG_NOTICE("OK");
-        release();
 
         return 0;
     }
 
-#   ifndef XMRIG_NO_API
-    Api::start(m_controller);
-#   endif
-
-#   ifndef XMRIG_NO_HTTPD
-    m_httpd = new Httpd(
-                m_controller->config()->apiPort(),
-                m_controller->config()->apiToken(),
-                m_controller->config()->isApiIPv6(),
-                m_controller->config()->isApiRestricted()
-                );
-
-    m_httpd->start();
-#   endif
-
     Workers::start(m_controller);
 
-    m_controller->network()->connect();
+    m_controller->start();
 
     const int r = uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     uv_loop_close(uv_default_loop());
 
-    release();
     return r;
 }
 
 
-void App::onConsoleCommand(char command)
+void xlarig::App::onConsoleCommand(char command)
 {
     switch (command) {
     case 'h':
@@ -146,7 +109,7 @@ void App::onConsoleCommand(char command)
     case 'p':
     case 'P':
         if (Workers::isEnabled()) {
-            LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;33mpaused\x1B[0m, press \x1B[01;35mr\x1B[0m to resume" : "paused, press 'r' to resume");
+            LOG_INFO(YELLOW_BOLD("paused") ", press " MAGENTA_BOLD("r") " to resume");
             Workers::setEnabled(false);
         }
         break;
@@ -154,7 +117,7 @@ void App::onConsoleCommand(char command)
     case 'r':
     case 'R':
         if (!Workers::isEnabled()) {
-            LOG_INFO(m_controller->config()->isColors() ? "\x1B[01;32mresumed" : "resumed");
+            LOG_INFO(GREEN_BOLD("resumed"));
             Workers::setEnabled(true);
         }
         break;
@@ -170,21 +133,7 @@ void App::onConsoleCommand(char command)
 }
 
 
-void App::close()
-{
-    m_controller->network()->stop();
-    Workers::stop();
-
-    uv_stop(uv_default_loop());
-}
-
-
-void App::release()
-{
-}
-
-
-void App::onSignal(uv_signal_t *handle, int signum)
+void xlarig::App::onSignal(int signum)
 {
     switch (signum)
     {
@@ -201,9 +150,19 @@ void App::onSignal(uv_signal_t *handle, int signum)
         break;
 
     default:
-        break;
+        return;
     }
 
-    uv_signal_stop(handle);
-    m_self->close();
+    close();
+}
+
+
+void xlarig::App::close()
+{
+    m_signals->stop();
+    m_console->stop();
+    m_controller->stop();
+
+    Workers::stop();
+    Log::destroy();
 }

@@ -1,28 +1,17 @@
-# XMRig
 
-:warning: **[Monero changed PoW algorithm on October 18](https://github.com/xmrig/xmrig/issues/753), all miners and proxy should be updated to [v2.8+](https://github.com/xmrig/xmrig/releases/tag/v2.8.3)** :warning:
+# XLArig
 
-[![Github All Releases](https://img.shields.io/github/downloads/xmrig/xmrig/total.svg)](https://github.com/xmrig/xmrig/releases)
-[![GitHub release](https://img.shields.io/github/release/xmrig/xmrig/all.svg)](https://github.com/xmrig/xmrig/releases)
-[![GitHub Release Date](https://img.shields.io/github/release-date-pre/xmrig/xmrig.svg)](https://github.com/xmrig/xmrig/releases)
-[![GitHub license](https://img.shields.io/github/license/xmrig/xmrig.svg)](https://github.com/xmrig/xmrig/blob/master/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/xmrig/xmrig.svg)](https://github.com/xmrig/xmrig/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/xmrig/xmrig.svg)](https://github.com/xmrig/xmrig/network)
+XLArig is a high performance Scala (XLA) CPU miner, with official support for Windows. Forked from XMRig for Monero and other cryptonight currencies.
 
-XMRig is a high performance Monero (XMR) CPU miner, with official support for Windows.
-Originally based on cpuminer-multi with heavy optimizations/rewrites and removing a lot of legacy code, since version 1.0.0 completely rewritten from scratch on C++.
-
-* This is the **CPU-mining** version, there is also a [NVIDIA GPU version](https://github.com/xmrig/xmrig-nvidia) and [AMD GPU version]( https://github.com/xmrig/xmrig-amd).
-* [Roadmap](https://github.com/xmrig/xmrig/issues/106) for next releases.
-
-<img src="http://i.imgur.com/OKZRVDh.png" width="619" >
+<img src="http://i.imgur.com/Ymumes5.png" width="670" >
 
 #### Table of contents
+
 * [Features](#features)
 * [Download](#download)
 * [Usage](#usage)
 * [Algorithm variations](#algorithm-variations)
-* [Build](https://github.com/xmrig/xmrig/wiki/Build)
+* [Build](https://github.com/xlarig/xlarig/wiki/Build)
 * [Common Issues](#common-issues)
 * [Other information](#other-information)
 * [Donations](#donations)
@@ -37,18 +26,22 @@ Originally based on cpuminer-multi with heavy optimizations/rewrites and removin
 * Support for backup (failover) mining server.
 * keepalived support.
 * Command line options compatible with cpuminer.
-* CryptoNight-Lite support for AEON.
-* Smart automatic [CPU configuration](https://github.com/xmrig/xmrig/wiki/Threads).
-* Nicehash support
+* Smart automatic CPU configuration.
 * It's open source software.
 
 ## Download
-* Binary releases: https://github.com/xmrig/xmrig/releases
-* Git tree: https://github.com/xmrig/xmrig.git
-  * Clone with `git clone https://github.com/xmrig/xmrig.git` :hammer: [Build instructions](https://github.com/xmrig/xmrig/wiki/Build).
+* Binary releases: https://github.com/scala-network/xlarig/releases
+
 
 ## Usage
-Use [config.xmrig.com](https://config.xmrig.com/xmrig) to generate, edit or share configurations.
+On windows
+```
+xlarig.exe
+```
+on linux 
+```
+./xlarig
+```
 
 ### Options
 ```
@@ -95,12 +88,12 @@ Use [config.xmrig.com](https://config.xmrig.com/xmrig) to generate, edit or shar
   -V, --version            output version information and exit
 ```
 
-Also you can use configuration via config file, default name **config.json**. Some options available only via config file: [`autosave`](https://github.com/xmrig/xmrig/issues/767), [`hw-aes`](https://github.com/xmrig/xmrig/issues/563). `watch` option currently not implemented in miners only in proxy.
+Also you can use configuration via config file, default name **config.json**. Some options available only via config file: [`autosave`](https://github.com/xlarig/xlarig/issues/767), [`hw-aes`](https://github.com/xlarig/xlarig/issues/563). `watch` option currently not implemented in miners only in proxy.
 
 ## Algorithm variations
 
 - `av` option used for automatic and simple threads mode (when you specify only threads count).
-- For [advanced threads mode](https://github.com/xmrig/xmrig/issues/563) each thread configured individually and `av` option not used.
+- For [advanced threads mode](https://github.com/xlarig/xlarig/issues/563) each thread configured individually and `av` option not used.
 
 | av | Hashes per round | Hardware AES |
 |----|------------------|--------------|
@@ -117,13 +110,12 @@ Also you can use configuration via config file, default name **config.json**. So
 
 ## Common Issues
 ### HUGE PAGES unavailable
-* Run XMRig as Administrator.
-* Since version 0.8.0 XMRig automatically enables SeLockMemoryPrivilege for current user, but reboot or sign out still required. [Manual instruction](https://msdn.microsoft.com/en-gb/library/ms190730.aspx).
+* Run XLArig as Administrator.
+* Since version 0.8.0 XLArig automatically enables SeLockMemoryPrivilege for current user, but reboot or sign out still required.
 
 ## Other information
 * No HTTP support, only stratum protocol support.
 * Default donation 5% (5 minutes in 100 minutes) can be reduced to 1% via option `donate-level`.
-
 
 ### CPU mining performance
 * **Intel i7-7700** - 307 H/s (4 threads)
@@ -139,23 +131,10 @@ Please note performance is highly dependent on system load. The numbers above ar
 * Enable fast memory (Large/Huge pages).
 
 ## Donations
+The donation in XLArig helps out a bit since our project is a community funded one. These are the addresses of the official developers of XMRig as we recieve the in-built miner donations from XLArig.
+
 * XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
 * BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
 
-## Release checksums
-### SHA-256
-```
-365198ed4f1205c42fa448d41c9088d3dea6bff43173c5e870e8bec4631c3a7d xmrig-2.8.3-xenial-amd64.tar.gz/xmrig-2.8.3/xmrig
-77b235244eea7eab72c420c3575bc6c32eb83061d90b84addb187257c9819be7 xmrig-2.8.3-xenial-amd64.tar.gz/xmrig-2.8.3/xmrig-notls
-586b81e455ed0aa7623507b0307ba34afdc2ff3494a822cbf1fcc0c1a86ac974 xmrig-2.8.3-gcc-win32.zip/xmrig.exe
-2d35980542b603e02832c774ce0d0bc22e269f066bcdff20a919dcbd23e2ef2a xmrig-2.8.3-gcc-win32.zip/xmrig-notls.exe
-0a638249271f3a7d7ad87643a1fa250cc21b9871dca951d15c7c214346cb02aa xmrig-2.8.3-gcc-win64.zip/xmrig.exe
-0f9d05c96d2268f1cf3e2c120ad94e440a730e753efa2ae8cbc9ef4567b4da03 xmrig-2.8.3-gcc-win64.zip/xmrig-notls.exe
-19600aead9ebc509db57538e5ace0a30604708c051b34f81c0bdc1b587624434 xmrig-2.8.3-msvc-win64.zip/xmrig.exe
-b9380c58a863488c8d9d138bb32a92b5ab3bb7b4e614e8caa85239cbb2ca3c8b xmrig-2.8.3-msvc-win64.zip/xmrig-notls.exe
-```
-
 ## Contacts
-* support@xmrig.com
-* [reddit](https://www.reddit.com/user/XMRig/)
-* [twitter](https://twitter.com/xmrig_dev)
+* hello@scalaproject.io

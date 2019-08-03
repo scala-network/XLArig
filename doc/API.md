@@ -15,7 +15,7 @@ Example configuration:
 ```
 
 * **port** Port for incoming connections `http://<miner ip>:<port>`.
-* **access-token** [Bearer](https://gist.github.com/xmrig/c75fdd1f8e0f3bac05500be2ab718f8e#file-api-html-L54) access token to secure access to API.
+* **access-token** [Bearer](https://gist.github.com/xlarig/c75fdd1f8e0f3bac05500be2ab718f8e#file-api-html-L54) access token to secure access to API.
 * **worker-id** Optional worker name, if not set will be detected automatically.
 * **ipv6** Enable (`true`) or disable (`false`) IPv6 for API.
 * **restricted** Use `false` to allow remote configuration.
