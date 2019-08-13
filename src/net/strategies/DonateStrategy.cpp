@@ -1,4 +1,4 @@
-/* XLArig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLArig       <https://github.com/xlarig>, <support@xlarig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ namespace xlarig {
 static inline double randomf(double min, double max)                 { return (max - min) * (((static_cast<double>(rand())) / static_cast<double>(RAND_MAX))) + min; }
 static inline uint64_t random(uint64_t base, double min, double max) { return static_cast<uint64_t>(base * randomf(min, max)); }
 
-static const char *kDonateHost = "donate.v2.xlarig.com";
+static const char *kDonateHost = "donate.scalaproject.io";
 #ifdef XMRIG_FEATURE_TLS
 static const char *kDonateHostTls = "donate.ssl.xlarig.com";
 #endif
@@ -80,7 +80,7 @@ xlarig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener
     m_pools.push_back(Pool(kDonateHost, 3333, m_userId, nullptr, 0, true));
 
     for (Pool &pool : m_pools) {
-        pool.adjust(Algorithm(controller->config()->algorithm().algo(), VARIANT_AUTO));
+        pool.adjust(Algorithm(controller->config()->algorithm().algo(), VARIANT_RX_DEFYX));
     }
 
     if (m_pools.size() > 1) {
