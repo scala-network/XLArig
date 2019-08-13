@@ -1,11 +1,12 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,22 +25,22 @@
 #include <libcpuid.h>
 #include <math.h>
 #include <string.h>
-#include <thread>
 
 
 #include "core/cpu/AdvancedCpuInfo.h"
 
 
-xmrig::AdvancedCpuInfo::AdvancedCpuInfo() :
+xlarig::AdvancedCpuInfo::AdvancedCpuInfo() :
     m_assembly(ASM_NONE),
     m_aes(false),
+    m_avx2(false),
     m_L2_exclusive(false),
     m_brand(),
     m_cores(0),
     m_L2(0),
     m_L3(0),
     m_sockets(1),
-    m_threads(std::thread::hardware_concurrency())
+    m_threads(0)
 {
     struct cpu_raw_data_t raw = { 0 };
     struct cpu_id_t data = { 0 };
@@ -49,6 +50,7 @@ xmrig::AdvancedCpuInfo::AdvancedCpuInfo() :
 
     strncpy(m_brand, data.brand_str, sizeof(m_brand));
 
+    m_threads = data.total_logical_cpus;
     m_sockets = threads() / data.num_logical_cpus;
     if (m_sockets == 0) {
         m_sockets = 1;
@@ -76,16 +78,18 @@ xmrig::AdvancedCpuInfo::AdvancedCpuInfo() :
         m_aes = true;
 
         if (data.vendor == VENDOR_AMD) {
-            m_assembly = ASM_RYZEN;
+            m_assembly = (data.ext_family >= 23) ? ASM_RYZEN : ASM_BULLDOZER;
         }
         else if (data.vendor == VENDOR_INTEL) {
             m_assembly = ASM_INTEL;
         }
     }
+
+    m_avx2 = data.flags[CPU_FEATURE_AVX2] && data.flags[CPU_FEATURE_OSXSAVE];
 }
 
 
-size_t xmrig::AdvancedCpuInfo::optimalThreadsCount(size_t memSize, int maxCpuUsage) const
+size_t xlarig::AdvancedCpuInfo::optimalThreadsCount(size_t memSize, int maxCpuUsage) const
 {
     if (threads() == 1) {
         return 1;

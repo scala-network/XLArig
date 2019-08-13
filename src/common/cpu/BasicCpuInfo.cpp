@@ -1,11 +1,12 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,6 +34,14 @@
 
 #ifndef bit_AES
 #   define bit_AES (1 << 25)
+#endif
+
+#ifndef bit_OSXSAVE
+#   define bit_OSXSAVE (1 << 27)
+#endif
+
+#ifndef bit_AVX2
+#   define bit_AVX2 (1 << 5)
 #endif
 
 
@@ -93,9 +102,28 @@ static inline bool has_aes_ni()
 }
 
 
-xmrig::BasicCpuInfo::BasicCpuInfo() :
+static inline bool has_avx2()
+{
+    int32_t cpu_info[4] = { 0 };
+    cpuid(EXTENDED_FEATURES, cpu_info);
+
+    return (cpu_info[EBX_Reg] & bit_AVX2) != 0;
+}
+
+
+static inline bool has_ossave()
+{
+    int32_t cpu_info[4] = { 0 };
+    cpuid(PROCESSOR_INFO, cpu_info);
+
+    return (cpu_info[ECX_Reg] & bit_OSXSAVE) != 0;
+}
+
+
+xlarig::BasicCpuInfo::BasicCpuInfo() :
     m_assembly(ASM_NONE),
     m_aes(has_aes_ni()),
+    m_avx2(has_avx2() && has_ossave()),
     m_brand(),
     m_threads(std::thread::hardware_concurrency())
 {
@@ -123,7 +151,7 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
 }
 
 
-size_t xmrig::BasicCpuInfo::optimalThreadsCount(size_t memSize, int maxCpuUsage) const
+size_t xlarig::BasicCpuInfo::optimalThreadsCount(size_t memSize, int maxCpuUsage) const
 {
     const size_t count = threads() / 2;
 

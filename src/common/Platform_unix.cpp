@@ -1,11 +1,11 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XLArig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -54,13 +54,17 @@ typedef cpuset_t cpu_set_t;
 
 char *Platform::createUserAgent()
 {
-    const size_t max = 160;
+    constexpr const size_t max = 256;
 
-    char *buf = new char[max];
+    char *buf = new char[max]();
     int length = snprintf(buf, max, "%s/%s (Linux ", APP_NAME, APP_VERSION);
 
 #   if defined(__x86_64__)
     length += snprintf(buf + length, max - length, "x86_64) libuv/%s", uv_version_string());
+#   elif defined(__aarch64__)
+    length += snprintf(buf + length, max - length, "aarch64) libuv/%s", uv_version_string());
+#   elif defined(__arm__)
+    length += snprintf(buf + length, max - length, "arm) libuv/%s", uv_version_string());
 #   else
     length += snprintf(buf + length, max - length, "i686) libuv/%s", uv_version_string());
 #   endif
@@ -70,7 +74,9 @@ char *Platform::createUserAgent()
     length += snprintf(buf + length, max - length, " CUDA/%d.%d", cudaVersion / 1000, cudaVersion % 100);
 #   endif
 
-#   ifdef __GNUC__
+#   ifdef __clang__
+    length += snprintf(buf + length, max - length, " clang/%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__);
+#   elif defined(__GNUC__)
     length += snprintf(buf + length, max - length, " gcc/%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #   endif
 
@@ -89,6 +95,17 @@ bool Platform::setThreadAffinity(uint64_t cpu_id)
 #   else
     return sched_setaffinity(gettid(), sizeof(cpu_set_t), &mn) == 0;
 #   endif
+}
+
+
+uint32_t Platform::setTimerResolution(uint32_t resolution)
+{
+    return resolution;
+}
+
+
+void Platform::restoreTimerResolution()
+{
 }
 
 

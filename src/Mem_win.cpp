@@ -1,4 +1,4 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,11 +30,12 @@
 #include <tchar.h>
 
 
-#include "common/log/Log.h"
-#include "common/utils/mm_malloc.h"
-#include "common/xmrig.h"
-#include "crypto/CryptoNight.h"
-#include "crypto/CryptoNight_constants.h"
+#include "base/io/log/Log.h"
+#include "common/xlarig.h"
+#include "crypto/common/portable/mm_malloc.h"
+#include "crypto/common/VirtualMemory.h"
+#include "crypto/cn/CryptoNight_constants.h"
+#include "crypto/cn/CryptoNight.h"
 #include "Mem.h"
 
 
@@ -66,11 +68,11 @@ static BOOL SetLockPagesPrivilege() {
     tp.PrivilegeCount = 1;
     tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-    if (LookupPrivilegeValue(NULL, SE_LOCK_MEMORY_NAME, &(tp.Privileges[0].Luid)) != TRUE) {
+    if (LookupPrivilegeValue(nullptr, SE_LOCK_MEMORY_NAME, &(tp.Privileges[0].Luid)) != TRUE) {
         return FALSE;
     }
 
-    BOOL rc = AdjustTokenPrivileges(token, FALSE, (PTOKEN_PRIVILEGES) &tp, 0, NULL, NULL);
+    BOOL rc = AdjustTokenPrivileges(token, FALSE, (PTOKEN_PRIVILEGES) &tp, 0, nullptr, nullptr);
     if (rc != TRUE || GetLastError() != ERROR_SUCCESS) {
         return FALSE;
     }
@@ -94,12 +96,12 @@ static LSA_UNICODE_STRING StringToLsaUnicodeString(LPCTSTR string) {
 
 static BOOL ObtainLockPagesPrivilege() {
     HANDLE token;
-    PTOKEN_USER user = NULL;
+    PTOKEN_USER user = nullptr;
 
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == TRUE) {
         DWORD size = 0;
 
-        GetTokenInformation(token, TokenUser, NULL, 0, &size);
+        GetTokenInformation(token, TokenUser, nullptr, 0, &size);
         if (size) {
             user = (PTOKEN_USER) LocalAlloc(LPTR, size);
         }
@@ -117,7 +119,7 @@ static BOOL ObtainLockPagesPrivilege() {
     ZeroMemory(&attributes, sizeof(attributes));
 
     BOOL result = FALSE;
-    if (LsaOpenPolicy(NULL, &attributes, POLICY_ALL_ACCESS, &handle) == 0) {
+    if (LsaOpenPolicy(nullptr, &attributes, POLICY_ALL_ACCESS, &handle) == 0) {
         LSA_UNICODE_STRING str = StringToLsaUnicodeString(_T(SE_LOCK_MEMORY_NAME));
 
         if (LsaAddAccountRights(handle, user->User.Sid, &str, 1) == 0) {
@@ -162,7 +164,7 @@ void Mem::allocate(MemInfo &info, bool enabled)
         return;
     }
 
-    info.memory = static_cast<uint8_t*>(VirtualAlloc(nullptr, info.size, MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE));
+    info.memory = static_cast<uint8_t*>(xlarig::VirtualMemory::allocateLargePagesMemory(info.size));
     if (info.memory) {
         info.hugePages = info.pages;
 
@@ -176,7 +178,7 @@ void Mem::allocate(MemInfo &info, bool enabled)
 void Mem::release(MemInfo &info)
 {
     if (info.hugePages) {
-        VirtualFree(info.memory, 0, MEM_RELEASE);
+        xlarig::VirtualMemory::freeLargePagesMemory(info.memory, info.size);
     }
     else {
         _mm_free(info.memory);

@@ -1,11 +1,12 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,8 +30,9 @@
 #include <stdio.h>
 
 
-#include "common/log/Log.h"
-#include "core/Config.h"
+#include "base/io/log/Log.h"
+#include "base/tools/Handle.h"
+#include "core/config/Config.h"
 #include "core/Controller.h"
 #include "workers/Hashrate.h"
 
@@ -46,10 +48,10 @@ inline static const char *format(double h, char *buf, size_t size)
 }
 
 
-Hashrate::Hashrate(size_t threads, xmrig::Controller *controller) :
+Hashrate::Hashrate(size_t threads, xlarig::Controller *controller) :
     m_highest(0.0),
     m_threads(threads),
-    m_controller(controller)
+    m_timer(nullptr)
 {
     m_counts     = new uint64_t*[threads];
     m_timestamps = new uint64_t*[threads];
@@ -64,10 +66,11 @@ Hashrate::Hashrate(size_t threads, xmrig::Controller *controller) :
     const int printTime = controller->config()->printTime();
 
     if (printTime > 0) {
-        uv_timer_init(uv_default_loop(), &m_timer);
-        m_timer.data = this;
+        m_timer = new uv_timer_t;
+        uv_timer_init(uv_default_loop(), m_timer);
+        m_timer->data = this;
 
-       uv_timer_start(&m_timer, Hashrate::onReport, (printTime + 4) * 1000, printTime * 1000);
+        uv_timer_start(m_timer, Hashrate::onReport, (printTime + 4) * 1000, printTime * 1000);
     }
 }
 
@@ -159,8 +162,7 @@ void Hashrate::print() const
     char num3[8] = { 0 };
     char num4[8] = { 0 };
 
-    LOG_INFO(m_controller->config()->isColors() ? WHITE_BOLD("speed") " 10s/60s/15m " CYAN_BOLD("%s") CYAN(" %s %s ") CYAN_BOLD("H/s") " max " CYAN_BOLD("%s H/s")
-                                                : "speed 10s/60s/15m %s %s %s H/s max %s H/s",
+    LOG_INFO(WHITE_BOLD("speed") " 10s/60s/15m " CYAN_BOLD("%s") CYAN(" %s %s ") CYAN_BOLD("H/s") " max " CYAN_BOLD("%s H/s"),
              format(calc(ShortInterval),  num1, sizeof(num1)),
              format(calc(MediumInterval), num2, sizeof(num2)),
              format(calc(LargeInterval),  num3, sizeof(num3)),
@@ -171,7 +173,8 @@ void Hashrate::print() const
 
 void Hashrate::stop()
 {
-    uv_timer_stop(&m_timer);
+    xlarig::Handle::close(m_timer);
+    m_timer = nullptr;
 }
 
 

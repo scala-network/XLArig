@@ -1,10 +1,10 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2018 XMRig       <support@xmrig.com>
+ * Copyright 2016-2018 XLArig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,11 +27,11 @@
 #include <stdint.h>
 
 
-#include "common/xmrig.h"
+#include "common/xlarig.h"
 #include "rapidjson/fwd.h"
 
 
-namespace xmrig {
+namespace xlarig {
 
 
 class IThread
@@ -51,7 +51,7 @@ public:
         PentaWay
     };
 
-    virtual ~IThread() {}
+    virtual ~IThread() = default;
 
     virtual Algo algorithm() const                                    = 0;
     virtual int priority() const                                      = 0;
@@ -61,7 +61,7 @@ public:
     virtual size_t index() const                                      = 0;
     virtual Type type() const                                         = 0;
 
-#   ifndef XMRIG_NO_API
+#   ifdef XMRIG_FEATURE_API
     virtual rapidjson::Value toAPI(rapidjson::Document &doc) const = 0;
 #   endif
 
@@ -71,7 +71,7 @@ public:
 };
 
 
-} /* namespace xmrig */
+} /* namespace xlarig */
 
 
 #endif // XMRIG_ITHREAD_H

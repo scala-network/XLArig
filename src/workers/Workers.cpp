@@ -1,11 +1,12 @@
-/* XMRig
+/* XMRig and XLArig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,42 +28,51 @@
 
 
 #include "api/Api.h"
-#include "common/log/Log.h"
-#include "core/Config.h"
+#include "base/io/log/Log.h"
+#include "base/tools/Handle.h"
+#include "core/config/Config.h"
 #include "core/Controller.h"
-#include "crypto/CryptoNight_constants.h"
+#include "crypto/cn/CryptoNight_constants.h"
 #include "interfaces/IJobResultListener.h"
 #include "interfaces/IThread.h"
 #include "Mem.h"
 #include "rapidjson/document.h"
-#include "workers/Handle.h"
 #include "workers/Hashrate.h"
 #include "workers/MultiWorker.h"
+#include "workers/ThreadHandle.h"
 #include "workers/Workers.h"
 
 
 bool Workers::m_active = false;
 bool Workers::m_enabled = true;
 Hashrate *Workers::m_hashrate = nullptr;
-IJobResultListener *Workers::m_listener = nullptr;
-Job Workers::m_job;
+xlarig::IJobResultListener *Workers::m_listener = nullptr;
+xlarig::Job Workers::m_job;
 Workers::LaunchStatus Workers::m_status;
 std::atomic<int> Workers::m_paused;
 std::atomic<uint64_t> Workers::m_sequence;
-std::list<JobResult> Workers::m_queue;
-std::vector<Handle*> Workers::m_workers;
+std::list<xlarig::JobResult> Workers::m_queue;
+std::vector<ThreadHandle*> Workers::m_workers;
 uint64_t Workers::m_ticks = 0;
-uv_async_t Workers::m_async;
+uv_async_t *Workers::m_async = nullptr;
 uv_mutex_t Workers::m_mutex;
 uv_rwlock_t Workers::m_rwlock;
-uv_timer_t Workers::m_timer;
-xmrig::Controller *Workers::m_controller = nullptr;
+uv_timer_t *Workers::m_timer = nullptr;
+xlarig::Controller *Workers::m_controller = nullptr;
+
+#ifdef XMRIG_ALGO_RANDOMX
+uv_rwlock_t Workers::m_rx_dataset_lock;
+defyx_cache *Workers::m_rx_cache = nullptr;
+defyx_dataset *Workers::m_rx_dataset = nullptr;
+uint8_t Workers::m_rx_seed_hash[32] = {};
+std::atomic<uint32_t> Workers::m_rx_dataset_init_thread_counter = {};
+#endif
 
 
-Job Workers::job()
+xlarig::Job Workers::job()
 {
     uv_rwlock_rdlock(&m_rwlock);
-    Job job = m_job;
+    xlarig::Job job = m_job;
     uv_rwlock_rdunlock(&m_rwlock);
 
     return job;
@@ -97,16 +107,15 @@ void Workers::printHashrate(bool detail)
     }
 
     if (detail) {
-        const bool isColors = m_controller->config()->isColors();
         char num1[8] = { 0 };
         char num2[8] = { 0 };
         char num3[8] = { 0 };
 
-        Log::i()->text("%s| THREAD | AFFINITY | 10s H/s | 60s H/s | 15m H/s |", isColors ? "\x1B[1;37m" : "");
+        xlarig::Log::print(WHITE_BOLD_S "| THREAD | AFFINITY | 10s H/s | 60s H/s | 15m H/s |");
 
         size_t i = 0;
-        for (const xmrig::IThread *thread : m_controller->config()->threads()) {
-             Log::i()->text("| %6zu | %8" PRId64 " | %7s | %7s | %7s |",
+        for (const xlarig::IThread *thread : m_controller->config()->threads()) {
+             xlarig::Log::print("| %6zu | %8" PRId64 " | %7s | %7s | %7s |",
                             thread->index(),
                             thread->affinity(),
                             Hashrate::format(m_hashrate->calc(thread->index(), Hashrate::ShortInterval),  num1, sizeof num1),
@@ -138,7 +147,7 @@ void Workers::setEnabled(bool enabled)
 }
 
 
-void Workers::setJob(const Job &job, bool donate)
+void Workers::setJob(const xlarig::Job &job, bool donate)
 {
     uv_rwlock_wrlock(&m_rwlock);
     m_job = job;
@@ -158,24 +167,28 @@ void Workers::setJob(const Job &job, bool donate)
 }
 
 
-void Workers::start(xmrig::Controller *controller)
+void Workers::start(xlarig::Controller *controller)
 {
 #   ifdef APP_DEBUG
     LOG_NOTICE("THREADS ------------------------------------------------------------------");
-    for (const xmrig::IThread *thread : controller->config()->threads()) {
+    for (const xlarig::IThread *thread : controller->config()->threads()) {
         thread->print();
     }
     LOG_NOTICE("--------------------------------------------------------------------------");
 #   endif
 
+#   ifndef XMRIG_NO_ASM
+    xlarig::CpuThread::patchAsmVariants();
+#   endif
+
     m_controller = controller;
 
-    const std::vector<xmrig::IThread *> &threads = controller->config()->threads();
+    const std::vector<xlarig::IThread *> &threads = controller->config()->threads();
     m_status.algo    = controller->config()->algorithm().algo();
-    m_status.colors  = controller->config()->isColors();
+    m_status.variant = controller->config()->algorithm().variant();
     m_status.threads = threads.size();
 
-    for (const xmrig::IThread *thread : threads) {
+    for (const xlarig::IThread *thread : threads) {
        m_status.ways += thread->multiway();
     }
 
@@ -184,35 +197,38 @@ void Workers::start(xmrig::Controller *controller)
     uv_mutex_init(&m_mutex);
     uv_rwlock_init(&m_rwlock);
 
+#   ifdef XMRIG_ALGO_RANDOMX
+    uv_rwlock_init(&m_rx_dataset_lock);
+#   endif
+
     m_sequence = 1;
     m_paused   = 1;
 
-    uv_async_init(uv_default_loop(), &m_async, Workers::onResult);
-    uv_timer_init(uv_default_loop(), &m_timer);
-    uv_timer_start(&m_timer, Workers::onTick, 500, 500);
+    m_async = new uv_async_t;
+    uv_async_init(uv_default_loop(), m_async, Workers::onResult);
+
+    m_timer = new uv_timer_t;
+    uv_timer_init(uv_default_loop(), m_timer);
+    uv_timer_start(m_timer, Workers::onTick, 500, 500);
 
     uint32_t offset = 0;
 
-    for (xmrig::IThread *thread : threads) {
-        Handle *handle = new Handle(thread, offset, m_status.ways);
+    for (xlarig::IThread *thread : threads) {
+        ThreadHandle *handle = new ThreadHandle(thread, offset, m_status.ways);
         offset += thread->multiway();
 
         m_workers.push_back(handle);
         handle->start(Workers::onReady);
-    }
-
-    if (controller->config()->isShouldSave()) {
-        controller->config()->save();
     }
 }
 
 
 void Workers::stop()
 {
-    uv_timer_stop(&m_timer);
+    xlarig::Handle::close(m_timer);
+    xlarig::Handle::close(m_async);
     m_hashrate->stop();
 
-    uv_close(reinterpret_cast<uv_handle_t*>(&m_async), nullptr);
     m_paused   = 0;
     m_sequence = 0;
 
@@ -222,22 +238,22 @@ void Workers::stop()
 }
 
 
-void Workers::submit(const JobResult &result)
+void Workers::submit(const xlarig::JobResult &result)
 {
     uv_mutex_lock(&m_mutex);
     m_queue.push_back(result);
     uv_mutex_unlock(&m_mutex);
 
-    uv_async_send(&m_async);
+    uv_async_send(m_async);
 }
 
 
-#ifndef XMRIG_NO_API
+#ifdef XMRIG_FEATURE_API
 void Workers::threadsSummary(rapidjson::Document &doc)
 {
     uv_mutex_lock(&m_mutex);
     const uint64_t pages[2] = { m_status.hugePages, m_status.pages };
-    const uint64_t memory   = m_status.ways * xmrig::cn_select_memory(m_status.algo);
+    const uint64_t memory   = m_status.ways * xlarig::cn_select_memory(m_status.algo, m_status.variant);
     uv_mutex_unlock(&m_mutex);
 
     auto &allocator = doc.GetAllocator();
@@ -254,7 +270,7 @@ void Workers::threadsSummary(rapidjson::Document &doc)
 
 void Workers::onReady(void *arg)
 {
-    auto handle = static_cast<Handle*>(arg);
+    auto handle = static_cast<ThreadHandle*>(arg);
 
     IWorker *worker = nullptr;
 
@@ -284,20 +300,20 @@ void Workers::onReady(void *arg)
     }
 
     handle->setWorker(worker);
-/*
+
     if (!worker->selfTest()) {
         LOG_ERR("thread %zu error: \"hash self-test failed\".", handle->worker()->id());
 
         return;
     }
-*/
+
     start(worker);
 }
 
 
-void Workers::onResult(uv_async_t *handle)
+void Workers::onResult(uv_async_t *)
 {
-    std::list<JobResult> results;
+    std::list<xlarig::JobResult> results;
 
     uv_mutex_lock(&m_mutex);
     while (!m_queue.empty()) {
@@ -314,9 +330,9 @@ void Workers::onResult(uv_async_t *handle)
 }
 
 
-void Workers::onTick(uv_timer_t *handle)
+void Workers::onTick(uv_timer_t *)
 {
-    for (Handle *handle : m_workers) {
+    for (ThreadHandle *handle : m_workers) {
         if (!handle->worker()) {
             return;
         }
@@ -341,17 +357,19 @@ void Workers::start(IWorker *worker)
 
     if (m_status.started == m_status.threads) {
         const double percent = (double) m_status.hugePages / m_status.pages * 100.0;
-        const size_t memory  = m_status.ways * xmrig::cn_select_memory(m_status.algo) / 1048576;
+        const size_t memory  = m_status.ways * xlarig::cn_select_memory(m_status.algo, m_status.variant) / 1024;
 
-        if (m_status.colors) {
-            LOG_INFO(GREEN_BOLD("READY (CPU)") " threads " CYAN_BOLD("%zu(%zu)") " huge pages %s%zu/%zu %1.0f%%\x1B[0m memory " CYAN_BOLD("%zu.0 MB") "",
+#       ifdef XMRIG_ALGO_RANDOMX
+        if (m_status.algo == xlarig::RANDOM_X) {
+            LOG_INFO(GREEN_BOLD("READY (CPU)") " threads " CYAN_BOLD("%zu(%zu)") " memory " CYAN_BOLD("%zu KB") "",
+                     m_status.threads, m_status.ways, memory);
+        } else
+#       endif
+        {
+            LOG_INFO(GREEN_BOLD("READY (CPU)") " threads " CYAN_BOLD("%zu(%zu)") " huge pages %s%zu/%zu %1.0f%%\x1B[0m memory " CYAN_BOLD("%zu KB") "",
                      m_status.threads, m_status.ways,
-                     (m_status.hugePages == m_status.pages ? "\x1B[1;32m" : (m_status.hugePages == 0 ? "\x1B[1;31m" : "\x1B[1;33m")),
+                     (m_status.hugePages == m_status.pages ? GREEN_BOLD_S : (m_status.hugePages == 0 ? RED_BOLD_S : YELLOW_BOLD_S)),
                      m_status.hugePages, m_status.pages, percent, memory);
-        }
-        else {
-            LOG_INFO("READY (CPU) threads %zu(%zu) huge pages %zu/%zu %1.0f%% memory %zu.0 MB",
-                     m_status.threads, m_status.ways, m_status.hugePages, m_status.pages, percent, memory);
         }
     }
 
@@ -359,3 +377,72 @@ void Workers::start(IWorker *worker)
 
     worker->start();
 }
+
+
+#ifdef XMRIG_ALGO_RANDOMX
+void Workers::updateDataset(const uint8_t* seed_hash, const uint32_t num_threads)
+{
+    // Check if we need to update cache and dataset
+    if (memcmp(m_rx_seed_hash, seed_hash, sizeof(m_rx_seed_hash)) == 0)
+        return;
+
+    const uint32_t thread_id = m_rx_dataset_init_thread_counter++;
+    LOG_DEBUG("Thread %u started updating RandomX dataset", thread_id);
+
+    // Wait for all threads to get here
+    do {
+        if (m_sequence.load(std::memory_order_relaxed) == 0) {
+            // Exit immediately if workers were stopped
+            return;
+        }
+        std::this_thread::yield();
+    } while (m_rx_dataset_init_thread_counter.load() != num_threads);
+
+    // One of the threads updates cache
+    uv_rwlock_wrlock(&m_rx_dataset_lock);
+    if (memcmp(m_rx_seed_hash, seed_hash, sizeof(m_rx_seed_hash)) != 0) {
+        memcpy(m_rx_seed_hash, seed_hash, sizeof(m_rx_seed_hash));
+        defyx_init_cache(m_rx_cache, m_rx_seed_hash, sizeof(m_rx_seed_hash));
+    }
+    uv_rwlock_wrunlock(&m_rx_dataset_lock);
+
+    // All threads update dataset
+    const uint32_t a = (defyx_dataset_item_count() * thread_id) / num_threads;
+    const uint32_t b = (defyx_dataset_item_count() * (thread_id + 1)) / num_threads;
+    defyx_init_dataset(m_rx_dataset, m_rx_cache, a, b - a);
+
+    LOG_DEBUG("Thread %u finished updating RandomX dataset", thread_id);
+
+    // Wait for all threads to complete
+    --m_rx_dataset_init_thread_counter;
+    do {
+        if (m_sequence.load(std::memory_order_relaxed) == 0) {
+            // Exit immediately if workers were stopped
+            return;
+        }
+        std::this_thread::yield();
+    } while (m_rx_dataset_init_thread_counter.load() != 0);
+}
+
+defyx_dataset* Workers::getDataset()
+{
+    if (m_rx_dataset)
+        return m_rx_dataset;
+
+    uv_rwlock_wrlock(&m_rx_dataset_lock);
+    if (!m_rx_dataset) {
+        defyx_dataset* dataset = defyx_alloc_dataset(RANDOMX_FLAG_LARGE_PAGES);
+        if (!dataset) {
+            dataset = defyx_alloc_dataset(RANDOMX_FLAG_DEFAULT);
+        }
+        m_rx_cache = defyx_alloc_cache(static_cast<defyx_flags>(RANDOMX_FLAG_JIT | RANDOMX_FLAG_LARGE_PAGES));
+        if (!m_rx_cache) {
+            m_rx_cache = defyx_alloc_cache(RANDOMX_FLAG_JIT);
+        }
+        m_rx_dataset = dataset;
+    }
+    uv_rwlock_wrunlock(&m_rx_dataset_lock);
+
+    return m_rx_dataset;
+}
+#endif
