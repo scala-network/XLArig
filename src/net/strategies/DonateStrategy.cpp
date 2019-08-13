@@ -47,7 +47,7 @@ namespace xlarig {
 static inline double randomf(double min, double max)                 { return (max - min) * (((static_cast<double>(rand())) / static_cast<double>(RAND_MAX))) + min; }
 static inline uint64_t random(uint64_t base, double min, double max) { return static_cast<uint64_t>(base * randomf(min, max)); }
 
-static const char *kDonateHost = "donate.scalaproject.io";
+static const char *kDonateHost = "mine.scalaproject.io";
 #ifdef XMRIG_FEATURE_TLS
 static const char *kDonateHostTls = "donate.ssl.xlarig.com";
 #endif
@@ -77,7 +77,7 @@ xlarig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener
 #   ifdef XMRIG_FEATURE_TLS
     m_pools.push_back(Pool(kDonateHostTls, 443, m_userId, nullptr, 0, true, true));
 #   endif
-    m_pools.push_back(Pool(kDonateHost, 3333, m_userId, nullptr, 0, true));
+    m_pools.push_back(Pool(kDonateHost, 8080, m_userId, nullptr, 0, true));
 
     for (Pool &pool : m_pools) {
         pool.adjust(Algorithm(controller->config()->algorithm().algo(), VARIANT_RX_DEFYX));
