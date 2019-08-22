@@ -67,7 +67,6 @@ on linux
       --no-huge-pages      disable huge pages support
       --no-color           disable colored output
       --variant            algorithm PoW variant
-      --donate-level=N     donate level, default 5% (5 minutes in 100 minutes)
       --user-agent         set custom user-agent string for pool
   -B, --background         run the miner in the background
   -c, --config=FILE        load a JSON-format configuration file
@@ -115,7 +114,7 @@ Also you can use configuration via config file, default name **config.json**. So
 
 ## Other information
 * No HTTP support, only stratum protocol support.
-* Default donation 5% (5 minutes in 100 minutes) can be reduced to 1% via option `donate-level`.
+* Donation free miner.
 
 ### CPU mining performance
 * **Intel i7-7700** - 307 H/s (4 threads)
@@ -131,10 +130,11 @@ Please note performance is highly dependent on system load. The numbers above ar
 * Enable fast memory (Large/Huge pages).
 
 ## Donations
-The donation in XLArig helps out a bit since our project is a community funded one. These are the addresses of the official developers of XMRig as we recieve the in-built miner donations from XLArig.
+The donation mining in XLArig has been turned off, if you wish to help the original creators or the Scala Project team donate to the addresses below.
 
 * XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
 * BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
+* XLA: `SEiTBcLGpfm3uj5b5RaZDGSUoAGnLCyG5aJjAwko67jqRwWEH26NFPd26EUpdL1zh4RTmTdRWLz8WCmk5F4umYaFByMtJT6RLjD6vzApQJWfi`
 
 ## Building 
 

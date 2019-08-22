@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -43,17 +43,20 @@ public:
     ~Buffer();
 
 
-    inline char *data()                   { return m_data; }
-    inline const char *data() const       { return m_data; }
-    inline size_t size() const            { return m_size; }
-    inline void from(const Buffer &other) { from(other.data(), other.size()); }
+    inline bool isEqual(const Buffer &other) const  { return m_size == other.m_size && (m_size == 0 || memcmp(m_data, other.m_data, m_size) == 0); }
+    inline char *data()                             { return m_data; }
+    inline const char *data() const                 { return m_data; }
+    inline size_t size() const                      { return m_size; }
+    inline void from(const Buffer &other)           { from(other.data(), other.size()); }
 
 
     void from(const char *data, size_t size);
 
 
-    inline Buffer &operator=(const Buffer &other) { from(other); return *this; }
-    inline Buffer &operator=(Buffer &&other)      { move(std::move(other)); return *this; }
+    inline bool operator!=(const Buffer &other) const   { return !isEqual(other); }
+    inline bool operator==(const Buffer &other) const   { return isEqual(other); }
+    inline Buffer &operator=(Buffer &&other)            { move(std::move(other)); return *this; }
+    inline Buffer &operator=(const Buffer &other)       { from(other); return *this; }
 
 
     static Buffer allocUnsafe(size_t size);

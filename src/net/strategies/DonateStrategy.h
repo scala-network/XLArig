@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -57,6 +57,8 @@ protected:
     inline void onJobReceived(IClient *client, const Job &job, const rapidjson::Value &) override                      { setJob(client, job); }
     inline void onResultAccepted(IClient *client, const SubmitResult &result, const char *error) override              { setResult(client, result, error); }
     inline void onResultAccepted(IStrategy *, IClient *client, const SubmitResult &result, const char *error) override { setResult(client, result, error); }
+    inline void onVerifyAlgorithm(const IClient *, const Algorithm &, bool *) override                                 {}
+    inline void onVerifyAlgorithm(IStrategy *, const IClient *, const Algorithm &, bool *) override                    {}
     inline void resume() override                                                                                      {}
 
     int64_t submit(const JobResult &result) override;
@@ -70,6 +72,7 @@ protected:
 
     void onClose(IClient *client, int failures) override;
     void onLogin(IClient *client, rapidjson::Document &doc, rapidjson::Value &params) override;
+    void onLogin(IStrategy *strategy, IClient *client, rapidjson::Document &doc, rapidjson::Value &params) override;
     void onLoginSuccess(IClient *client) override;
 
     void onTimer(const Timer *timer) override;
@@ -87,16 +90,18 @@ private:
 
     Client *createProxy();
     void idle(double min, double max);
+    void setAlgorithms(rapidjson::Document &doc, rapidjson::Value &params);
     void setJob(IClient *client, const Job &job);
     void setResult(IClient *client, const SubmitResult &result, const char *error);
     void setState(State state);
 
+    Algorithm m_algorithm;
     bool m_tls;
     char m_userId[65];
-    IClient *m_proxy;
     const uint64_t m_donateTime;
     const uint64_t m_idleTime;
     Controller *m_controller;
+    IClient *m_proxy;
     IStrategy *m_strategy;
     IStrategyListener *m_listener;
     State m_state;

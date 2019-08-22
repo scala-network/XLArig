@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ namespace xlarig {
 const static char *default_config =
 R"===(
 {
-    "algo": "cryptonight",
     "api": {
         "id": null,
         "worker-id": null
@@ -45,42 +44,47 @@ R"===(
         "access-token": null,
         "restricted": true
     },
-    "asm": true,
     "autosave": true,
-    "av": 0,
+    "version": 1,
     "background": false,
     "colors": true,
-    "cpu-affinity": null,
-    "cpu-priority": null,
-    "donate-level": 5,
+    "randomx": {
+        "init": -1,
+        "numa": true
+    },
+    "cpu": {
+        "enabled": true,
+        "huge-pages": true,
+        "hw-aes": null,
+        "priority": null,
+        "asm": true,
+        "argon2-impl": null,
+        "cn/0": false,
+        "cn-lite/0": false
+    },
+    "donate-level": 0,
     "donate-over-proxy": 1,
-    "huge-pages": true,
-    "hw-aes": null,
     "log-file": null,
-    "max-cpu-usage": 100,
     "pools": [
         {
+            "algo": null,
             "url": "donate.v2.xlarig.com:3333",
             "user": "YOUR_WALLET_ADDRESS",
             "pass": "x",
             "rig-id": null,
             "nicehash": false,
             "keepalive": false,
-            "variant": -1,
             "enabled": true,
             "tls": false,
             "tls-fingerprint": null,
-            "daemon": false,
-            "daemon-poll-interval": 1000
+            "daemon": false
         }
     ],
     "print-time": 60,
     "retries": 5,
     "retry-pause": 5,
-    "safe": false,
-    "threads": null,
-    "user-agent": null,
     "syslog": false,
+    "user-agent": null,
     "watch": true
 }
 )===";

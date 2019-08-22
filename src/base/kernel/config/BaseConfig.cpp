@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -34,6 +34,9 @@
 #   include <openssl/opensslv.h>
 #endif
 
+#ifdef XMRIG_FEATURE_HWLOC
+#   include "backend/cpu/Cpu.h"
+#endif
 
 #ifdef XMRIG_AMD_PROJECT
 #   if defined(__APPLE__)
@@ -60,14 +63,7 @@
 #include "version.h"
 
 
-xlarig::BaseConfig::BaseConfig() :
-    m_algorithm(CRYPTONIGHT, VARIANT_AUTO),
-    m_autoSave(true),
-    m_background(false),
-    m_dryRun(false),
-    m_syslog(false),
-    m_upgrade(false),
-    m_watch(true)
+xlarig::BaseConfig::BaseConfig()
 {
 }
 
@@ -102,22 +98,23 @@ void xlarig::BaseConfig::printVersions()
 #   elif defined(XMRIG_NVIDIA_PROJECT)
     const int cudaVersion = cuda_get_runtime_version();
     int length = snprintf(buf, sizeof buf, "CUDA/%d.%d ", cudaVersion / 1000, cudaVersion % 100);
-#   else
-    memset(buf, 0, 16);
+#   endif
 
-#   if defined(XMRIG_FEATURE_HTTP) || defined(XMRIG_FEATURE_TLS)
-    int length = 0;
-#   endif
-#   endif
+    std::string libs;
 
 #   if defined(XMRIG_FEATURE_TLS) && defined(OPENSSL_VERSION_TEXT)
     {
         constexpr const char *v = OPENSSL_VERSION_TEXT + 8;
-        length += snprintf(buf + length, (sizeof buf) - length, "OpenSSL/%.*s ", static_cast<int>(strchr(v, ' ') - v), v);
+        snprintf(buf, sizeof buf, "OpenSSL/%.*s ", static_cast<int>(strchr(v, ' ') - v), v);
+        libs += buf;
     }
 #   endif
 
-    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13slibuv/%s %s"), "LIBS", uv_version_string(), buf);
+#   if defined(XMRIG_FEATURE_HWLOC)
+    libs += Cpu::info()->backend();
+#   endif
+
+    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13slibuv/%s %s"), "LIBS", uv_version_string(), libs.c_str());
 }
 
 
@@ -137,6 +134,10 @@ bool xlarig::BaseConfig::read(const IJsonReader &reader, const char *fileName)
     Log::colors    = reader.getBool("colors", Log::colors);
     m_logFile      = reader.getString("log-file");
     m_userAgent    = reader.getString("user-agent");
+    m_version      = reader.getUint("version");
+
+    m_rebenchAlgo   = reader.getBool("rebench-algo", m_rebenchAlgo);
+    m_benchAlgoTime = reader.getInt("bench-algo-time", m_benchAlgoTime);
 
     setPrintTime(reader.getUint("print-time", 60));
 
@@ -146,33 +147,8 @@ bool xlarig::BaseConfig::read(const IJsonReader &reader, const char *fileName)
         m_apiWorkerId = Json::getString(api, "worker-id");
     }
 
-#   ifdef XMRIG_DEPRECATED
-    if (api.IsObject() && api.HasMember("port")) {
-        m_upgrade = true;
-        m_http.load(api);
-        m_http.setEnabled(Json::getUint(api, "port") > 0);
-        m_http.setHost("0.0.0.0");
-    }
-    else {
-        m_http.load(reader.getObject("http"));
-    }
-#   else
-    m_http.load(chain.getObject("http"));
-#   endif
-
-    m_algorithm.parseAlgorithm(reader.getString("algo", "cn"));
-
-    m_pools.load(reader.getArray("pools"));
-    m_pools.setDonateLevel(reader.getInt("donate-level", kDefaultDonateLevel));
-    m_pools.setProxyDonate(reader.getInt("donate-over-proxy", Pools::PROXY_DONATE_AUTO));
-    m_pools.setRetries(reader.getInt("retries"));
-    m_pools.setRetryPause(reader.getInt("retry-pause"));
-
-    if (!m_algorithm.isValid()) {
-        return false;
-    }
-
-    m_pools.adjust(m_algorithm);
+    m_http.load(reader.getObject("http"));
+    m_pools.load(reader);
 
     return m_pools.active() > 0;
 }

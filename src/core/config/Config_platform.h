@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -62,16 +62,13 @@ static const option options[] = {
     { "dry-run",               0, nullptr, IConfig::DryRunKey             },
     { "keepalive",             0, nullptr, IConfig::KeepAliveKey          },
     { "log-file",              1, nullptr, IConfig::LogFileKey            },
-    { "max-cpu-usage",         1, nullptr, IConfig::MaxCPUUsageKey        },
     { "nicehash",              0, nullptr, IConfig::NicehashKey           },
     { "no-color",              0, nullptr, IConfig::ColorKey              },
     { "no-huge-pages",         0, nullptr, IConfig::HugePagesKey          },
-    { "variant",               1, nullptr, IConfig::VariantKey            },
     { "pass",                  1, nullptr, IConfig::PasswordKey           },
     { "print-time",            1, nullptr, IConfig::PrintTimeKey          },
     { "retries",               1, nullptr, IConfig::RetriesKey            },
     { "retry-pause",           1, nullptr, IConfig::RetryPauseKey         },
-    { "safe",                  0, nullptr, IConfig::SafeKey               },
     { "syslog",                0, nullptr, IConfig::SyslogKey             },
     { "threads",               1, nullptr, IConfig::ThreadsKey            },
     { "url",                   1, nullptr, IConfig::UrlKey                },
@@ -84,40 +81,11 @@ static const option options[] = {
     { "asm",                   1, nullptr, IConfig::AssemblyKey           },
     { "daemon",                0, nullptr, IConfig::DaemonKey             },
     { "daemon-poll-interval",  1, nullptr, IConfig::DaemonPollKey         },
-
-#   ifdef XMRIG_DEPRECATED
-    { "api-port",              1, nullptr, IConfig::ApiPort               },
-    { "api-access-token",      1, nullptr, IConfig::ApiAccessTokenKey     },
-    { "api-no-restricted",     0, nullptr, IConfig::ApiRestrictedKey      },
-    { "api-ipv6",              0, nullptr, IConfig::ApiIPv6Key            },
-#   endif
-
+    { "rebench-algo",          0, nullptr, IConfig::RebenchAlgoKey        },
+    { "bench-algo-time",       1, nullptr, IConfig::BenchAlgoTimeKey      },
+    { "randomx-init",          1, nullptr, IConfig::RandomXInitKey        },
+    { "randomx-no-numa",       0, nullptr, IConfig::RandomXNumaKey        },
     { nullptr,                 0, nullptr, 0 }
-};
-
-
-static struct option const config_options[] = {
-    { "algo",              1, nullptr, IConfig::AlgorithmKey   },
-    { "av",                1, nullptr, IConfig::AVKey          },
-    { "background",        0, nullptr, IConfig::BackgroundKey  },
-    { "colors",            0, nullptr, IConfig::ColorKey       },
-    { "cpu-affinity",      1, nullptr, IConfig::CPUAffinityKey },
-    { "cpu-priority",      1, nullptr, IConfig::CPUPriorityKey },
-    { "donate-level",      1, nullptr, IConfig::DonateLevelKey },
-    { "donate-over-proxy", 1, nullptr, IConfig::ProxyDonateKey },
-    { "dry-run",           0, nullptr, IConfig::DryRunKey      },
-    { "huge-pages",        0, nullptr, IConfig::HugePagesKey   },
-    { "log-file",          1, nullptr, IConfig::LogFileKey     },
-    { "max-cpu-usage",     1, nullptr, IConfig::MaxCPUUsageKey },
-    { "print-time",        1, nullptr, IConfig::PrintTimeKey   },
-    { "retries",           1, nullptr, IConfig::RetriesKey     },
-    { "retry-pause",       1, nullptr, IConfig::RetryPauseKey  },
-    { "safe",              0, nullptr, IConfig::SafeKey        },
-    { "syslog",            0, nullptr, IConfig::SyslogKey      },
-    { "threads",           1, nullptr, IConfig::ThreadsKey     },
-    { "user-agent",        1, nullptr, IConfig::UserAgentKey   },
-    { "asm",               1, nullptr, IConfig::AssemblyKey    },
-    { nullptr,             0, nullptr, 0 }
 };
 
 

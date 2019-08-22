@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,10 +29,10 @@
 
 #include "3rdparty/http-parser/http_parser.h"
 #include "base/io/log/Log.h"
+#include "base/kernel/Platform.h"
 #include "base/net/dns/Dns.h"
 #include "base/net/http/HttpClient.h"
 #include "base/tools/Baton.h"
-#include "common/Platform.h"
 
 
 namespace xlarig {

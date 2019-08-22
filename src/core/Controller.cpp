@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,15 +26,14 @@
 #include <assert.h>
 
 
-#include "common/cpu/Cpu.h"
-#include "common/Platform.h"
+#include "backend/cpu/Cpu.h"
 #include "core/Controller.h"
+#include "core/Miner.h"
 #include "net/Network.h"
 
 
 xlarig::Controller::Controller(Process *process) :
-    Base(process),
-    m_network(nullptr)
+    Base(process)
 {
 }
 
@@ -64,11 +63,15 @@ int xlarig::Controller::init()
     return 0;
 }
 
+void xlarig::Controller::pre_start()
+{
+    m_miner = new Miner(this);
+}
+
 
 void xlarig::Controller::start()
 {
     Base::start();
-
     network()->connect();
 }
 
@@ -79,6 +82,19 @@ void xlarig::Controller::stop()
 
     delete m_network;
     m_network = nullptr;
+
+    m_miner->stop();
+
+    delete m_miner;
+    m_miner = nullptr;
+}
+
+
+xlarig::Miner *xlarig::Controller::miner() const
+{
+    assert(m_miner != nullptr);
+
+    return m_miner;
 }
 
 

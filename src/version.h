@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,16 +26,16 @@
 #define XMRIG_VERSION_H
 
 #define APP_ID        "xlarig"
-#define APP_NAME      "XLArig"
-#define APP_DESC      "XLArig CPU miner"
-#define APP_VERSION   "2.16.0-beta"
+#define APP_NAME      "XLARig"
+#define APP_DESC      "XLARig CPU miner"
+#define APP_VERSION   "3.1.0-mo1"
 #define APP_DOMAIN    "xlarig.com"
 #define APP_SITE      "www.xlarig.com"
 #define APP_COPYRIGHT "Copyright (C) 2016-2019 xlarig.com"
 #define APP_KIND      "cpu"
 
-#define APP_VER_MAJOR  2
-#define APP_VER_MINOR  16
+#define APP_VER_MAJOR  3
+#define APP_VER_MINOR  1
 #define APP_VER_PATCH  0
 
 #ifdef _MSC_VER

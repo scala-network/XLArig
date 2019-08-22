@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 
 
 #include "base/io/log/Log.h"
+#include "base/kernel/interfaces/IJsonReader.h"
 #include "base/net/stratum/Pools.h"
 #include "base/net/stratum/strategies/FailoverStrategy.h"
 #include "base/net/stratum/strategies/SinglePoolStrategy.h"
@@ -32,10 +33,10 @@
 
 
 xlarig::Pools::Pools() :
-    m_donateLevel(kDefaultDonateLevel),
+    m_donateLevel(0),
     m_retries(5),
     m_retryPause(5),
-    m_proxyDonate(PROXY_DONATE_AUTO)
+    m_proxyDonate(PROXY_DONATE_NONE)
 {
 #   ifdef XMRIG_PROXY_PROJECT
     m_retries    = 2;
@@ -103,22 +104,16 @@ size_t xlarig::Pools::active() const
 }
 
 
-void xlarig::Pools::adjust(const Algorithm &algorithm)
-{
-    for (Pool &pool : m_data) {
-        pool.adjust(algorithm);
-    }
-}
-
-
-void xlarig::Pools::load(const rapidjson::Value &pools)
+void xlarig::Pools::load(const IJsonReader &reader)
 {
     m_data.clear();
 
+    const rapidjson::Value &pools = reader.getArray("pools");
     if (!pools.IsArray()) {
         return;
     }
 
+    bool mo = false;
     for (const rapidjson::Value &value : pools.GetArray()) {
         if (!value.IsObject()) {
             continue;
@@ -126,9 +121,16 @@ void xlarig::Pools::load(const rapidjson::Value &pools)
 
         Pool pool(value);
         if (pool.isValid()) {
+            if (m_data.empty() && strstr(pool.host(), "moneroocean.stream")) mo = true;
             m_data.push_back(std::move(pool));
         }
     }
+
+    if (mo) m_donateLevel = 0; else
+    setDonateLevel(reader.getInt("donate-level", kDefaultDonateLevel));
+    setProxyDonate(reader.getInt("donate-over-proxy", PROXY_DONATE_NONE));
+    setRetries(reader.getInt("retries"));
+    setRetryPause(reader.getInt("retry-pause"));
 }
 
 
@@ -136,11 +138,11 @@ void xlarig::Pools::print() const
 {
     size_t i = 1;
     for (const Pool &pool : m_data) {
-        Log::print(GREEN_BOLD(" * ") WHITE_BOLD("POOL #%-7zu") CSI "1;%dm%s" CLEAR " variant " WHITE_BOLD("%s"),
+        Log::print(GREEN_BOLD(" * ") WHITE_BOLD("POOL #%-7zu") CSI "1;%dm%s" CLEAR " algo " WHITE_BOLD("%s"),
                    i,
                    (pool.isEnabled() ? (pool.isTLS() ? 32 : 36) : 31),
                    pool.url().data(),
-                   pool.algorithm().variantName()
+                   pool.algorithm().isValid() ? pool.algorithm().shortName() : "auto"
                    );
 
         i++;

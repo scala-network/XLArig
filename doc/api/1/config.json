@@ -12,7 +12,7 @@
     "colors": true,
     "cpu-affinity": null,
     "cpu-priority": null,
-    "donate-level": 5,
+    "donate-level": 0,
     "huge-pages": true,
     "hw-aes": null,
     "log-file": null,

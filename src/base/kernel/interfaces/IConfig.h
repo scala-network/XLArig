@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -65,7 +65,6 @@ public:
         UserAgentKey         = 1008,
         UserKey              = 'u',
         UserpassKey          = 'O',
-        VariantKey           = 1010,
         VerboseKey           = 1100,
         TlsKey               = 1013,
         FingerprintKey       = 1014,
@@ -73,28 +72,23 @@ public:
         DaemonKey            = 1018,
         DaemonPollKey        = 1019,
 
-#       ifdef XMRIG_DEPRECATED
-        ApiPort              = 4000,
-        ApiAccessTokenKey    = 4001,
-        ApiIPv6Key           = 4003,
-        ApiRestrictedKey     = 4004,
-#       endif
-
         // xlarig common
         CPUPriorityKey       = 1021,
         NicehashKey          = 1006,
         PrintTimeKey         = 1007,
+
+        RebenchAlgoKey       = 10001,
+        BenchAlgoTimeKey     = 10002,
 
         // xlarig cpu
         AVKey                = 'v',
         CPUAffinityKey       = 1020,
         DryRunKey            = 5000,
         HugePagesKey         = 1009,
-        MaxCPUUsageKey       = 1004,
-        SafeKey              = 1005,
         ThreadsKey           = 't',
-//        HardwareAESKey       = 1011,
         AssemblyKey          = 1015,
+        RandomXInitKey       = 1022,
+        RandomXNumaKey       = 1023,
 
         // xlarig amd
         OclPlatformKey       = 1400,
@@ -144,7 +138,6 @@ public:
     virtual bool isWatch() const                                       = 0;
     virtual bool read(const IJsonReader &reader, const char *fileName) = 0;
     virtual bool save()                                                = 0;
-    virtual const Algorithm &algorithm() const                         = 0;
     virtual const String &fileName() const                             = 0;
     virtual void getJSON(rapidjson::Document &doc) const               = 0;
     virtual void setFileName(const char *fileName)                     = 0;

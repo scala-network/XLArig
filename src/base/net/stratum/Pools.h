@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 namespace xlarig {
 
 
+class IJsonReader;
 class IStrategy;
 class IStrategyListener;
 
@@ -63,15 +64,15 @@ public:
     IStrategy *createStrategy(IStrategyListener *listener) const;
     rapidjson::Value toJSON(rapidjson::Document &doc) const;
     size_t active() const;
-    void adjust(const Algorithm &algorithm);
-    void load(const rapidjson::Value &pools);
+    void load(const IJsonReader &reader);
     void print() const;
+
+private:
     void setDonateLevel(int level);
     void setProxyDonate(int value);
     void setRetries(int retries);
     void setRetryPause(int retryPause);
 
-private:
     int m_donateLevel;
     int m_retries;
     int m_retryPause;

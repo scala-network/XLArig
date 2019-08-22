@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,8 +35,8 @@
 #include "base/io/Watcher.h"
 #include "base/kernel/Base.h"
 #include "base/kernel/interfaces/IBaseListener.h"
+#include "base/kernel/Platform.h"
 #include "base/kernel/Process.h"
-#include "common/Platform.h"
 #include "core/config/Config.h"
 #include "core/config/ConfigTransform.h"
 
@@ -47,7 +47,15 @@
 
 
 #ifdef XMRIG_FEATURE_API
-#   include "api/Api.h"
+#   include "base/api/Api.h"
+#   include "base/api/interfaces/IApiRequest.h"
+
+namespace xlarig {
+
+static const char *kConfigPathV1 = "/1/config";
+static const char *kConfigPathV2 = "/2/config";
+
+} // namespace xlarig
 #endif
 
 
@@ -167,12 +175,13 @@ int xlarig::Base::init()
 
 #   ifdef XMRIG_FEATURE_API
     d_ptr->api = new Api(this);
+    d_ptr->api->addListener(this);
 #   endif
 
     Platform::init(config()->userAgent());
 
 #   ifndef XMRIG_PROXY_PROJECT
-    Platform::setProcessPriority(config()->priority());
+    Platform::setProcessPriority(config()->cpu().priority());
 #   endif
 
     if (!config()->isBackground()) {
@@ -288,3 +297,31 @@ void xlarig::Base::onFileChanged(const String &fileName)
 
     d_ptr->replace(config);
 }
+
+
+#ifdef XMRIG_FEATURE_API
+void xlarig::Base::onRequest(IApiRequest &request)
+{
+    if (request.method() == IApiRequest::METHOD_GET) {
+        if (request.url() == kConfigPathV1 || request.url() == kConfigPathV2) {
+            if (request.isRestricted()) {
+                return request.done(403);
+            }
+
+            request.accept();
+            config()->getJSON(request.doc());
+        }
+    }
+    else if (request.method() == IApiRequest::METHOD_PUT || request.method() == IApiRequest::METHOD_POST) {
+        if (request.url() == kConfigPathV1 || request.url() == kConfigPathV2) {
+            request.accept();
+
+            if (!reload(request.json())) {
+                return request.done(400);
+            }
+
+            request.done(204);
+        }
+    }
+}
+#endif

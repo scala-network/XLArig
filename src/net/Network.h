@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
  * Copyright 2019      Howard Chu  <https://github.com/hyc>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include <vector>
 
 
-#include "api/interfaces/IApiListener.h"
+#include "base/api/interfaces/IApiListener.h"
 #include "base/kernel/interfaces/IBaseListener.h"
 #include "base/kernel/interfaces/IStrategyListener.h"
 #include "base/kernel/interfaces/ITimerListener.h"
@@ -63,9 +63,14 @@ protected:
     void onConfigChanged(Config *config, Config *previousConfig) override;
     void onJob(IStrategy *strategy, IClient *client, const Job &job) override;
     void onJobResult(const JobResult &result) override;
+    void onLogin(IStrategy *strategy, IClient *client, rapidjson::Document &doc, rapidjson::Value &params) override;
     void onPause(IStrategy *strategy) override;
-    void onRequest(IApiRequest &request) override;
     void onResultAccepted(IStrategy *strategy, IClient *client, const SubmitResult &result, const char *error) override;
+    void onVerifyAlgorithm(IStrategy *strategy, const  IClient *client, const Algorithm &algorithm, bool *ok) override;
+
+#   ifdef XMRIG_FEATURE_API
+    void onRequest(IApiRequest &request) override;
+#   endif
 
 private:
     constexpr static int kTickInterval = 1 * 1000;
@@ -74,8 +79,8 @@ private:
     void tick();
 
 #   ifdef XMRIG_FEATURE_API
-    void getConnection(rapidjson::Value &reply, rapidjson::Document &doc) const;
-    void getResults(rapidjson::Value &reply, rapidjson::Document &doc) const;
+    void getConnection(rapidjson::Value &reply, rapidjson::Document &doc, int version) const;
+    void getResults(rapidjson::Value &reply, rapidjson::Document &doc, int version) const;
 #   endif
 
     Controller *m_controller;

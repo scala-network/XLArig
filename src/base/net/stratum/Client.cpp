@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -162,7 +162,7 @@ int64_t xlarig::Client::submit(const JobResult &result)
     Buffer::toHex(reinterpret_cast<const char*>(&result.nonce), 4, nonce);
     nonce[8] = '\0';
 
-    Buffer::toHex(result.result, 32, data);
+    Buffer::toHex(result.result(), 32, data);
     data[64] = '\0';
 #   endif
 
@@ -313,7 +313,7 @@ bool xlarig::Client::parseJob(const rapidjson::Value &params, int *code)
         return false;
     }
 
-    Job job(m_id, has<EXT_NICEHASH>(), m_pool.algorithm(), m_rpcId);
+    Job job(has<EXT_NICEHASH>(), m_pool.algorithm(), m_rpcId);
 
     if (!job.setId(params["job_id"].GetString())) {
         *code = 3;
@@ -330,28 +330,24 @@ bool xlarig::Client::parseJob(const rapidjson::Value &params, int *code)
         return false;
     }
 
-    if (params.HasMember("algo")) {
-        job.setAlgorithm(params["algo"].GetString());
+    const char *algo = Json::getString(params, "algo");
+    if (algo) {
+        job.setAlgorithm(algo);
     }
 
-    if (params.HasMember("variant")) {
-        const rapidjson::Value &variant = params["variant"];
-
-        if (variant.IsInt()) {
-            job.setVariant(variant.GetInt());
-        }
-        else if (variant.IsString()){
-            job.setVariant(variant.GetString());
-        }
-    }
-
-    job.setSeedHash(Json::getString(params, "seed_hash"));
     job.setHeight(Json::getUint64(params, "height"));
 
-    if (!verifyAlgorithm(job.algorithm())) {
+    if (!verifyAlgorithm(job.algorithm(), algo)) {
         *code = 6;
+        return false;
+    }
 
-        close();
+    if (job.algorithm().family() == Algorithm::RANDOM_X && !job.setSeedHash(Json::getString(params, "seed_hash"))) {
+        if (!isQuiet()) {
+            LOG_ERR("[%s] failed to parse field \"seed_hash\" required by RandomX", url(), algo);
+        }
+
+        *code = 7;
         return false;
     }
 
@@ -426,30 +422,24 @@ bool xlarig::Client::send(BIO *bio)
 }
 
 
-bool xlarig::Client::verifyAlgorithm(const Algorithm &algorithm) const
+bool xlarig::Client::verifyAlgorithm(const Algorithm &algorithm, const char *algo) const
 {
-#   ifdef XMRIG_PROXY_PROJECT
-    if (m_pool.algorithm().variant() == VARIANT_AUTO || m_id == -1) {
-        return true;
-    }
-#   endif
+    if (!algorithm.isValid()) {
+        if (!isQuiet()) {
+            LOG_ERR("[%s] Unknown/unsupported algorithm \"%s\" detected, reconnect", url(), algo);
+        }
 
-    if (m_pool.isCompatible(algorithm)) {
-        return true;
-    }
-
-    if (isQuiet()) {
         return false;
     }
 
-    if (algorithm.isValid()) {
-        LOG_ERR("Incompatible algorithm \"%s\" detected, reconnect", algorithm.name());
-    }
-    else {
-        LOG_ERR("Unknown/unsupported algorithm detected, reconnect");
+    bool ok = true;
+    m_listener->onVerifyAlgorithm(this, algorithm, &ok);
+
+    if (!ok && !isQuiet()) {
+        LOG_ERR("[%s] Incompatible/disabled algorithm \"%s\" detected, reconnect", url(), algorithm.shortName());
     }
 
-    return false;
+    return ok;
 }
 
 
@@ -586,19 +576,6 @@ void xlarig::Client::login()
         params.AddMember("rigid", m_pool.rigId().toJSON(), allocator);
     }
 
-#   ifdef XMRIG_PROXY_PROJECT
-    if (m_pool.algorithm().variant() != xlarig::VARIANT_AUTO)
-#   endif
-    {
-        Value algo(kArrayType);
-
-        for (const auto &a : m_pool.algorithms()) {
-            algo.PushBack(StringRef(a.shortName()), allocator);
-        }
-
-        params.AddMember("algo", algo, allocator);
-    }
-
     m_listener->onLogin(this, doc, params);
 
     JsonRequest::create(doc, 1, "login", params);
@@ -722,6 +699,9 @@ void xlarig::Client::parseNotification(const char *method, const rapidjson::Valu
         if (parseJob(params, &code)) {
             m_listener->onJobReceived(this, m_job, params);
         }
+        else {
+            close();
+        }
 
         return;
     }
@@ -739,7 +719,7 @@ void xlarig::Client::parseResponse(int64_t id, const rapidjson::Value &result, c
             LOG_ERR("[%s] error: " RED_BOLD("\"%s\"") RED_S ", code: %d", url(), message, error["code"].GetInt());
         }
 
-        if (isCriticalError(message)) {
+        if (m_id == 1 || isCriticalError(message)) {
             close();
         }
 

@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "crypto/cn/CryptoNight_constants.h"
+
+#include "crypto/cn/CnAlgo.h"
+
 
 #ifdef __GNUC__
 #   include <x86intrin.h>
@@ -207,4 +209,4 @@ void cn_gpu_inner_ssse3(const uint8_t* spad, uint8_t* lpad)
     }
 }
 
-template void cn_gpu_inner_ssse3<xlarig::CRYPTONIGHT_GPU_ITER, xlarig::CRYPTONIGHT_GPU_MASK>(const uint8_t* spad, uint8_t* lpad);
+template void cn_gpu_inner_ssse3<xlarig::CnAlgo<xlarig::Algorithm::CN_GPU>().iterations(), xlarig::CnAlgo<xlarig::Algorithm::CN_GPU>().mask()>(const uint8_t* spad, uint8_t* lpad);

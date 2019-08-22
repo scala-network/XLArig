@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018      SChernykh   <https://github.com/SChernykh>
  * Copyright 2019      Howard Chu  <https://github.com/hyc>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -34,31 +34,16 @@
 
 
 xlarig::Job::Job() :
-    m_autoVariant(false),
-    m_nicehash(false),
-    m_poolId(-2),
-    m_threadId(-1),
-    m_size(0),
-    m_diff(0),
-    m_height(0),
-    m_target(0),
     m_blob(),
     m_seedHash()
 {
 }
 
 
-xlarig::Job::Job(int poolId, bool nicehash, const Algorithm &algorithm, const String &clientId) :
+xlarig::Job::Job(bool nicehash, const Algorithm &algorithm, const String &clientId) :
     m_algorithm(algorithm),
-    m_autoVariant(algorithm.variant() == VARIANT_AUTO),
     m_nicehash(nicehash),
-    m_poolId(poolId),
-    m_threadId(-1),
-    m_size(0),
     m_clientId(clientId),
-    m_diff(0),
-    m_height(0),
-    m_target(0),
     m_blob(),
     m_seedHash()
 {
@@ -98,10 +83,6 @@ bool xlarig::Job::setBlob(const char *blob)
 
     if (*nonce() != 0 && !m_nicehash) {
         m_nicehash = true;
-    }
-
-    if (m_autoVariant) {
-        m_algorithm.setVariant(variant());
     }
 
 #   ifdef XMRIG_PROXY_PROJECT
@@ -169,16 +150,6 @@ bool xlarig::Job::setTarget(const char *target)
 }
 
 
-void xlarig::Job::setAlgorithm(const char *algo)
-{
-    m_algorithm.parseAlgorithm(algo);
-
-    if (m_algorithm.variant() == xlarig::VARIANT_AUTO) {
-        m_algorithm.setVariant(variant());
-    }
-}
-
-
 void xlarig::Job::setDiff(uint64_t diff)
 {
     m_diff   = diff;
@@ -191,19 +162,25 @@ void xlarig::Job::setDiff(uint64_t diff)
 }
 
 
-xlarig::Variant xlarig::Job::variant() const
+void xlarig::Job::copy(const Job &other)
 {
-    switch (m_algorithm.algo()) {
-    case CRYPTONIGHT:
-        return (m_blob[0] >= 10) ? VARIANT_RX_DEFYX : VARIANT_HALF;
-    case CRYPTONIGHT_LITE:
-        return VARIANT_1;
-    case CRYPTONIGHT_HEAVY:
-        return VARIANT_0;
+    m_algorithm = other.m_algorithm;
+    m_nicehash  = other.m_nicehash;
+    m_size      = other.m_size;
+    m_clientId  = other.m_clientId;
+    m_id        = other.m_id;
+    m_diff      = other.m_diff;
+    m_height    = other.m_height;
+    m_target    = other.m_target;
+    m_index     = other.m_index;
 
-    default:
-        break;
-    }
+    memcpy(m_blob, other.m_blob, sizeof(m_blob));
+    memcpy(m_seedHash, other.m_seedHash, sizeof(m_seedHash));
 
-    return m_algorithm.variant();
+#   ifdef XMRIG_PROXY_PROJECT
+    m_rawSeedHash = other.m_rawSeedHash;
+
+    memcpy(m_rawBlob, other.m_rawBlob, sizeof(m_rawBlob));
+    memcpy(m_rawTarget, other.m_rawTarget, sizeof(m_rawTarget));
+#   endif
 }

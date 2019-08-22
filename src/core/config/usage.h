@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -36,18 +36,28 @@ static char const usage[] = "\
 Usage: " APP_ID " [OPTIONS]\n\
 Options:\n\
   -a, --algo=ALGO               specify the algorithm to use\n\
-                                  cryptonight\n"
+                                  cn/r, cn/2, cn/1, cn/0, cn/double, cn/half, cn/fast,\n\
+                                  cn/rwz, cn/zls, cn/xao, cn/rto"
+#ifdef XMRIG_ALGO_CN_GPU
+", cn/gpu,\n"
+#else
+",\n"
+#endif
 #ifdef XMRIG_ALGO_CN_LITE
 "\
-                                  cryptonight-lite\n"
+                                  cn-lite/1,\n"
 #endif
 #ifdef XMRIG_ALGO_CN_HEAVY
 "\
-                                  cryptonight-heavy\n"
+                                  cn-heavy/xhv, cn-heavy/tube, cn-heavy/0,\n"
 #endif
 #ifdef XMRIG_ALGO_CN_PICO
 "\
-                                  cryptonight-pico\n"
+                                  cn-pico,\n"
+#endif
+#ifdef XMRIG_ALGO_RANDOMX
+"\
+                                  rx/wow, rx/loki, defyx\n"
 #endif
 "\
   -o, --url=URL                 URL of mining server\n\
@@ -76,7 +86,6 @@ Options:\n\
       --cpu-priority            set process priority (0 idle, 2 normal to 5 highest)\n\
       --no-huge-pages           disable huge pages support\n\
       --no-color                disable colored output\n\
-      --variant                 algorithm PoW variant\n\
       --donate-level=N          donate level, default 5%% (5 minutes in 100 minutes)\n\
       --user-agent              set custom user-agent string for pool\n\
   -B, --background              run the miner in the background\n\
@@ -87,8 +96,6 @@ Options:\n\
   -S, --syslog                  use system log for output messages\n"
 # endif
 "\
-      --max-cpu-usage=N         maximum CPU usage for automatic threads mode (default: 100)\n\
-      --safe                    safe adjust threads and av settings for current CPU\n\
       --asm=ASM                 ASM optimizations, possible values: auto, none, intel, ryzen, bulldozer.\n\
       --print-time=N            print hashrate report every N seconds\n"
 #ifdef XMRIG_FEATURE_HTTP
@@ -100,6 +107,15 @@ Options:\n\
       --http-port=N             bind port for HTTP API\n\
       --http-access-token=T     access token for HTTP API\n\
       --http-no-restricted      enable full remote access to HTTP API (only if access token set)\n"
+#endif
+#ifdef XMRIG_ALGO_RANDOMX
+"\
+      --randomx-init=N          threads count to initialize RandomX dataset\n\
+      --randomx-no-numa         disable NUMA support for RandomX\n"
+#endif
+#ifdef XMRIG_FEATURE_HWLOC
+"\
+      --export-topology         export hwloc topology to a XML file and exit\n"
 #endif
 "\
       --dry-run                 test configuration and exit\n\

@@ -1,4 +1,4 @@
-/* XMRig and XLArig
+/* XMRig
  * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
@@ -6,8 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2018      SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,20 +28,18 @@
 #include <uv.h>
 
 
-#include "api/Api.h"
 #include "App.h"
+#include "backend/cpu/Cpu.h"
 #include "base/io/Console.h"
 #include "base/io/log/Log.h"
 #include "base/kernel/Signals.h"
-#include "common/cpu/Cpu.h"
-#include "common/Platform.h"
 #include "core/config/Config.h"
 #include "core/Controller.h"
-#include "Mem.h"
+#include "core/Miner.h"
+#include "crypto/common/VirtualMemory.h"
 #include "net/Network.h"
 #include "Summary.h"
 #include "version.h"
-#include "workers/Workers.h"
 
 
 xlarig::App::App(Process *process) :
@@ -77,7 +75,7 @@ int xlarig::App::exec()
 
     background();
 
-    Mem::init(m_controller->config()->isHugePages());
+    VirtualMemory::init(m_controller->config()->cpu().isHugePages());
 
     Summary::print(m_controller);
 
@@ -87,9 +85,15 @@ int xlarig::App::exec()
         return 0;
     }
 
-    Workers::start(m_controller);
+    m_controller->pre_start();
+    m_controller->config()->benchmark().set_controller(m_controller);
 
-    m_controller->start();
+    if (m_controller->config()->benchmark().isNewBenchRun() || m_controller->config()->isRebenchAlgo()) {
+        //m_controller->config()->benchmark().start();
+        m_controller->start();
+    } else {
+        m_controller->start();
+    }
 
     const int r = uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     uv_loop_close(uv_default_loop());
@@ -103,23 +107,17 @@ void xlarig::App::onConsoleCommand(char command)
     switch (command) {
     case 'h':
     case 'H':
-        Workers::printHashrate(true);
+        m_controller->miner()->printHashrate(true);
         break;
 
     case 'p':
     case 'P':
-        if (Workers::isEnabled()) {
-            LOG_INFO(YELLOW_BOLD("paused") ", press " MAGENTA_BOLD("r") " to resume");
-            Workers::setEnabled(false);
-        }
+        m_controller->miner()->setEnabled(false);
         break;
 
     case 'r':
     case 'R':
-        if (!Workers::isEnabled()) {
-            LOG_INFO(GREEN_BOLD("resumed"));
-            Workers::setEnabled(true);
-        }
+        m_controller->miner()->setEnabled(true);
         break;
 
     case 3:
@@ -163,6 +161,5 @@ void xlarig::App::close()
     m_console->stop();
     m_controller->stop();
 
-    Workers::stop();
     Log::destroy();
 }
