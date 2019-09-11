@@ -28,7 +28,7 @@
 #define APP_ID        "xlarig"
 #define APP_NAME      "XLARig"
 #define APP_DESC      "XLARig CPU miner"
-#define APP_VERSION   "3.1.0-mo1"
+#define APP_VERSION   "3.2.0-mo1"
 #define APP_DOMAIN    "xlarig.com"
 #define APP_SITE      "www.xlarig.com"
 #define APP_COPYRIGHT "Copyright (C) 2016-2019 xlarig.com"
