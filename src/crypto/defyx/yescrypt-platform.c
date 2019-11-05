@@ -141,10 +141,11 @@ yescrypt_init_shared(yescrypt_shared_t * shared,
 
 	half1 = half2 = *shared;
 	half1.aligned_size /= 2;
-	half2.aligned += half1.aligned_size;
+	half2.aligned_size += half1.aligned_size;//added fix
+	//half2.aligned += half1.aligned_size;
 	half2.aligned_size = half1.aligned_size;
 	N /= 2;
-
+	
 	if (p > 1 && yescrypt_kdf(&half1, &half2,
 	    param, paramlen, salt, sizeof(salt), N, r, p, 0, 0,
 	    YESCRYPT_RW | __YESCRYPT_INIT_SHARED_2,
