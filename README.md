@@ -95,7 +95,7 @@ Misc:
 
 ## Building 
 
-The building instruction has been moved [(here)](doc/building.md)
+The building instruction has been moved [here](doc/building.md)
 
 ## Donations
 The donation mining in XLArig has been turned off, if you wish to help the original creators or the Scala Project team donate to the addresses below.
