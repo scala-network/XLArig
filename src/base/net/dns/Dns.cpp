@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,13 +28,13 @@
 #include "base/tools/Handle.h"
 
 
-namespace xlarig {
+namespace xmrig {
     Storage<Dns> Dns::m_storage;
     static const DnsRecord defaultRecord;
 }
 
 
-xlarig::Dns::Dns(IDnsListener *listener) :
+xmrig::Dns::Dns(IDnsListener *listener) :
     m_hints(),
     m_listener(listener),
     m_status(0),
@@ -51,7 +51,7 @@ xlarig::Dns::Dns(IDnsListener *listener) :
 }
 
 
-xlarig::Dns::~Dns()
+xmrig::Dns::~Dns()
 {
     m_storage.release(m_key);
 
@@ -59,7 +59,7 @@ xlarig::Dns::~Dns()
 }
 
 
-bool xlarig::Dns::resolve(const String &host)
+bool xmrig::Dns::resolve(const String &host)
 {
     if (m_host != host) {
         m_host = host;
@@ -73,13 +73,13 @@ bool xlarig::Dns::resolve(const String &host)
 }
 
 
-const char *xlarig::Dns::error() const
+const char *xmrig::Dns::error() const
 {
     return uv_strerror(m_status);
 }
 
 
-const xlarig::DnsRecord &xlarig::Dns::get(DnsRecord::Type prefered) const
+const xmrig::DnsRecord &xmrig::Dns::get(DnsRecord::Type prefered) const
 {
     if (count() == 0) {
         return defaultRecord;
@@ -100,7 +100,7 @@ const xlarig::DnsRecord &xlarig::Dns::get(DnsRecord::Type prefered) const
 }
 
 
-size_t xlarig::Dns::count(DnsRecord::Type type) const
+size_t xmrig::Dns::count(DnsRecord::Type type) const
 {
     if (type == DnsRecord::A) {
         return m_ipv4.size();
@@ -114,14 +114,14 @@ size_t xlarig::Dns::count(DnsRecord::Type type) const
 }
 
 
-void xlarig::Dns::clear()
+void xmrig::Dns::clear()
 {
     m_ipv4.clear();
     m_ipv6.clear();
 }
 
 
-void xlarig::Dns::onResolved(int status, addrinfo *res)
+void xmrig::Dns::onResolved(int status, addrinfo *res)
 {
     m_status = status;
 
@@ -152,7 +152,7 @@ void xlarig::Dns::onResolved(int status, addrinfo *res)
 }
 
 
-void xlarig::Dns::onResolved(uv_getaddrinfo_t *req, int status, addrinfo *res)
+void xmrig::Dns::onResolved(uv_getaddrinfo_t *req, int status, addrinfo *res)
 {
     Dns *dns = m_storage.get(req->data);
     if (dns) {

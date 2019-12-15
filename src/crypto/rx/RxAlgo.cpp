@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,25 +30,56 @@
 #include "crypto/rx/RxAlgo.h"
 
 
-xlarig::Algorithm::Id xlarig::RxAlgo::apply(Algorithm::Id algorithm)
+xmrig::Algorithm::Id xmrig::RxAlgo::apply(Algorithm::Id algorithm)
+{
+    randomx_apply_config(*base(algorithm));
+
+    return algorithm;
+}
+
+
+const RandomX_ConfigurationBase *xmrig::RxAlgo::base(Algorithm::Id algorithm)
 {
     switch (algorithm) {
     case Algorithm::RX_WOW:
-        randomx_apply_config(RandomX_WowneroConfig);
-        break;
+        return &RandomX_WowneroConfig;
 
     case Algorithm::RX_LOKI:
-        randomx_apply_config(RandomX_LokiConfig);
-        break;
+        return &RandomX_LokiConfig;
 
-    case Algorithm::DEFYX:
-        randomx_apply_config(RandomX_ScalaConfig);
-        break;
+    case Algorithm::RX_ARQ:
+        return &RandomX_ArqmaConfig;
 
+	case Algorithm::DEFYX:
+        return &RandomX_ScalaConfig;
+		
     default:
-        randomx_apply_config(RandomX_MoneroConfig);
         break;
     }
 
-    return algorithm;
+    return &RandomX_MoneroConfig;
+}
+
+
+uint32_t xmrig::RxAlgo::version(Algorithm::Id algorithm)
+{
+    return algorithm == Algorithm::RX_WOW ? 103 : 104;
+}
+
+
+uint32_t xmrig::RxAlgo::programCount(Algorithm::Id algorithm)
+{
+    return base(algorithm)->ProgramCount;
+}
+
+
+uint32_t xmrig::RxAlgo::programIterations(Algorithm::Id algorithm)
+{
+    return base(algorithm)->ProgramIterations;
+}
+
+
+uint32_t xmrig::RxAlgo::programSize(Algorithm::Id algorithm)
+{
+    return base(algorithm)->ProgramSize;
 }

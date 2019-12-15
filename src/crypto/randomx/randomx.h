@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef RANDOMX_H
 #define RANDOMX_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 #include "crypto/randomx/intrin_portable.h"
 
@@ -41,17 +41,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RANDOMX_EXPORT
 #endif
 
-typedef enum {
+
+enum randomx_flags {
   RANDOMX_FLAG_DEFAULT = 0,
   RANDOMX_FLAG_LARGE_PAGES = 1,
   RANDOMX_FLAG_HARD_AES = 2,
   RANDOMX_FLAG_FULL_MEM = 4,
   RANDOMX_FLAG_JIT = 8,
-} randomx_flags;
+  RANDOMX_FLAG_1GB_PAGES = 16,
+  RANDOMX_FLAG_RYZEN = 64,
+};
 
-typedef struct randomx_dataset randomx_dataset;
-typedef struct randomx_cache randomx_cache;
-typedef struct randomx_vm randomx_vm;
+
+struct randomx_dataset;
+struct randomx_cache;
+class randomx_vm;
+
 
 struct RandomX_ConfigurationBase
 {
@@ -114,9 +119,12 @@ struct RandomX_ConfigurationBase
 	rx_vec_i128 fillAes4Rx4_Key[8];
 
 	uint8_t codeShhPrefetchTweaked[20];
-	uint8_t codeReadDatasetTweaked[64];
+	uint8_t codeReadDatasetTweaked[256];
+	uint32_t codeReadDatasetTweakedSize;
+	uint8_t codeReadDatasetRyzenTweaked[256];
+	uint32_t codeReadDatasetRyzenTweakedSize;
 	uint8_t codeReadDatasetLightSshInitTweaked[68];
-	uint8_t codeLoopLoadTweaked[140];
+	uint8_t codePrefetchScratchpadTweaked[32];
 
 	uint32_t CacheLineAlignMask_Calculated;
 	uint32_t DatasetExtraItems_Calculated;
@@ -129,6 +137,14 @@ struct RandomX_ConfigurationBase
 	uint32_t ScratchpadL3Mask64_Calculated;
 
 	uint32_t ConditionMask_Calculated;
+
+#if defined(XMRIG_ARMv8)
+	uint32_t Log2_ScratchpadL1;
+	uint32_t Log2_ScratchpadL2;
+	uint32_t Log2_ScratchpadL3;
+	uint32_t Log2_DatasetBaseSize;
+	uint32_t Log2_CacheSize;
+#endif
 
 	int CEIL_IADD_RS;
 	int CEIL_IADD_M;
@@ -165,10 +181,12 @@ struct RandomX_ConfigurationBase
 struct RandomX_ConfigurationMonero : public RandomX_ConfigurationBase {};
 struct RandomX_ConfigurationWownero : public RandomX_ConfigurationBase { RandomX_ConfigurationWownero(); };
 struct RandomX_ConfigurationLoki : public RandomX_ConfigurationBase { RandomX_ConfigurationLoki(); };
+struct RandomX_ConfigurationArqma : public RandomX_ConfigurationBase { RandomX_ConfigurationArqma(); };
 
 extern RandomX_ConfigurationMonero RandomX_MoneroConfig;
 extern RandomX_ConfigurationWownero RandomX_WowneroConfig;
 extern RandomX_ConfigurationLoki RandomX_LokiConfig;
+extern RandomX_ConfigurationArqma RandomX_ArqmaConfig;
 
 extern RandomX_ConfigurationBase RandomX_CurrentConfig;
 
@@ -197,7 +215,7 @@ extern "C" {
  *         NULL is returned if memory allocation fails or if the RANDOMX_FLAG_JIT
  *         is set and JIT compilation is not supported on the current platform.
  */
-RANDOMX_EXPORT randomx_cache *randomx_alloc_cache(randomx_flags flags);
+RANDOMX_EXPORT randomx_cache *randomx_create_cache(randomx_flags flags, uint8_t *memory);
 
 /**
  * Initializes the cache memory and SuperscalarHash using the provided key value.
@@ -224,7 +242,7 @@ RANDOMX_EXPORT void randomx_release_cache(randomx_cache* cache);
  * @return Pointer to an allocated randomx_dataset structure.
  *         NULL is returned if memory allocation fails.
  */
-RANDOMX_EXPORT randomx_dataset *randomx_alloc_dataset(randomx_flags flags);
+RANDOMX_EXPORT randomx_dataset *randomx_create_dataset(uint8_t *memory);
 
 /**
  * Gets the number of items contained in the dataset.
@@ -324,6 +342,9 @@ RANDOMX_EXPORT void randomx_destroy_vm(randomx_vm *machine);
  *        be NULL and at least RANDOMX_HASH_SIZE bytes must be available for writing.
 */
 RANDOMX_EXPORT void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
+
+RANDOMX_EXPORT void randomx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
+RANDOMX_EXPORT void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
 
 #if defined(__cplusplus)
 }

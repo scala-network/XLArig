@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,11 +30,11 @@
 #include "backend/common/Worker.h"
 #include "backend/common/WorkerJob.h"
 #include "backend/cpu/CpuLaunchData.h"
-#include "base/net/stratum/Job.h"
+#include "base/tools/Object.h"
 #include "net/JobResult.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class RxVm;
@@ -44,7 +44,9 @@ template<size_t N>
 class CpuWorker : public Worker
 {
 public:
-    CpuWorker(size_t index, const CpuLaunchData &data);
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(CpuWorker)
+
+    CpuWorker(size_t id, const CpuLaunchData &data);
     ~CpuWorker() override;
 
 protected:
@@ -52,6 +54,7 @@ protected:
     void start() override;
 
     inline const VirtualMemory *memory() const override { return m_memory; }
+    inline size_t intensity() const override            { return N; }
 
 private:
     inline cn_hash_fun fn(const Algorithm &algorithm) const { return CnHash::fn(algorithm, m_av, m_assembly); }
@@ -68,10 +71,11 @@ private:
     const Algorithm m_algorithm;
     const Assembly m_assembly;
     const bool m_hwAES;
+    const bool m_yield;
     const CnHash::AlgoVariant m_av;
     const Miner *m_miner;
     cryptonight_ctx *m_ctx[N];
-    uint8_t m_hash[N * 32];
+    uint8_t m_hash[N * 32]{ 0 };
     VirtualMemory *m_memory = nullptr;
     WorkerJob<N> m_job;
 
@@ -92,7 +96,7 @@ extern template class CpuWorker<4>;
 extern template class CpuWorker<5>;
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_CPUWORKER_H */

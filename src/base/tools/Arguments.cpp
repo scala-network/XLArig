@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "base/tools/Arguments.h"
 
 
-xlarig::Arguments::Arguments(int argc, char **argv) :
+xmrig::Arguments::Arguments(int argc, char **argv) :
     m_argv(argv),
     m_argc(argc)
 {
@@ -42,7 +42,7 @@ xlarig::Arguments::Arguments(int argc, char **argv) :
 }
 
 
-bool xlarig::Arguments::hasArg(const char *name) const
+bool xmrig::Arguments::hasArg(const char *name) const
 {
     if (m_argc == 1) {
         return false;
@@ -52,7 +52,7 @@ bool xlarig::Arguments::hasArg(const char *name) const
 }
 
 
-void xlarig::Arguments::add(const char *arg)
+void xmrig::Arguments::add(const char *arg)
 {
     if (arg == nullptr) {
         return;
@@ -60,17 +60,17 @@ void xlarig::Arguments::add(const char *arg)
 
     const size_t size = strlen(arg);
     if (size > 4 && arg[0] == '-' && arg[1] == '-') {
-        const char *p = strstr(arg, "=");
+        const char *p = strchr(arg, '=');
 
         if (p) {
-            const size_t keySize = static_cast<size_t>(p - arg);
+            const auto keySize = static_cast<size_t>(p - arg);
 
-            m_data.push_back(String(arg, keySize));
-            m_data.push_back(arg + keySize + 1);
+            m_data.emplace_back(arg, keySize);
+            m_data.emplace_back(arg + keySize + 1);
 
             return;
         }
     }
 
-    m_data.push_back(arg);
+    m_data.emplace_back(arg);
 }

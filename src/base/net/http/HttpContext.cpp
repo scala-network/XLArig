@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,27 +24,30 @@
  */
 
 
+#include "base/net/http/HttpContext.h"
+#include "3rdparty/http-parser/http_parser.h"
+#include "base/kernel/interfaces/IHttpListener.h"
+#include "base/tools/Chrono.h"
+
+
 #include <algorithm>
 #include <uv.h>
 
 
-#include "3rdparty/http-parser/http_parser.h"
-#include "base/kernel/interfaces/IHttpListener.h"
-#include "base/net/http/HttpContext.h"
+namespace xmrig {
 
-
-namespace xlarig {
 
 static http_parser_settings http_settings;
 static std::map<uint64_t, HttpContext *> storage;
 static uint64_t SEQUENCE = 0;
 
-} // namespace xlarig
+
+} // namespace xmrig
 
 
-xlarig::HttpContext::HttpContext(int parser_type, IHttpListener *listener) :
+xmrig::HttpContext::HttpContext(int parser_type, IHttpListener *listener) :
     HttpData(SEQUENCE++),
-    m_wasHeaderValue(false),
+    m_timestamp(Chrono::steadyMSecs()),
     m_listener(listener)
 {
     storage[id()] = this;
@@ -65,20 +68,20 @@ xlarig::HttpContext::HttpContext(int parser_type, IHttpListener *listener) :
 }
 
 
-xlarig::HttpContext::~HttpContext()
+xmrig::HttpContext::~HttpContext()
 {
     delete m_tcp;
     delete m_parser;
 }
 
 
-size_t xlarig::HttpContext::parse(const char *data, size_t size)
+size_t xmrig::HttpContext::parse(const char *data, size_t size)
 {
     return http_parser_execute(m_parser, &http_settings, data, size);
 }
 
 
-std::string xlarig::HttpContext::ip() const
+std::string xmrig::HttpContext::ip() const
 {
     char ip[46]           = {};
     sockaddr_storage addr = {};
@@ -96,7 +99,13 @@ std::string xlarig::HttpContext::ip() const
 }
 
 
-void xlarig::HttpContext::close(int status)
+uint64_t xmrig::HttpContext::elapsed() const
+{
+    return Chrono::steadyMSecs() - m_timestamp;
+}
+
+
+void xmrig::HttpContext::close(int status)
 {
     if (status < 0 && m_listener) {
         this->status = status;
@@ -114,7 +123,7 @@ void xlarig::HttpContext::close(int status)
 }
 
 
-xlarig::HttpContext *xlarig::HttpContext::get(uint64_t id)
+xmrig::HttpContext *xmrig::HttpContext::get(uint64_t id)
 {
     if (storage.count(id) == 0) {
         return nullptr;
@@ -124,7 +133,7 @@ xlarig::HttpContext *xlarig::HttpContext::get(uint64_t id)
 }
 
 
-void xlarig::HttpContext::closeAll()
+void xmrig::HttpContext::closeAll()
 {
     for (auto kv : storage) {
         if (!uv_is_closing(kv.second->handle())) {
@@ -134,9 +143,9 @@ void xlarig::HttpContext::closeAll()
 }
 
 
-int xlarig::HttpContext::onHeaderField(http_parser *parser, const char *at, size_t length)
+int xmrig::HttpContext::onHeaderField(http_parser *parser, const char *at, size_t length)
 {
-    HttpContext *ctx = static_cast<HttpContext*>(parser->data);
+    auto ctx = static_cast<HttpContext*>(parser->data);
 
     if (ctx->m_wasHeaderValue) {
         if (!ctx->m_lastHeaderField.empty()) {
@@ -153,9 +162,9 @@ int xlarig::HttpContext::onHeaderField(http_parser *parser, const char *at, size
 }
 
 
-int xlarig::HttpContext::onHeaderValue(http_parser *parser, const char *at, size_t length)
+int xmrig::HttpContext::onHeaderValue(http_parser *parser, const char *at, size_t length)
 {
-    HttpContext *ctx = static_cast<HttpContext*>(parser->data);
+    auto ctx = static_cast<HttpContext*>(parser->data);
 
     if (!ctx->m_wasHeaderValue) {
         ctx->m_lastHeaderValue = std::string(at, length);
@@ -168,7 +177,7 @@ int xlarig::HttpContext::onHeaderValue(http_parser *parser, const char *at, size
 }
 
 
-void xlarig::HttpContext::attach(http_parser_settings *settings)
+void xmrig::HttpContext::attach(http_parser_settings *settings)
 {
     settings->on_message_begin  = nullptr;
     settings->on_status         = nullptr;
@@ -185,7 +194,7 @@ void xlarig::HttpContext::attach(http_parser_settings *settings)
     settings->on_header_value = onHeaderValue;
 
     settings->on_headers_complete = [](http_parser* parser) -> int {
-        HttpContext *ctx = static_cast<HttpContext*>(parser->data);
+        auto ctx = static_cast<HttpContext*>(parser->data);
         ctx->status = parser->status_code;
 
         if (parser->type == HTTP_REQUEST) {
@@ -208,7 +217,7 @@ void xlarig::HttpContext::attach(http_parser_settings *settings)
 
     settings->on_message_complete = [](http_parser *parser) -> int
     {
-        HttpContext *ctx = static_cast<HttpContext*>(parser->data);
+        auto ctx = static_cast<HttpContext*>(parser->data);
         ctx->m_listener->onHttpData(*ctx);
         ctx->m_listener = nullptr;
 
@@ -217,7 +226,7 @@ void xlarig::HttpContext::attach(http_parser_settings *settings)
 }
 
 
-void xlarig::HttpContext::setHeader()
+void xmrig::HttpContext::setHeader()
 {
     std::transform(m_lastHeaderField.begin(), m_lastHeaderField.end(), m_lastHeaderField.begin(), ::tolower);
     headers.insert({ m_lastHeaderField, m_lastHeaderValue });

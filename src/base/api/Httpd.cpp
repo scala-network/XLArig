@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@
  */
 
 
+#include "base/api/Httpd.h"
 #include "3rdparty/http-parser/http_parser.h"
 #include "base/api/Api.h"
-#include "base/api/Httpd.h"
 #include "base/io/log/Log.h"
 #include "base/net/http/HttpApiResponse.h"
 #include "base/net/http/HttpData.h"
@@ -35,7 +35,7 @@
 #include "core/Controller.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 static const char *kAuthorization = "authorization";
 static const char *kContentType   = "content-type";
@@ -45,10 +45,10 @@ static const char *favicon = nullptr;
 static size_t faviconSize  = 0;
 #endif
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-xlarig::Httpd::Httpd(Base *base) :
+xmrig::Httpd::Httpd(Base *base) :
     m_base(base),
     m_http(nullptr),
     m_server(nullptr),
@@ -58,12 +58,10 @@ xlarig::Httpd::Httpd(Base *base) :
 }
 
 
-xlarig::Httpd::~Httpd()
-{
-}
+xmrig::Httpd::~Httpd() = default;
 
 
-bool xlarig::Httpd::start()
+bool xmrig::Httpd::start()
 {
     const Http &config = m_base->config()->http();
 
@@ -105,7 +103,7 @@ bool xlarig::Httpd::start()
 }
 
 
-void xlarig::Httpd::stop()
+void xmrig::Httpd::stop()
 {
     delete m_server;
     delete m_http;
@@ -117,7 +115,7 @@ void xlarig::Httpd::stop()
 
 
 
-void xlarig::Httpd::onConfigChanged(Config *config, Config *previousConfig)
+void xmrig::Httpd::onConfigChanged(Config *config, Config *previousConfig)
 {
     if (config->http() == previousConfig->http()) {
         return;
@@ -128,7 +126,7 @@ void xlarig::Httpd::onConfigChanged(Config *config, Config *previousConfig)
 }
 
 
-void xlarig::Httpd::onHttpData(const HttpData &data)
+void xmrig::Httpd::onHttpData(const HttpData &data)
 {
     if (data.method == HTTP_OPTIONS) {
         return HttpApiResponse(data.id()).end();
@@ -170,7 +168,7 @@ void xlarig::Httpd::onHttpData(const HttpData &data)
 }
 
 
-int xlarig::Httpd::auth(const HttpData &req) const
+int xmrig::Httpd::auth(const HttpData &req) const
 {
     const Http &config = m_base->config()->http();
 

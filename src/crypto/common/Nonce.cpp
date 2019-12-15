@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 #include "crypto/common/Nonce.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 std::atomic<bool> Nonce::m_paused;
@@ -41,20 +41,20 @@ static std::mutex mutex;
 static Nonce nonce;
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-xlarig::Nonce::Nonce()
+xmrig::Nonce::Nonce()
 {
     m_paused = true;
 
-    for (int i = 0; i < MAX; ++i) {
-        m_sequence[i] = 1;
+    for (auto &i : m_sequence) {
+        i = 1;
     }
 }
 
 
-uint32_t xlarig::Nonce::next(uint8_t index, uint32_t nonce, uint32_t reserveCount, bool nicehash)
+uint32_t xmrig::Nonce::next(uint8_t index, uint32_t nonce, uint32_t reserveCount, bool nicehash)
 {
     uint32_t next;
 
@@ -73,28 +73,27 @@ uint32_t xlarig::Nonce::next(uint8_t index, uint32_t nonce, uint32_t reserveCoun
 }
 
 
-void xlarig::Nonce::reset(uint8_t index)
+void xmrig::Nonce::reset(uint8_t index)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
     m_nonces[index] = 0;
-    touch();
 }
 
 
-void xlarig::Nonce::stop()
+void xmrig::Nonce::stop()
 {
     pause(false);
 
-    for (int i = 0; i < MAX; ++i) {
-        m_sequence[i] = 0;
+    for (auto &i : m_sequence) {
+        i = 0;
     }
 }
 
 
-void xlarig::Nonce::touch()
+void xmrig::Nonce::touch()
 {
-    for (int i = 0; i < MAX; ++i) {
-        m_sequence[i]++;
+    for (auto &i : m_sequence) {
+        i++;
     }
 }

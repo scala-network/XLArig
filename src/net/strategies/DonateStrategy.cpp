@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <iterator>
 
 
@@ -44,38 +44,41 @@
 #include "rapidjson/document.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 static inline double randomf(double min, double max)                 { return (max - min) * (((static_cast<double>(rand())) / static_cast<double>(RAND_MAX))) + min; }
 static inline uint64_t random(uint64_t base, double min, double max) { return static_cast<uint64_t>(base * randomf(min, max)); }
 
-} /* namespace xlarig */
+static const char *kDonateHost = "donate.v2.xmrig.com";
+#ifdef XMRIG_FEATURE_TLS
+static const char *kDonateHostTls = "donate.ssl.xmrig.com";
+#endif
+
+} /* namespace xmrig */
 
 
-xlarig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener *listener) :
-    m_tls(false),
-    m_userId(),
+xmrig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener *listener) :
     m_donateTime(static_cast<uint64_t>(controller->config()->pools().donateLevel()) * 60 * 1000),
     m_idleTime((100 - static_cast<uint64_t>(controller->config()->pools().donateLevel())) * 60 * 1000),
     m_controller(controller),
-    m_proxy(nullptr),
-    m_strategy(nullptr),
-    m_listener(listener),
-    m_state(STATE_NEW),
-    m_now(0),
-    m_timestamp(0)
+    m_listener(listener)
 {
-    static char donate_user[] = "";
-#   ifndef XMRIG_FEATURE_TLS
-    m_pools.push_back(Pool("127.0.0.1", 3333, donate_user, nullptr, 0, true, true));
+    uint8_t hash[200];
+
+    const String &user = controller->config()->pools().data().front().user();
+    keccak(reinterpret_cast<const uint8_t *>(user.data()), user.size(), hash);
+    Buffer::toHex(hash, 32, m_userId);
+
+#   ifdef XMRIG_FEATURE_TLS
+    m_pools.emplace_back(kDonateHostTls, 443, m_userId, nullptr, 0, true, true);
 #   endif
-    m_pools.push_back(Pool("127.0.0.1", 3333, donate_user, nullptr, 0, true));
+    m_pools.emplace_back(kDonateHost, 3333, m_userId, nullptr, 0, true);
 
     if (m_pools.size() > 1) {
-        m_strategy = new FailoverStrategy(m_pools, 1, 2, this, true);
+        m_strategy = new FailoverStrategy(m_pools, 10, 2, this, true);
     }
     else {
-        m_strategy = new SinglePoolStrategy(m_pools.front(), 1, 2, this, true);
+        m_strategy = new SinglePoolStrategy(m_pools.front(), 10, 2, this, true);
     }
 
     m_timer = new Timer(this);
@@ -84,7 +87,7 @@ xlarig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener
 }
 
 
-xlarig::DonateStrategy::~DonateStrategy()
+xmrig::DonateStrategy::~DonateStrategy()
 {
     delete m_timer;
     delete m_strategy;
@@ -95,13 +98,13 @@ xlarig::DonateStrategy::~DonateStrategy()
 }
 
 
-int64_t xlarig::DonateStrategy::submit(const JobResult &result)
+int64_t xmrig::DonateStrategy::submit(const JobResult &result)
 {
     return m_proxy ? m_proxy->submit(result) : m_strategy->submit(result);
 }
 
 
-void xlarig::DonateStrategy::connect()
+void xmrig::DonateStrategy::connect()
 {
     m_proxy = createProxy();
     if (m_proxy) {
@@ -116,7 +119,7 @@ void xlarig::DonateStrategy::connect()
 }
 
 
-void xlarig::DonateStrategy::setAlgo(const xlarig::Algorithm &algo)
+void xmrig::DonateStrategy::setAlgo(const xmrig::Algorithm &algo)
 {
     m_algorithm = algo;
 
@@ -124,14 +127,14 @@ void xlarig::DonateStrategy::setAlgo(const xlarig::Algorithm &algo)
 }
 
 
-void xlarig::DonateStrategy::stop()
+void xmrig::DonateStrategy::stop()
 {
     m_timer->stop();
     m_strategy->stop();
 }
 
 
-void xlarig::DonateStrategy::tick(uint64_t now)
+void xmrig::DonateStrategy::tick(uint64_t now)
 {
     m_now = now;
 
@@ -147,7 +150,7 @@ void xlarig::DonateStrategy::tick(uint64_t now)
 }
 
 
-void xlarig::DonateStrategy::onActive(IStrategy *, IClient *client)
+void xmrig::DonateStrategy::onActive(IStrategy *, IClient *client)
 {
     if (isActive()) {
         return;
@@ -158,12 +161,12 @@ void xlarig::DonateStrategy::onActive(IStrategy *, IClient *client)
 }
 
 
-void xlarig::DonateStrategy::onPause(IStrategy *)
+void xmrig::DonateStrategy::onPause(IStrategy *)
 {
 }
 
 
-void xlarig::DonateStrategy::onClose(IClient *, int failures)
+void xmrig::DonateStrategy::onClose(IClient *, int failures)
 {
     if (failures == 2 && m_controller->config()->pools().proxyDonate() == Pools::PROXY_DONATE_AUTO) {
         m_proxy->deleteLater();
@@ -174,7 +177,7 @@ void xlarig::DonateStrategy::onClose(IClient *, int failures)
 }
 
 
-void xlarig::DonateStrategy::onLogin(IClient *, rapidjson::Document &doc, rapidjson::Value &params)
+void xmrig::DonateStrategy::onLogin(IClient *, rapidjson::Document &doc, rapidjson::Value &params)
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
@@ -196,13 +199,13 @@ void xlarig::DonateStrategy::onLogin(IClient *, rapidjson::Document &doc, rapidj
 }
 
 
-void xlarig::DonateStrategy::onLogin(IStrategy *, IClient *, rapidjson::Document &doc, rapidjson::Value &params)
+void xmrig::DonateStrategy::onLogin(IStrategy *, IClient *, rapidjson::Document &doc, rapidjson::Value &params)
 {
     setAlgorithms(doc, params);
 }
 
 
-void xlarig::DonateStrategy::onLoginSuccess(IClient *client)
+void xmrig::DonateStrategy::onLoginSuccess(IClient *client)
 {
     if (isActive()) {
         return;
@@ -213,13 +216,25 @@ void xlarig::DonateStrategy::onLoginSuccess(IClient *client)
 }
 
 
-void xlarig::DonateStrategy::onTimer(const Timer *)
+void xmrig::DonateStrategy::onVerifyAlgorithm(const IClient *client, const Algorithm &algorithm, bool *ok)
+{
+    m_listener->onVerifyAlgorithm(this, client, algorithm, ok);
+}
+
+
+void xmrig::DonateStrategy::onVerifyAlgorithm(IStrategy *, const  IClient *client, const Algorithm &algorithm, bool *ok)
+{
+    m_listener->onVerifyAlgorithm(this, client, algorithm, ok);
+}
+
+
+void xmrig::DonateStrategy::onTimer(const Timer *)
 {
     setState(isActive() ? STATE_WAIT : STATE_CONNECT);
 }
 
 
-xlarig::Client *xlarig::DonateStrategy::createProxy()
+xmrig::IClient *xmrig::DonateStrategy::createProxy()
 {
     if (m_controller->config()->pools().proxyDonate() == Pools::PROXY_DONATE_NONE) {
         return nullptr;
@@ -236,7 +251,7 @@ xlarig::Client *xlarig::DonateStrategy::createProxy()
     Pool pool(client->ip(), client->pool().port(), m_userId, client->pool().password(), 0, true, client->isTLS());
     pool.setAlgo(client->pool().algorithm());
 
-    Client *proxy = new Client(-1, Platform::userAgent(), this);
+    IClient *proxy = new Client(-1, Platform::userAgent(), this);
     proxy->setPool(pool);
     proxy->setQuiet(true);
 
@@ -244,13 +259,13 @@ xlarig::Client *xlarig::DonateStrategy::createProxy()
 }
 
 
-void xlarig::DonateStrategy::idle(double min, double max)
+void xmrig::DonateStrategy::idle(double min, double max)
 {
     m_timer->start(random(m_idleTime, min, max), 0);
 }
 
 
-void xlarig::DonateStrategy::setAlgorithms(rapidjson::Document &doc, rapidjson::Value &params)
+void xmrig::DonateStrategy::setAlgorithms(rapidjson::Document &doc, rapidjson::Value &params)
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
@@ -271,7 +286,7 @@ void xlarig::DonateStrategy::setAlgorithms(rapidjson::Document &doc, rapidjson::
 }
 
 
-void xlarig::DonateStrategy::setJob(IClient *client, const Job &job)
+void xmrig::DonateStrategy::setJob(IClient *client, const Job &job)
 {
     if (isActive()) {
         m_listener->onJob(this, client, job);
@@ -279,13 +294,13 @@ void xlarig::DonateStrategy::setJob(IClient *client, const Job &job)
 }
 
 
-void xlarig::DonateStrategy::setResult(IClient *client, const SubmitResult &result, const char *error)
+void xmrig::DonateStrategy::setResult(IClient *client, const SubmitResult &result, const char *error)
 {
     m_listener->onResultAccepted(this, client, result, error);
 }
 
 
-void xlarig::DonateStrategy::setState(State state)
+void xmrig::DonateStrategy::setState(State state)
 {
     constexpr const uint64_t waitTime = 3000;
 

@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,17 +29,29 @@
 #include "backend/common/Workers.h"
 #include "backend/cpu/CpuWorker.h"
 #include "base/io/log/Log.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+#ifdef XMRIG_FEATURE_OPENCL
+#   include "backend/opencl/OclWorker.h"
+#endif
+
+
+#ifdef XMRIG_FEATURE_CUDA
+#   include "backend/cuda/CudaWorker.h"
+#endif
+
+
+namespace xmrig {
 
 
 class WorkersPrivate
 {
 public:
-    inline WorkersPrivate()
-    {
-    }
+    XMRIG_DISABLE_COPY_MOVE(WorkersPrivate)
+
+
+    WorkersPrivate() = default;
 
 
     inline ~WorkersPrivate()
@@ -53,11 +65,11 @@ public:
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 template<class T>
-xlarig::Workers<T>::Workers() :
+xmrig::Workers<T>::Workers() :
     d_ptr(new WorkersPrivate())
 {
 
@@ -65,43 +77,49 @@ xlarig::Workers<T>::Workers() :
 
 
 template<class T>
-xlarig::Workers<T>::~Workers()
+xmrig::Workers<T>::~Workers()
 {
     delete d_ptr;
 }
 
 
 template<class T>
-const xlarig::Hashrate *xlarig::Workers<T>::hashrate() const
+const xmrig::Hashrate *xmrig::Workers<T>::hashrate() const
 {
     return d_ptr->hashrate;
 }
 
 
 template<class T>
-void xlarig::Workers<T>::setBackend(IBackend *backend)
+void xmrig::Workers<T>::setBackend(IBackend *backend)
 {
     d_ptr->backend = backend;
 }
 
 
 template<class T>
-void xlarig::Workers<T>::start(const std::vector<T> &data)
+void xmrig::Workers<T>::start(const std::vector<T> &data)
 {
     for (const T &item : data) {
         m_workers.push_back(new Thread<T>(d_ptr->backend, m_workers.size(), item));
     }
 
     d_ptr->hashrate = new Hashrate(m_workers.size());
+    Nonce::touch(T::backend());
 
     for (Thread<T> *worker : m_workers) {
         worker->start(Workers<T>::onReady);
+
+        // This sleep is important for optimal caching!
+        // Threads must allocate scratchpads in order so that adjacent cores will use adjacent scratchpads
+        // Sub-optimal caching can result in up to 0.5% hashrate penalty
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
 
 
 template<class T>
-void xlarig::Workers<T>::stop()
+void xmrig::Workers<T>::stop()
 {
     Nonce::stop(T::backend());
 
@@ -118,7 +136,7 @@ void xlarig::Workers<T>::stop()
 
 
 template<class T>
-void xlarig::Workers<T>::tick(uint64_t)
+void xmrig::Workers<T>::tick(uint64_t)
 {
     if (!d_ptr->hashrate) {
         return;
@@ -126,61 +144,66 @@ void xlarig::Workers<T>::tick(uint64_t)
 
     for (Thread<T> *handle : m_workers) {
         if (!handle->worker()) {
-            return;
+            continue;
         }
 
-        d_ptr->hashrate->add(handle->index(), handle->worker()->hashCount(), handle->worker()->timestamp());
+        d_ptr->hashrate->add(handle->id(), handle->worker()->hashCount(), handle->worker()->timestamp());
     }
-
-    d_ptr->hashrate->updateHighest();
 }
 
 
 template<class T>
-xlarig::IWorker *xlarig::Workers<T>::create(Thread<CpuLaunchData> *)
+xmrig::IWorker *xmrig::Workers<T>::create(Thread<T> *)
 {
     return nullptr;
 }
 
 
 template<class T>
-void xlarig::Workers<T>::onReady(void *arg)
+void xmrig::Workers<T>::onReady(void *arg)
 {
-    Thread<T> *handle = static_cast<Thread<T>* >(arg);
+    auto handle = static_cast<Thread<T>* >(arg);
 
     IWorker *worker = create(handle);
+    assert(worker != nullptr);
+
     if (!worker || !worker->selfTest()) {
-        LOG_ERR("thread %zu error: \"hash self-test failed\".", worker->id());
+        LOG_ERR("%s " RED("thread ") RED_BOLD("#%zu") RED(" self-test failed"), T::tag(), worker ? worker->id() : 0);
+
+        handle->backend()->start(worker, false);
+        delete worker;
 
         return;
     }
 
+    assert(handle->backend() != nullptr);
+
     handle->setWorker(worker);
-    handle->backend()->start(worker);
+    handle->backend()->start(worker, true);
 }
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 template<>
-xlarig::IWorker *xlarig::Workers<CpuLaunchData>::create(Thread<CpuLaunchData> *handle)
+xmrig::IWorker *xmrig::Workers<CpuLaunchData>::create(Thread<CpuLaunchData> *handle)
 {
     switch (handle->config().intensity) {
     case 1:
-        return new CpuWorker<1>(handle->index(), handle->config());
+        return new CpuWorker<1>(handle->id(), handle->config());
 
     case 2:
-        return new CpuWorker<2>(handle->index(), handle->config());
+        return new CpuWorker<2>(handle->id(), handle->config());
 
     case 3:
-        return new CpuWorker<3>(handle->index(), handle->config());
+        return new CpuWorker<3>(handle->id(), handle->config());
 
     case 4:
-        return new CpuWorker<4>(handle->index(), handle->config());
+        return new CpuWorker<4>(handle->id(), handle->config());
 
     case 5:
-        return new CpuWorker<5>(handle->index(), handle->config());
+        return new CpuWorker<5>(handle->id(), handle->config());
     }
 
     return nullptr;
@@ -190,4 +213,28 @@ xlarig::IWorker *xlarig::Workers<CpuLaunchData>::create(Thread<CpuLaunchData> *h
 template class Workers<CpuLaunchData>;
 
 
-} // namespace xlarig
+#ifdef XMRIG_FEATURE_OPENCL
+template<>
+xmrig::IWorker *xmrig::Workers<OclLaunchData>::create(Thread<OclLaunchData> *handle)
+{
+    return new OclWorker(handle->id(), handle->config());
+}
+
+
+template class Workers<OclLaunchData>;
+#endif
+
+
+#ifdef XMRIG_FEATURE_CUDA
+template<>
+xmrig::IWorker *xmrig::Workers<CudaLaunchData>::create(Thread<CudaLaunchData> *handle)
+{
+    return new CudaWorker(handle->id(), handle->config());
+}
+
+
+template class Workers<CudaLaunchData>;
+#endif
+
+
+} // namespace xmrig

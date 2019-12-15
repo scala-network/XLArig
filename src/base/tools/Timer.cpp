@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include "base/tools/Timer.h"
 
 
-xlarig::Timer::Timer(ITimerListener *listener) :
+xmrig::Timer::Timer(ITimerListener *listener) :
     m_listener(listener),
     m_timer(nullptr)
 {
@@ -36,7 +36,7 @@ xlarig::Timer::Timer(ITimerListener *listener) :
 }
 
 
-xlarig::Timer::Timer(ITimerListener *listener, uint64_t timeout, uint64_t repeat) :
+xmrig::Timer::Timer(ITimerListener *listener, uint64_t timeout, uint64_t repeat) :
     m_listener(listener),
     m_timer(nullptr)
 {
@@ -45,37 +45,37 @@ xlarig::Timer::Timer(ITimerListener *listener, uint64_t timeout, uint64_t repeat
 }
 
 
-xlarig::Timer::~Timer()
+xmrig::Timer::~Timer()
 {
     Handle::close(m_timer);
 }
 
 
-uint64_t xlarig::Timer::repeat() const
+uint64_t xmrig::Timer::repeat() const
 {
     return uv_timer_get_repeat(m_timer);
 }
 
 
-void xlarig::Timer::setRepeat(uint64_t repeat)
+void xmrig::Timer::setRepeat(uint64_t repeat)
 {
     uv_timer_set_repeat(m_timer, repeat);
 }
 
 
-void xlarig::Timer::start(uint64_t timeout, uint64_t repeat)
+void xmrig::Timer::start(uint64_t timeout, uint64_t repeat)
 {
     uv_timer_start(m_timer, onTimer, timeout, repeat);
 }
 
 
-void xlarig::Timer::stop()
+void xmrig::Timer::stop()
 {
     uv_timer_stop(m_timer);
 }
 
 
-void xlarig::Timer::init()
+void xmrig::Timer::init()
 {
     m_timer = new uv_timer_t;
     m_timer->data = this;
@@ -83,7 +83,7 @@ void xlarig::Timer::init()
 }
 
 
-void xlarig::Timer::onTimer(uv_timer_t *handle)
+void xmrig::Timer::onTimer(uv_timer_t *handle)
 {
     const Timer *timer = static_cast<Timer *>(handle->data);
 

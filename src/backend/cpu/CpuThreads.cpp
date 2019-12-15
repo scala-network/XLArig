@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 #include "rapidjson/document.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 static const char *kAffinity    = "affinity";
@@ -83,7 +83,7 @@ static inline int64_t getAffinity(uint64_t index, int64_t affinity)
 }
 
 
-xlarig::CpuThreads::CpuThreads(const rapidjson::Value &value)
+xmrig::CpuThreads::CpuThreads(const rapidjson::Value &value)
 {
     if (value.IsArray()) {
         for (auto &v : value.GetArray()) {
@@ -110,7 +110,7 @@ xlarig::CpuThreads::CpuThreads(const rapidjson::Value &value)
 }
 
 
-xlarig::CpuThreads::CpuThreads(size_t count, uint32_t intensity)
+xmrig::CpuThreads::CpuThreads(size_t count, uint32_t intensity)
 {
     m_data.reserve(count);
 
@@ -120,7 +120,17 @@ xlarig::CpuThreads::CpuThreads(size_t count, uint32_t intensity)
 }
 
 
-rapidjson::Value xlarig::CpuThreads::toJSON(rapidjson::Document &doc) const
+bool xmrig::CpuThreads::isEqual(const CpuThreads &other) const
+{
+    if (isEmpty() && other.isEmpty()) {
+        return true;
+    }
+
+    return count() == other.count() && std::equal(m_data.begin(), m_data.end(), other.m_data.begin());
+}
+
+
+rapidjson::Value xmrig::CpuThreads::toJSON(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();

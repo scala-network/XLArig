@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include "rapidjson/fwd.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 template <class T>
@@ -44,10 +44,26 @@ class Threads
 public:
     inline bool has(const char *profile) const                                         { return m_profiles.count(profile) > 0; }
     inline bool isDisabled(const Algorithm &algo) const                                { return m_disabled.count(algo) > 0; }
+    inline bool isEmpty() const                                                        { return m_profiles.empty(); }
     inline bool isExist(const Algorithm &algo) const                                   { return isDisabled(algo) || m_aliases.count(algo) > 0 || has(algo.shortName()); }
     inline const T &get(const Algorithm &algo, bool strict = false) const              { return get(profileName(algo, strict)); }
     inline void disable(const Algorithm &algo)                                         { m_disabled.insert(algo); }
-    inline void move(const char *profile, T &&threads)                                 { m_profiles.insert({ profile, threads }); }
+    inline void setAlias(const Algorithm &algo, const char *profile)                   { m_aliases[algo] = profile; }
+
+    inline size_t move(const char *profile, T &&threads)
+    {
+        if (has(profile)) {
+            return 0;
+        }
+
+        const size_t count = threads.count();
+
+        if (!threads.isEmpty()) {
+            m_profiles.insert({ profile, std::move(threads) });
+        }
+
+        return count;
+    }
 
     const T &get(const String &profileName) const;
     size_t read(const rapidjson::Value &value);
@@ -61,7 +77,7 @@ private:
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_THREADS_H */

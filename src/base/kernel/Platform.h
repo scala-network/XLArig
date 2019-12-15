@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,10 +26,13 @@
 #define XMRIG_PLATFORM_H
 
 
-#include <stdint.h>
+#include <cstdint>
 
 
 #include "base/tools/String.h"
+
+
+namespace xmrig {
 
 
 class Platform
@@ -48,7 +51,6 @@ public:
     static uint32_t setTimerResolution(uint32_t resolution);
     static void init(const char *userAgent);
     static void restoreTimerResolution();
-    static void setProcessPriority(int priority);
     static void setThreadPriority(int priority);
 
     static inline const char *userAgent() { return m_userAgent; }
@@ -56,8 +58,11 @@ public:
 private:
     static char *createUserAgent();
 
-    static xlarig::String m_userAgent;
+    static String m_userAgent;
 };
+
+
+} // namespace xmrig
 
 
 #endif /* XMRIG_PLATFORM_H */

@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,17 +26,18 @@
 #define XMRIG_IBACKEND_H
 
 
-#include <stdint.h>
+#include <cstdint>
 
 
 #include "rapidjson/fwd.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Algorithm;
 class Hashrate;
+class IApiRequest;
 class IWorker;
 class Job;
 class String;
@@ -52,20 +53,22 @@ public:
     virtual const Hashrate *hashrate() const                            = 0;
     virtual const String &profileName() const                           = 0;
     virtual const String &type() const                                  = 0;
+    virtual void execCommand(char command)                              = 0;
     virtual void prepare(const Job &nextJob)                            = 0;
     virtual void printHashrate(bool details)                            = 0;
     virtual void setJob(const Job &job)                                 = 0;
-    virtual void start(IWorker *worker)                                 = 0;
+    virtual void start(IWorker *worker, bool ready)                     = 0;
     virtual void stop()                                                 = 0;
     virtual void tick(uint64_t ticks)                                   = 0;
 
 #   ifdef XMRIG_FEATURE_API
     virtual rapidjson::Value toJSON(rapidjson::Document &doc) const     = 0;
+    virtual void handleRequest(IApiRequest &request)                    = 0;
 #   endif
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif // XMRIG_IBACKEND_H

@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,13 +23,14 @@
  */
 
 
-#include <assert.h>
+#include <cassert>
 #include <cmath>
 #include <memory.h>
-#include <stdio.h>
+#include <cstdio>
 
 
 #include "backend/common/Hashrate.h"
+#include "base/io/json/Json.h"
 #include "base/tools/Chrono.h"
 #include "base/tools/Handle.h"
 #include "rapidjson/document.h"
@@ -46,8 +47,7 @@ inline static const char *format(double h, char *buf, size_t size)
 }
 
 
-xlarig::Hashrate::Hashrate(size_t threads) :
-    m_highest(0.0),
+xmrig::Hashrate::Hashrate(size_t threads) :
     m_threads(threads)
 {
     m_counts     = new uint64_t*[threads];
@@ -62,7 +62,7 @@ xlarig::Hashrate::Hashrate(size_t threads) :
 }
 
 
-xlarig::Hashrate::~Hashrate()
+xmrig::Hashrate::~Hashrate()
 {
     for (size_t i = 0; i < m_threads; i++) {
         delete [] m_counts[i];
@@ -75,7 +75,7 @@ xlarig::Hashrate::~Hashrate()
 }
 
 
-double xlarig::Hashrate::calc(size_t ms) const
+double xmrig::Hashrate::calc(size_t ms) const
 {
     double result = 0.0;
     double data;
@@ -91,7 +91,7 @@ double xlarig::Hashrate::calc(size_t ms) const
 }
 
 
-double xlarig::Hashrate::calc(size_t threadId, size_t ms) const
+double xmrig::Hashrate::calc(size_t threadId, size_t ms) const
 {
     assert(threadId < m_threads);
     if (threadId >= m_threads) {
@@ -100,30 +100,30 @@ double xlarig::Hashrate::calc(size_t threadId, size_t ms) const
 
     uint64_t earliestHashCount = 0;
     uint64_t earliestStamp     = 0;
-    uint64_t lastestStamp      = 0;
-    uint64_t lastestHashCnt    = 0;
     bool haveFullSet           = false;
 
-    for (size_t i = 1; i < kBucketSize; i++) {
-        const size_t idx = (m_top[threadId] - i) & kBucketMask;
+    const uint64_t timeStampLimit = xmrig::Chrono::highResolutionMSecs() - ms;
+    uint64_t* timestamps = m_timestamps[threadId];
+    uint64_t* counts = m_counts[threadId];
 
-        if (m_timestamps[threadId][idx] == 0) {
+    const size_t idx_start = (m_top[threadId] - 1) & kBucketMask;
+    size_t idx = idx_start;
+
+    uint64_t lastestStamp = timestamps[idx];
+    uint64_t lastestHashCnt = counts[idx];
+
+    do {
+        if (timestamps[idx] < timeStampLimit) {
+            haveFullSet = (timestamps[idx] != 0);
+            if (idx != idx_start) {
+                idx = (idx + 1) & kBucketMask;
+                earliestStamp = timestamps[idx];
+                earliestHashCount = counts[idx];
+            }
             break;
         }
-
-        if (lastestStamp == 0) {
-            lastestStamp = m_timestamps[threadId][idx];
-            lastestHashCnt = m_counts[threadId][idx];
-        }
-
-        if (xlarig::Chrono::highResolutionMSecs() - m_timestamps[threadId][idx] > ms) {
-            haveFullSet = true;
-            break;
-        }
-
-        earliestStamp = m_timestamps[threadId][idx];
-        earliestHashCount = m_counts[threadId][idx];
-    }
+        idx = (idx - 1) & kBucketMask;
+    } while (idx != idx_start);
 
     if (!haveFullSet || earliestStamp == 0 || lastestStamp == 0) {
         return nan("");
@@ -133,14 +133,14 @@ double xlarig::Hashrate::calc(size_t threadId, size_t ms) const
         return nan("");
     }
 
-    const double hashes = static_cast<double>(lastestHashCnt - earliestHashCount);
-    const double time   = static_cast<double>(lastestStamp - earliestStamp) / 1000.0;
+    const auto hashes = static_cast<double>(lastestHashCnt - earliestHashCount);
+    const auto time   = static_cast<double>(lastestStamp - earliestStamp) / 1000.0;
 
     return hashes / time;
 }
 
 
-void xlarig::Hashrate::add(size_t threadId, uint64_t count, uint64_t timestamp)
+void xmrig::Hashrate::add(size_t threadId, uint64_t count, uint64_t timestamp)
 {
     const size_t top = m_top[threadId];
     m_counts[threadId][top]     = count;
@@ -150,28 +150,43 @@ void xlarig::Hashrate::add(size_t threadId, uint64_t count, uint64_t timestamp)
 }
 
 
-void xlarig::Hashrate::updateHighest()
-{
-   double highest = calc(ShortInterval);
-   if (std::isnormal(highest) && highest > m_highest) {
-       m_highest = highest;
-   }
-}
-
-
-const char *xlarig::Hashrate::format(double h, char *buf, size_t size)
+const char *xmrig::Hashrate::format(double h, char *buf, size_t size)
 {
     return ::format(h, buf, size);
 }
 
 
-rapidjson::Value xlarig::Hashrate::normalize(double d)
+rapidjson::Value xmrig::Hashrate::normalize(double d)
+{
+    return Json::normalize(d, false);
+}
+
+
+#ifdef XMRIG_FEATURE_API
+rapidjson::Value xmrig::Hashrate::toJSON(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
+    auto &allocator = doc.GetAllocator();
 
-    if (!std::isnormal(d)) {
-        return Value(kNullType);
-    }
+    Value out(kArrayType);
+    out.PushBack(normalize(calc(ShortInterval)),  allocator);
+    out.PushBack(normalize(calc(MediumInterval)), allocator);
+    out.PushBack(normalize(calc(LargeInterval)),  allocator);
 
-    return Value(floor(d * 100.0) / 100.0);
+    return out;
 }
+
+
+rapidjson::Value xmrig::Hashrate::toJSON(size_t threadId, rapidjson::Document &doc) const
+{
+    using namespace rapidjson;
+    auto &allocator = doc.GetAllocator();
+
+    Value out(kArrayType);
+    out.PushBack(normalize(calc(threadId, ShortInterval)),  allocator);
+    out.PushBack(normalize(calc(threadId, MediumInterval)), allocator);
+    out.PushBack(normalize(calc(threadId, LargeInterval)),  allocator);
+
+    return out;
+}
+#endif

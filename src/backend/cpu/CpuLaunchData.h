@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #include "crypto/common/Nonce.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class CpuConfig;
@@ -54,10 +54,13 @@ public:
     inline bool operator!=(const CpuLaunchData &other) const    { return !isEqual(other); }
     inline bool operator==(const CpuLaunchData &other) const    { return isEqual(other); }
 
+    static const char *tag();
+
     const Algorithm algorithm;
     const Assembly assembly;
     const bool hugePages;
     const bool hwAES;
+    const bool yield;
     const int priority;
     const int64_t affinity;
     const Miner *miner;
@@ -65,7 +68,7 @@ public:
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_CPULAUNCHDATA_H */

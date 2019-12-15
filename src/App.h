@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,9 +29,10 @@
 
 #include "base/kernel/interfaces/IConsoleListener.h"
 #include "base/kernel/interfaces/ISignalListener.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Console;
@@ -44,6 +45,8 @@ class Signals;
 class App : public IConsoleListener, public ISignalListener
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(App)
+
     App(Process *process);
     ~App() override;
 
@@ -54,16 +57,16 @@ protected:
     void onSignal(int signum) override;
 
 private:
-    void background();
+    bool background(int &rc);
     void close();
 
-    Console *m_console;
-    Controller *m_controller;
-    Signals *m_signals;
+    Console *m_console          = nullptr;
+    Controller *m_controller    = nullptr;
+    Signals *m_signals          = nullptr;
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_APP_H */

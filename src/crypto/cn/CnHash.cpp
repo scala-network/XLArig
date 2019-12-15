@@ -7,7 +7,7 @@
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
+#include <cstdio>
 
 
 #include "backend/cpu/Cpu.h"
@@ -66,13 +66,7 @@
     m_map[algo][AV_DOUBLE][Assembly::BULLDOZER] = cryptonight_double_hash_asm<algo, Assembly::BULLDOZER>;
 
 
-extern "C" void cnv2_mainloop_ivybridge_asm(cryptonight_ctx **ctx);
-extern "C" void cnv2_mainloop_ryzen_asm(cryptonight_ctx **ctx);
-extern "C" void cnv2_mainloop_bulldozer_asm(cryptonight_ctx **ctx);
-extern "C" void cnv2_double_mainloop_sandybridge_asm(cryptonight_ctx **ctx);
-
-
-namespace xlarig {
+namespace xmrig {
 
 
 cn_mainloop_fun        cn_half_mainloop_ivybridge_asm             = nullptr;
@@ -99,7 +93,7 @@ cn_mainloop_fun        cn_double_double_mainloop_sandybridge_asm  = nullptr;
 template<typename T, typename U>
 static void patchCode(T dst, U src, const uint32_t iterations, const uint32_t mask = CnAlgo<Algorithm::CN_HALF>().mask())
 {
-    const uint8_t* p = reinterpret_cast<const uint8_t*>(src);
+    auto p = reinterpret_cast<const uint8_t*>(src);
 
     // Workaround for Visual Studio placing trampoline in debug builds.
 #   if defined(_MSC_VER)
@@ -117,7 +111,7 @@ static void patchCode(T dst, U src, const uint32_t iterations, const uint32_t ma
 
     memcpy((void*) dst, (const void*) src, size);
 
-    uint8_t* patched_data = reinterpret_cast<uint8_t*>(dst);
+    auto patched_data = reinterpret_cast<uint8_t*>(dst);
     for (size_t i = 0; i + sizeof(uint32_t) <= size; ++i) {
         switch (*(uint32_t*)(patched_data + i)) {
         case CnAlgo<Algorithm::CN_2>().iterations():
@@ -135,7 +129,7 @@ static void patchCode(T dst, U src, const uint32_t iterations, const uint32_t ma
 static void patchAsmVariants()
 {
     const int allocation_size = 65536;
-    uint8_t *base = static_cast<uint8_t *>(VirtualMemory::allocateExecutableMemory(allocation_size));
+    auto base = static_cast<uint8_t *>(VirtualMemory::allocateExecutableMemory(allocation_size));
 
     cn_half_mainloop_ivybridge_asm              = reinterpret_cast<cn_mainloop_fun>         (base + 0x0000);
     cn_half_mainloop_ryzen_asm                  = reinterpret_cast<cn_mainloop_fun>         (base + 0x1000);
@@ -201,22 +195,21 @@ static void patchAsmVariants()
     VirtualMemory::protectExecutableMemory(base, allocation_size);
     VirtualMemory::flushInstructionCache(base, allocation_size);
 }
-} // namespace xlarig
+} // namespace xmrig
 #else
 #   define ADD_FN_ASM(algo)
 #endif
 
 
-static const xlarig::CnHash cnHash;
+static const xmrig::CnHash cnHash;
 
 
-xlarig::CnHash::CnHash()
+xmrig::CnHash::CnHash()
 {
     ADD_FN(Algorithm::CN_0);
     ADD_FN(Algorithm::CN_1);
     ADD_FN(Algorithm::CN_2);
     ADD_FN(Algorithm::CN_R);
-    ADD_FN(Algorithm::CN_WOW);
     ADD_FN(Algorithm::CN_FAST);
     ADD_FN(Algorithm::CN_HALF);
     ADD_FN(Algorithm::CN_XAO);
@@ -228,7 +221,6 @@ xlarig::CnHash::CnHash()
     ADD_FN_ASM(Algorithm::CN_2);
     ADD_FN_ASM(Algorithm::CN_HALF);
     ADD_FN_ASM(Algorithm::CN_R);
-    ADD_FN_ASM(Algorithm::CN_WOW);
     ADD_FN_ASM(Algorithm::CN_RWZ);
     ADD_FN_ASM(Algorithm::CN_ZLS);
     ADD_FN_ASM(Algorithm::CN_DOUBLE);
@@ -267,7 +259,7 @@ xlarig::CnHash::CnHash()
 }
 
 
-xlarig::cn_hash_fun xlarig::CnHash::fn(const Algorithm &algorithm, AlgoVariant av, Assembly::Id assembly)
+xmrig::cn_hash_fun xmrig::CnHash::fn(const Algorithm &algorithm, AlgoVariant av, Assembly::Id assembly)
 {
     if (!algorithm.isValid()) {
         return nullptr;

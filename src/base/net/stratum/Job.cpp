@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018      SChernykh   <https://github.com/SChernykh>
  * Copyright 2019      Howard Chu  <https://github.com/hyc>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,43 +25,29 @@
  */
 
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 
 #include "base/net/stratum/Job.h"
 #include "base/tools/Buffer.h"
 
 
-xlarig::Job::Job() :
-    m_blob(),
-    m_seedHash()
-{
-}
-
-
-xlarig::Job::Job(bool nicehash, const Algorithm &algorithm, const String &clientId) :
+xmrig::Job::Job(bool nicehash, const Algorithm &algorithm, const String &clientId) :
     m_algorithm(algorithm),
     m_nicehash(nicehash),
-    m_clientId(clientId),
-    m_blob(),
-    m_seedHash()
+    m_clientId(clientId)
 {
 }
 
 
-xlarig::Job::~Job()
-{
-}
-
-
-bool xlarig::Job::isEqual(const Job &other) const
+bool xmrig::Job::isEqual(const Job &other) const
 {
     return m_id == other.m_id && m_clientId == other.m_clientId && memcmp(m_blob, other.m_blob, sizeof(m_blob)) == 0;
 }
 
 
-bool xlarig::Job::setBlob(const char *blob)
+bool xmrig::Job::setBlob(const char *blob)
 {
     if (!blob) {
         return false;
@@ -94,9 +80,9 @@ bool xlarig::Job::setBlob(const char *blob)
 }
 
 
-bool xlarig::Job::setSeedHash(const char *hash)
+bool xmrig::Job::setSeedHash(const char *hash)
 {
-    if (!hash || (strlen(hash) != sizeof(m_seedHash) * 2)) {
+    if (!hash || (strlen(hash) != kMaxSeedSize * 2)) {
         return false;
     }
 
@@ -104,11 +90,13 @@ bool xlarig::Job::setSeedHash(const char *hash)
     m_rawSeedHash = hash;
 #   endif
 
-    return Buffer::fromHex(hash, sizeof(m_seedHash) * 2, m_seedHash);
+    m_seed = Buffer::fromHex(hash, kMaxSeedSize * 2);
+
+    return !m_seed.isEmpty();
 }
 
 
-bool xlarig::Job::setTarget(const char *target)
+bool xmrig::Job::setTarget(const char *target)
 {
     if (!target) {
         return false;
@@ -150,7 +138,7 @@ bool xlarig::Job::setTarget(const char *target)
 }
 
 
-void xlarig::Job::setDiff(uint64_t diff)
+void xmrig::Job::setDiff(uint64_t diff)
 {
     m_diff   = diff;
     m_target = toDiff(diff);
@@ -162,23 +150,57 @@ void xlarig::Job::setDiff(uint64_t diff)
 }
 
 
-void xlarig::Job::copy(const Job &other)
+void xmrig::Job::copy(const Job &other)
 {
-    m_algorithm = other.m_algorithm;
-    m_nicehash  = other.m_nicehash;
-    m_size      = other.m_size;
-    m_clientId  = other.m_clientId;
-    m_id        = other.m_id;
-    m_diff      = other.m_diff;
-    m_height    = other.m_height;
-    m_target    = other.m_target;
-    m_index     = other.m_index;
+    m_algorithm  = other.m_algorithm;
+    m_nicehash   = other.m_nicehash;
+    m_size       = other.m_size;
+    m_clientId   = other.m_clientId;
+    m_id         = other.m_id;
+    m_backend    = other.m_backend;
+    m_diff       = other.m_diff;
+    m_height     = other.m_height;
+    m_target     = other.m_target;
+    m_index      = other.m_index;
+    m_seed       = other.m_seed;
+    m_extraNonce = other.m_extraNonce;
+    m_poolWallet = other.m_poolWallet;
 
     memcpy(m_blob, other.m_blob, sizeof(m_blob));
-    memcpy(m_seedHash, other.m_seedHash, sizeof(m_seedHash));
 
 #   ifdef XMRIG_PROXY_PROJECT
     m_rawSeedHash = other.m_rawSeedHash;
+
+    memcpy(m_rawBlob, other.m_rawBlob, sizeof(m_rawBlob));
+    memcpy(m_rawTarget, other.m_rawTarget, sizeof(m_rawTarget));
+#   endif
+}
+
+
+void xmrig::Job::move(Job &&other)
+{
+    m_algorithm  = other.m_algorithm;
+    m_nicehash   = other.m_nicehash;
+    m_size       = other.m_size;
+    m_clientId   = std::move(other.m_clientId);
+    m_id         = std::move(other.m_id);
+    m_backend    = other.m_backend;
+    m_diff       = other.m_diff;
+    m_height     = other.m_height;
+    m_target     = other.m_target;
+    m_index      = other.m_index;
+    m_seed       = std::move(other.m_seed);
+    m_extraNonce = std::move(other.m_extraNonce);
+    m_poolWallet = std::move(other.m_poolWallet);
+
+    memcpy(m_blob, other.m_blob, sizeof(m_blob));
+
+    other.m_size        = 0;
+    other.m_diff        = 0;
+    other.m_algorithm   = Algorithm::INVALID;
+
+#   ifdef XMRIG_PROXY_PROJECT
+    m_rawSeedHash = std::move(other.m_rawSeedHash);
 
     memcpy(m_rawBlob, other.m_rawBlob, sizeof(m_rawBlob));
     memcpy(m_rawTarget, other.m_rawTarget, sizeof(m_rawTarget));

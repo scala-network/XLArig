@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 void* allocExecutableMemory(std::size_t bytes) {
-    void *mem = xlarig::VirtualMemory::allocateExecutableMemory(bytes);
+    void *mem = xmrig::VirtualMemory::allocateExecutableMemory(bytes);
     if (mem == nullptr) {
         throw std::runtime_error("Failed to allocate executable memory");
     }
@@ -44,7 +44,7 @@ void* allocExecutableMemory(std::size_t bytes) {
 
 
 void* allocLargePagesMemory(std::size_t bytes) {
-    void *mem = xlarig::VirtualMemory::allocateLargePagesMemory(bytes);
+    void *mem = xmrig::VirtualMemory::allocateLargePagesMemory(bytes);
     if (mem == nullptr) {
         throw std::runtime_error("Failed to allocate large pages memory");
     }
@@ -54,5 +54,5 @@ void* allocLargePagesMemory(std::size_t bytes) {
 
 
 void freePagedMemory(void* ptr, std::size_t bytes) {
-    xlarig::VirtualMemory::freeLargePagesMemory(ptr, bytes);
+    xmrig::VirtualMemory::freeLargePagesMemory(ptr, bytes);
 }

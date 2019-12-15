@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "rapidjson/fwd.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class IJsonReader;
@@ -43,6 +43,7 @@ public:
     enum Keys {
         // common
         AlgorithmKey         = 'a',
+        CoinKey              = 1025,
         ApiWorkerIdKey       = 4002,
         ApiIdKey             = 4005,
         HttpPort             = 4100,
@@ -71,16 +72,15 @@ public:
         ProxyDonateKey       = 1017,
         DaemonKey            = 1018,
         DaemonPollKey        = 1019,
+        SelfSelectKey        = 1028,
 
-        // xlarig common
+        // xmrig common
         CPUPriorityKey       = 1021,
         NicehashKey          = 1006,
         PrintTimeKey         = 1007,
 
-        RebenchAlgoKey       = 10001,
-        BenchAlgoTimeKey     = 10002,
-
-        // xlarig cpu
+        // xmrig cpu
+        CPUKey               = 1024,
         AVKey                = 'v',
         CPUAffinityKey       = 1020,
         DryRunKey            = 5000,
@@ -89,8 +89,14 @@ public:
         AssemblyKey          = 1015,
         RandomXInitKey       = 1022,
         RandomXNumaKey       = 1023,
+        RandomXModeKey       = 1029,
+        RandomX1GbPagesKey   = 1031,
+        RandomXWrmsrKey      = 1032,
+        CPUMaxThreadsKey     = 1026,
+        MemoryPoolKey        = 1027,
+        YieldKey             = 1030,
 
-        // xlarig amd
+        // xmrig amd
         OclPlatformKey       = 1400,
         OclAffinityKey       = 1401,
         OclDevicesKey        = 1402,
@@ -102,8 +108,9 @@ public:
         OclMemChunkKey       = 1408,
         OclUnrollKey         = 1409,
         OclCompModeKey       = 1410,
+        OclKey               = 1411,
 
-        // xlarig-proxy
+        // xmrig-proxy
         AccessLogFileKey     = 'A',
         BindKey              = 'b',
         CustomDiffKey        = 1102,
@@ -122,8 +129,9 @@ public:
         TlsProtocolsKey      = 1114,
         AlgoExtKey           = 1115,
         ProxyPasswordKey     = 1116,
+        LoginFileKey         = 'L',
 
-        // xlarig nvidia
+        // xmrig nvidia
         CudaMaxThreadsKey    = 1200,
         CudaBFactorKey       = 1201,
         CudaBSleepKey        = 1202,
@@ -131,6 +139,10 @@ public:
         CudaLaunchKey        = 1204,
         CudaAffinityKey      = 1205,
         CudaMaxUsageKey      = 1206,
+        CudaKey              = 1207,
+        CudaLoaderKey        = 1208,
+        NvmlKey              = 1209,
+        HealthPrintTimeKey   = 1210,
     };
 
     virtual ~IConfig() = default;
@@ -144,7 +156,7 @@ public:
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif // XMRIG_ICONFIG_H

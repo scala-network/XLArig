@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,19 +29,19 @@
 #include "rapidjson/error/en.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 static const rapidjson::Value kNullValue;
 
 }
 
 
-xlarig::JsonChain::JsonChain()
+xmrig::JsonChain::JsonChain()
 {
 }
 
 
-bool xlarig::JsonChain::add(rapidjson::Document &&doc)
+bool xmrig::JsonChain::add(rapidjson::Document &&doc)
 {
     if (doc.HasParseError() || !doc.IsObject() || doc.ObjectEmpty()) {
         return false;
@@ -53,7 +53,7 @@ bool xlarig::JsonChain::add(rapidjson::Document &&doc)
 }
 
 
-bool xlarig::JsonChain::addFile(const char *fileName)
+bool xmrig::JsonChain::addFile(const char *fileName)
 {
     using namespace rapidjson;
     Document doc;
@@ -74,7 +74,7 @@ bool xlarig::JsonChain::addFile(const char *fileName)
 }
 
 
-bool xlarig::JsonChain::addRaw(const char *json)
+bool xmrig::JsonChain::addRaw(const char *json)
 {
     using namespace rapidjson;
     Document doc;
@@ -84,7 +84,7 @@ bool xlarig::JsonChain::addRaw(const char *json)
 }
 
 
-void xlarig::JsonChain::dump(const char *fileName)
+void xmrig::JsonChain::dump(const char *fileName)
 {
     rapidjson::Document doc(rapidjson::kArrayType);
 
@@ -96,7 +96,7 @@ void xlarig::JsonChain::dump(const char *fileName)
 }
 
 
-bool xlarig::JsonChain::getBool(const char *key, bool defaultValue) const
+bool xmrig::JsonChain::getBool(const char *key, bool defaultValue) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -109,7 +109,7 @@ bool xlarig::JsonChain::getBool(const char *key, bool defaultValue) const
 }
 
 
-const char *xlarig::JsonChain::getString(const char *key, const char *defaultValue) const
+const char *xmrig::JsonChain::getString(const char *key, const char *defaultValue) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -122,7 +122,7 @@ const char *xlarig::JsonChain::getString(const char *key, const char *defaultVal
 }
 
 
-const rapidjson::Value &xlarig::JsonChain::getArray(const char *key) const
+const rapidjson::Value &xmrig::JsonChain::getArray(const char *key) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -135,7 +135,7 @@ const rapidjson::Value &xlarig::JsonChain::getArray(const char *key) const
 }
 
 
-const rapidjson::Value &xlarig::JsonChain::getObject(const char *key) const
+const rapidjson::Value &xmrig::JsonChain::getObject(const char *key) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -148,7 +148,7 @@ const rapidjson::Value &xlarig::JsonChain::getObject(const char *key) const
 }
 
 
-const rapidjson::Value &xlarig::JsonChain::getValue(const char *key) const
+const rapidjson::Value &xmrig::JsonChain::getValue(const char *key) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -161,7 +161,7 @@ const rapidjson::Value &xlarig::JsonChain::getValue(const char *key) const
 }
 
 
-int xlarig::JsonChain::getInt(const char *key, int defaultValue) const
+int xmrig::JsonChain::getInt(const char *key, int defaultValue) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -174,7 +174,7 @@ int xlarig::JsonChain::getInt(const char *key, int defaultValue) const
 }
 
 
-int64_t xlarig::JsonChain::getInt64(const char *key, int64_t defaultValue) const
+int64_t xmrig::JsonChain::getInt64(const char *key, int64_t defaultValue) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -187,7 +187,7 @@ int64_t xlarig::JsonChain::getInt64(const char *key, int64_t defaultValue) const
 }
 
 
-uint64_t xlarig::JsonChain::getUint64(const char *key, uint64_t defaultValue) const
+uint64_t xmrig::JsonChain::getUint64(const char *key, uint64_t defaultValue) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);
@@ -200,7 +200,7 @@ uint64_t xlarig::JsonChain::getUint64(const char *key, uint64_t defaultValue) co
 }
 
 
-unsigned xlarig::JsonChain::getUint(const char *key, unsigned defaultValue) const
+unsigned xmrig::JsonChain::getUint(const char *key, unsigned defaultValue) const
 {
     for (auto it = m_chain.rbegin(); it != m_chain.rend(); ++it) {
         auto i = it->FindMember(key);

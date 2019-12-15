@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,13 +28,17 @@
 #define XMRIG_RX_VM_H
 
 
-#include <stdint.h>
+#include "base/tools/Object.h"
+#include "backend/cpu/Cpu.h"
 
 
-struct randomx_vm;
+#include <cstdint>
 
 
-namespace xlarig
+class randomx_vm;
+
+
+namespace xmrig
 {
 
 
@@ -44,7 +48,9 @@ class RxDataset;
 class RxVm
 {
 public:
-    RxVm(RxDataset *dataset, uint8_t *scratchpad, bool softAes);
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(RxVm);
+
+    RxVm(RxDataset *dataset, uint8_t *scratchpad, bool softAes, xmrig::Assembly assembly);
     ~RxVm();
 
     inline randomx_vm *get() const       { return m_vm; }
@@ -55,7 +61,7 @@ private:
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
-#endif /* XMRIG_RX_CACHE_H */
+#endif /* XMRIG_RX_VM_H */

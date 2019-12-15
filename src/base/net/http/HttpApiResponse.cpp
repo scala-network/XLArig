@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,22 +30,22 @@
 #include "rapidjson/stringbuffer.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 static const char *kError  = "error";
 static const char *kStatus = "status";
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-xlarig::HttpApiResponse::HttpApiResponse(uint64_t id) :
+xmrig::HttpApiResponse::HttpApiResponse(uint64_t id) :
     HttpResponse(id),
     m_doc(rapidjson::kObjectType)
 {
 }
 
 
-xlarig::HttpApiResponse::HttpApiResponse(uint64_t id, int status) :
+xmrig::HttpApiResponse::HttpApiResponse(uint64_t id, int status) :
     HttpResponse(id),
     m_doc(rapidjson::kObjectType)
 {
@@ -53,7 +53,7 @@ xlarig::HttpApiResponse::HttpApiResponse(uint64_t id, int status) :
 }
 
 
-void xlarig::HttpApiResponse::end()
+void xmrig::HttpApiResponse::end()
 {
     using namespace rapidjson;
 

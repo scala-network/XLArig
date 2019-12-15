@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
  * Copyright 2019      Howard Chu  <https://github.com/hyc>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 
 
 #include "3rdparty/http-parser/http_parser.h"
@@ -50,7 +50,7 @@
 #endif
 
 
-namespace xlarig {
+namespace xmrig {
 
 static const char *kBlocktemplateBlob       = "blocktemplate_blob";
 static const char *kGetHeight               = "/getheight";
@@ -62,7 +62,7 @@ static const char *kJsonRPC                 = "/json_rpc";
 }
 
 
-xlarig::DaemonClient::DaemonClient(int id, IClientListener *listener) :
+xmrig::DaemonClient::DaemonClient(int id, IClientListener *listener) :
     BaseClient(id, listener),
     m_monero(true)
 {
@@ -70,13 +70,13 @@ xlarig::DaemonClient::DaemonClient(int id, IClientListener *listener) :
 }
 
 
-xlarig::DaemonClient::~DaemonClient()
+xmrig::DaemonClient::~DaemonClient()
 {
     delete m_timer;
 }
 
 
-bool xlarig::DaemonClient::disconnect()
+bool xmrig::DaemonClient::disconnect()
 {
     if (m_state != UnconnectedState) {
         setState(UnconnectedState);
@@ -86,7 +86,7 @@ bool xlarig::DaemonClient::disconnect()
 }
 
 
-bool xlarig::DaemonClient::isTLS() const
+bool xmrig::DaemonClient::isTLS() const
 {
 #   ifdef XMRIG_FEATURE_TLS
     return m_pool.isTLS();
@@ -96,7 +96,7 @@ bool xlarig::DaemonClient::isTLS() const
 }
 
 
-int64_t xlarig::DaemonClient::submit(const JobResult &result)
+int64_t xmrig::DaemonClient::submit(const JobResult &result)
 {
     if (result.jobId != (m_blocktemplate.data() + m_blocktemplate.size() - 32)) {
         return -1;
@@ -117,9 +117,9 @@ int64_t xlarig::DaemonClient::submit(const JobResult &result)
     JsonRequest::create(doc, m_sequence, "submitblock", params);
 
 #   ifdef XMRIG_PROXY_PROJECT
-    m_results[m_sequence] = SubmitResult(m_sequence, result.diff, result.actualDiff(), result.id);
+    m_results[m_sequence] = SubmitResult(m_sequence, result.diff, result.actualDiff(), result.id, 0);
 #   else
-    m_results[m_sequence] = SubmitResult(m_sequence, result.diff, result.actualDiff());
+    m_results[m_sequence] = SubmitResult(m_sequence, result.diff, result.actualDiff(), 0, result.backend);
 #   endif
 
     send(HTTP_POST, kJsonRPC, doc);
@@ -128,21 +128,21 @@ int64_t xlarig::DaemonClient::submit(const JobResult &result)
 }
 
 
-void xlarig::DaemonClient::connect()
+void xmrig::DaemonClient::connect()
 {
     setState(ConnectingState);
     getBlockTemplate();
 }
 
 
-void xlarig::DaemonClient::connect(const Pool &pool)
+void xmrig::DaemonClient::connect(const Pool &pool)
 {
     setPool(pool);
     connect();
 }
 
 
-void xlarig::DaemonClient::onHttpData(const HttpData &data)
+void xmrig::DaemonClient::onHttpData(const HttpData &data)
 {
     if (data.status != HTTP_STATUS_OK) {
         return retry();
@@ -193,7 +193,7 @@ void xlarig::DaemonClient::onHttpData(const HttpData &data)
 }
 
 
-void xlarig::DaemonClient::onTimer(const Timer *)
+void xmrig::DaemonClient::onTimer(const Timer *)
 {
     if (m_state == ConnectingState) {
         getBlockTemplate();
@@ -204,13 +204,13 @@ void xlarig::DaemonClient::onTimer(const Timer *)
 }
 
 
-bool xlarig::DaemonClient::isOutdated(uint64_t height, const char *hash) const
+bool xmrig::DaemonClient::isOutdated(uint64_t height, const char *hash) const
 {
     return m_job.height() != height || m_prevHash != hash;
 }
 
 
-bool xlarig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
+bool xmrig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
 {
     Job job(false, m_pool.algorithm(), String());
 
@@ -225,6 +225,10 @@ bool xlarig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
     job.setDiff(Json::getUint64(params, "difficulty"));
     job.setId(blocktemplate.data() + blocktemplate.size() - 32);
 
+    if (m_pool.coin().isValid()) {
+        job.setAlgorithm(m_pool.coin().algorithm(job.blob()[0]));
+    }
+
     m_job           = std::move(job);
     m_blocktemplate = std::move(blocktemplate);
     m_prevHash      = Json::getString(params, "prev_hash");
@@ -238,7 +242,7 @@ bool xlarig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
 }
 
 
-bool xlarig::DaemonClient::parseResponse(int64_t id, const rapidjson::Value &result, const rapidjson::Value &error)
+bool xmrig::DaemonClient::parseResponse(int64_t id, const rapidjson::Value &result, const rapidjson::Value &error)
 {
     if (id == -1) {
         return false;
@@ -273,7 +277,7 @@ bool xlarig::DaemonClient::parseResponse(int64_t id, const rapidjson::Value &res
 }
 
 
-int64_t xlarig::DaemonClient::getBlockTemplate()
+int64_t xmrig::DaemonClient::getBlockTemplate()
 {
     using namespace rapidjson;
     Document doc(kObjectType);
@@ -291,7 +295,7 @@ int64_t xlarig::DaemonClient::getBlockTemplate()
 }
 
 
-void xlarig::DaemonClient::retry()
+void xmrig::DaemonClient::retry()
 {
     m_failures++;
     m_listener->onClose(this, static_cast<int>(m_failures));
@@ -309,7 +313,7 @@ void xlarig::DaemonClient::retry()
 }
 
 
-void xlarig::DaemonClient::send(int method, const char *url, const char *data, size_t size)
+void xmrig::DaemonClient::send(int method, const char *url, const char *data, size_t size)
 {
     LOG_DEBUG("[%s:%d] " MAGENTA_BOLD("\"%s %s\"") BLACK_BOLD_S " send (%zu bytes): \"%.*s\"",
               m_pool.host().data(),
@@ -336,7 +340,7 @@ void xlarig::DaemonClient::send(int method, const char *url, const char *data, s
 }
 
 
-void xlarig::DaemonClient::send(int method, const char *url, const rapidjson::Document &doc)
+void xmrig::DaemonClient::send(int method, const char *url, const rapidjson::Document &doc)
 {
     using namespace rapidjson;
 
@@ -348,7 +352,7 @@ void xlarig::DaemonClient::send(int method, const char *url, const rapidjson::Do
 }
 
 
-void xlarig::DaemonClient::setState(SocketState state)
+void xmrig::DaemonClient::setState(SocketState state)
 {
     assert(m_state != state);
     if (m_state == state) {

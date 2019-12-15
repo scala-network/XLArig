@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,54 +26,61 @@
 #define XMRIG_CONFIG_H
 
 
-#include <stdint.h>
+#include <cstdint>
 
 
 #include "backend/cpu/CpuConfig.h"
 #include "base/kernel/config/BaseConfig.h"
-#include "core/Benchmark.h"
+#include "base/tools/Object.h"
 #include "rapidjson/fwd.h"
 
 
-#ifdef XMRIG_ALGO_RANDOMX
-#   include "crypto/rx/RxConfig.h"
-#endif
+namespace xmrig {
 
 
-namespace xlarig {
-
-
+class ConfigPrivate;
+class CudaConfig;
 class IThread;
+class OclConfig;
+class RxConfig;
 
 
 class Config : public BaseConfig
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE(Config);
+
     Config();
+    ~Config() override;
+
+    const CpuConfig &cpu() const;
+
+#   ifdef XMRIG_FEATURE_OPENCL
+    const OclConfig &cl() const;
+#   endif
+
+#   ifdef XMRIG_FEATURE_CUDA
+    const CudaConfig &cuda() const;
+#   endif
+
+#   ifdef XMRIG_ALGO_RANDOMX
+    const RxConfig &rx() const;
+#   endif
+
+#   if defined(XMRIG_FEATURE_NVML)
+    uint32_t healthPrintTime() const;
+#   endif
 
     bool isShouldSave() const;
     bool read(const IJsonReader &reader, const char *fileName) override;
     void getJSON(rapidjson::Document &doc) const override;
 
-    inline const CpuConfig &cpu() const     { return m_cpu; }
-    inline Benchmark &benchmark()           { return m_benchmark; }
-
-#   ifdef XMRIG_ALGO_RANDOMX
-    inline const RxConfig &rx() const       { return m_rx; }
-#   endif
-
 private:
-    bool m_shouldSave   = false;
-    CpuConfig m_cpu;
-    Benchmark m_benchmark;
-
-#   ifdef XMRIG_ALGO_RANDOMX
-    RxConfig m_rx;
-#   endif
+    ConfigPrivate *d_ptr;
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_CONFIG_H */

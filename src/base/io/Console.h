@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,11 +26,13 @@
 #define XMRIG_CONSOLE_H
 
 
+#include "base/tools/Object.h"
+
+
 #include <uv.h>
 
 
-
-namespace xlarig {
+namespace xmrig {
 
 
 class IConsoleListener;
@@ -39,22 +41,26 @@ class IConsoleListener;
 class Console
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(Console)
+
     Console(IConsoleListener *listener);
     ~Console();
 
     void stop();
 
 private:
+    bool isSupported() const;
+
     static void onAllocBuffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
     static void onRead(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 
-    char m_buf[1];
+    char m_buf[1] = { 0 };
     IConsoleListener *m_listener;
-    uv_tty_t *m_tty;
+    uv_tty_t *m_tty = nullptr;
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_CONSOLE_H */

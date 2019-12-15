@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,17 +23,17 @@
  */
 
 
+#include <ctime>
 #include <uv.h>
-#include <time.h>
 
 
 #include "base/kernel/Process.h"
 #include "base/tools/Chrono.h"
 
 
-static size_t location(xlarig::Process::Location location, char *buf, size_t max)
+static size_t location(xmrig::Process::Location location, char *buf, size_t max)
 {
-    using namespace xlarig;
+    using namespace xmrig;
 
     size_t size = max;
     if (location == Process::ExeLocation) {
@@ -48,19 +48,14 @@ static size_t location(xlarig::Process::Location location, char *buf, size_t max
 }
 
 
-xlarig::Process::Process(int argc, char **argv) :
+xmrig::Process::Process(int argc, char **argv) :
     m_arguments(argc, argv)
 {
     srand(static_cast<unsigned int>(Chrono::currentMSecsSinceEpoch() ^ reinterpret_cast<uintptr_t>(this)));
 }
 
 
-xlarig::Process::~Process()
-{
-}
-
-
-xlarig::String xlarig::Process::location(Location location, const char *fileName) const
+xmrig::String xmrig::Process::location(Location location, const char *fileName) const
 {
     constexpr const size_t max = 520;
 

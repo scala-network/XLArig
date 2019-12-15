@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,18 +28,27 @@
 #include "crypto/cn/CnHash.h"
 
 
-namespace xlarig
+namespace xmrig
 {
 
 
 static const char *kAffinity    = "affinity";
 static const char *kAsterisk    = "*";
 static const char *kCpu         = "cpu";
+static const char *kEnabled     = "enabled";
 static const char *kIntensity   = "intensity";
 static const char *kThreads     = "threads";
 
 #ifdef XMRIG_ALGO_RANDOMX
-static const char *kRandomX = "randomx";
+static const char *kRandomX     = "randomx";
+#endif
+
+#ifdef XMRIG_FEATURE_OPENCL
+static const char *kOcl         = "opencl";
+#endif
+
+#ifdef XMRIG_FEATURE_CUDA
+static const char *kCuda        = "cuda";
 #endif
 
 
@@ -80,15 +89,10 @@ static inline bool isHwAes(uint64_t av)
 }
 
 
-}
+} // namespace xmrig
 
 
-xlarig::ConfigTransform::ConfigTransform() : BaseTransform()
-{
-}
-
-
-void xlarig::ConfigTransform::finalize(rapidjson::Document &doc)
+void xmrig::ConfigTransform::finalize(rapidjson::Document &doc)
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
@@ -96,6 +100,8 @@ void xlarig::ConfigTransform::finalize(rapidjson::Document &doc)
     BaseTransform::finalize(doc);
 
     if (m_threads) {
+        doc.AddMember("version", 1, allocator);
+
         if (!doc.HasMember(kCpu)) {
             doc.AddMember(StringRef(kCpu), Value(kObjectType), allocator);
         }
@@ -107,10 +113,16 @@ void xlarig::ConfigTransform::finalize(rapidjson::Document &doc)
 
         doc[kCpu].AddMember(StringRef(kAsterisk), profile, doc.GetAllocator());
     }
+
+#   ifdef XMRIG_FEATURE_OPENCL
+    if (m_opencl) {
+        set(doc, kOcl, kEnabled, true);
+    }
+#   endif
 }
 
 
-void xlarig::ConfigTransform::transform(rapidjson::Document &doc, int key, const char *arg)
+void xmrig::ConfigTransform::transform(rapidjson::Document &doc, int key, const char *arg)
 {
     BaseTransform::transform(doc, key, arg);
 
@@ -121,6 +133,7 @@ void xlarig::ConfigTransform::transform(rapidjson::Document &doc, int key, const
         return transformUint64(doc, key, static_cast<uint64_t>(strtol(arg, nullptr, 10)));
 
     case IConfig::HugePagesKey: /* --no-huge-pages */
+    case IConfig::CPUKey:       /* --no-cpu */
         return transformBoolean(doc, key, false);
 
     case IConfig::CPUAffinityKey: /* --cpu-affinity */
@@ -129,7 +142,16 @@ void xlarig::ConfigTransform::transform(rapidjson::Document &doc, int key, const
             return transformUint64(doc, key, p ? strtoull(p, nullptr, 16) : strtoull(arg, nullptr, 10));
         }
 
-#   ifndef XMRIG_NO_ASM
+    case IConfig::CPUMaxThreadsKey: /* --cpu-max-threads-hint */
+        return set(doc, kCpu, "max-threads-hint", static_cast<uint64_t>(strtol(arg, nullptr, 10)));
+
+    case IConfig::MemoryPoolKey: /* --cpu-memory-pool */
+        return set(doc, kCpu, "memory-pool", static_cast<int64_t>(strtol(arg, nullptr, 10)));
+
+    case IConfig::YieldKey: /* --cpu-no-yield */
+        return set(doc, kCpu, "yield", false);
+
+#   ifdef XMRIG_FEATURE_ASM
     case IConfig::AssemblyKey: /* --asm */
         return set(doc, kCpu, "asm", arg);
 #   endif
@@ -140,6 +162,68 @@ void xlarig::ConfigTransform::transform(rapidjson::Document &doc, int key, const
 
     case IConfig::RandomXNumaKey: /* --randomx-no-numa */
         return set(doc, kRandomX, "numa", false);
+
+    case IConfig::RandomXModeKey: /* --randomx-mode */
+        return set(doc, kRandomX, "mode", arg);
+
+    case IConfig::RandomX1GbPagesKey: /* --randomx-1gb-pages */
+        return set(doc, kRandomX, "1gb-pages", true);
+
+    case IConfig::RandomXWrmsrKey: /* --randomx-wrmsr */
+        if (arg == nullptr) {
+            return set(doc, kRandomX, "wrmsr", true);
+        }
+
+        return set(doc, kRandomX, "wrmsr", static_cast<int64_t>(strtol(arg, nullptr, 10)));
+#   endif
+
+#   ifdef XMRIG_FEATURE_OPENCL
+    case IConfig::OclKey: /* --opencl */
+        m_opencl = true;
+        break;
+
+    case IConfig::OclCacheKey: /* --opencl-no-cache */
+        return set(doc, kOcl, "cache", false);
+
+    case IConfig::OclLoaderKey: /* --opencl-loader */
+        return set(doc, kOcl, "loader", arg);
+
+    case IConfig::OclDevicesKey: /* --opencl-devices */
+        m_opencl = true;
+        return set(doc, kOcl, "devices-hint", arg);
+
+    case IConfig::OclPlatformKey: /* --opencl-platform */
+        if (strlen(arg) < 3) {
+            return set(doc, kOcl, "platform", static_cast<uint64_t>(strtol(arg, nullptr, 10)));
+        }
+
+        return set(doc, kOcl, "platform", arg);
+#   endif
+
+#   ifdef XMRIG_FEATURE_CUDA
+    case IConfig::CudaKey: /* --cuda */
+        return set(doc, kCuda, kEnabled, true);
+
+    case IConfig::CudaLoaderKey: /* --cuda-loader */
+        return set(doc, kCuda, "loader", arg);
+
+    case IConfig::CudaDevicesKey: /* --cuda-devices */
+        set(doc, kCuda, kEnabled, true);
+        return set(doc, kCuda, "devices-hint", arg);
+
+    case IConfig::CudaBFactorKey: /* --cuda-bfactor-hint */
+        return set(doc, kCuda, "bfactor-hint", static_cast<uint64_t>(strtol(arg, nullptr, 10)));
+
+    case IConfig::CudaBSleepKey: /* --cuda-bsleep-hint */
+        return set(doc, kCuda, "bsleep-hint", static_cast<uint64_t>(strtol(arg, nullptr, 10)));
+#   endif
+
+#   ifdef XMRIG_FEATURE_NVML
+    case IConfig::NvmlKey: /* --no-nvml */
+        return set(doc, kCuda, "nvml", false);
+
+    case IConfig::HealthPrintTimeKey: /* --health-print-time */
+        return set(doc, "health-print-time", static_cast<uint64_t>(strtol(arg, nullptr, 10)));
 #   endif
 
     default:
@@ -148,11 +232,14 @@ void xlarig::ConfigTransform::transform(rapidjson::Document &doc, int key, const
 }
 
 
-void xlarig::ConfigTransform::transformBoolean(rapidjson::Document &doc, int key, bool enable)
+void xmrig::ConfigTransform::transformBoolean(rapidjson::Document &doc, int key, bool enable)
 {
     switch (key) {
     case IConfig::HugePagesKey: /* --no-huge-pages */
         return set(doc, kCpu, "huge-pages", enable);
+
+    case IConfig::CPUKey:       /* --no-cpu */
+        return set(doc, kCpu, kEnabled, enable);
 
     default:
         break;
@@ -160,7 +247,7 @@ void xlarig::ConfigTransform::transformBoolean(rapidjson::Document &doc, int key
 }
 
 
-void xlarig::ConfigTransform::transformUint64(rapidjson::Document &doc, int key, uint64_t arg)
+void xmrig::ConfigTransform::transformUint64(rapidjson::Document &doc, int key, uint64_t arg)
 {
     using namespace rapidjson;
 
