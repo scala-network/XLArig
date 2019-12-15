@@ -61,22 +61,6 @@ API:
       --http-access-token=T     access token for HTTP API
       --http-no-restricted      enable full remote access to HTTP API (only if access token set)
 
-OpenCL backend:
-      --opencl                  enable OpenCL mining backend
-      --opencl-devices=N        comma separated list of OpenCL devices to use
-      --opencl-platform=N       OpenCL platform index or name
-      --opencl-loader=PATH      path to OpenCL-ICD-Loader (OpenCL.dll or libOpenCL.so)
-      --opencl-no-cache         disable OpenCL cache
-      --print-platforms         print available OpenCL platforms and exit
-
-CUDA backend:
-      --cuda                    enable CUDA mining backend
-      --cuda-loader=PATH        path to CUDA plugin (xmrig-cuda.dll or libxmrig-cuda.so)
-      --cuda-devices=N          comma separated list of CUDA devices to use
-      --cuda-bfactor-hint=N     bfactor hint for autoconfig (0-12)
-      --cuda-bsleep-hint=N      bsleep hint for autoconfig
-      --no-nvml                 disable NVML (NVIDIA Management Library) support
-
 Logging:
   -S, --syslog                  use system log for output messages
   -l, --log-file=FILE           log all output to a file
@@ -95,7 +79,7 @@ Misc:
 
 ## Building 
 
-The building instruction has been moved [here](doc/building.md)
+The building instructions has been moved [here](doc/building.md)
 
 ## Donations
 The donation mining in XLArig has been turned off, if you wish to help the original creators or the Scala Project team donate to the addresses below.
