@@ -57,7 +57,9 @@ public:
         if (algorithm == Algorithm::RX_SFX || algorithm == Algorithm::RX_V) {
             return Algorithm::RX_0;
         }
-
+		if (algorithm == Algorithm::DEFYX) {
+            return Algorithm::DEFYX;
+        }
         return algorithm;
     }
 };

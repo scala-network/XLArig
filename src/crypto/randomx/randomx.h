@@ -33,14 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdint>
 #include <type_traits>
 #include "crypto/randomx/intrin_portable.h"
-
 #define RANDOMX_HASH_SIZE 32
 #define RANDOMX_DATASET_ITEM_SIZE 64
 
 #ifndef RANDOMX_EXPORT
 #define RANDOMX_EXPORT
 #endif
-
 
 enum randomx_flags {
   RANDOMX_FLAG_DEFAULT = 0,
@@ -355,3 +353,4 @@ RANDOMX_EXPORT void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&
 #endif
 
 #endif
+#include "crypto/randomx/defyx/defyx.h"
