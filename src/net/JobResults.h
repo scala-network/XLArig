@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,23 +27,33 @@
 #define XMRIG_JOBRESULTS_H
 
 
-namespace xlarig {
+#include <cstddef>
+#include <cstdint>
+
+
+namespace xmrig {
 
 
 class IJobResultListener;
+class Job;
 class JobResult;
 
 
 class JobResults
 {
 public:
-    static void setListener(IJobResultListener *listener);
+    static void setListener(IJobResultListener *listener, bool hwAES);
     static void stop();
+    static void submit(const Job &job, uint32_t nonce, const uint8_t *result);
     static void submit(const JobResult &result);
+
+#   if defined(XMRIG_FEATURE_OPENCL) || defined(XMRIG_FEATURE_CUDA)
+    static void submit(const Job &job, uint32_t *results, size_t count);
+#   endif
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_JOBRESULTS_H */

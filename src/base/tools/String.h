@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #include "rapidjson/fwd.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 /**
@@ -46,9 +46,9 @@ namespace xlarig {
 class String
 {
 public:
-    inline String() : m_data(nullptr), m_size(0)                                     {}
-    inline String(char *str) : m_data(str), m_size(str == nullptr ? 0 : strlen(str)) {}
-    inline String(String &&other) : m_data(other.m_data), m_size(other.m_size)       { other.m_data = nullptr; other.m_size = 0; }
+    inline String() = default;
+    inline String(char *str) : m_data(str), m_size(str == nullptr ? 0 : strlen(str))    {}
+    inline String(String &&other) noexcept : m_data(other.m_data), m_size(other.m_size) { other.m_data = nullptr; other.m_size = 0; }
 
     String(const char *str);
     String(const char *str, size_t size);
@@ -81,14 +81,15 @@ public:
     inline String &operator=(const char *str)          { copy(str); return *this; }
     inline String &operator=(const String &str)        { copy(str); return *this; }
     inline String &operator=(std::nullptr_t)           { delete [] m_data; m_data = nullptr; m_size = 0; return *this; }
-    inline String &operator=(String &&other)           { move(std::move(other)); return *this; }
+    inline String &operator=(String &&other) noexcept  { move(std::move(other)); return *this; }
 
     rapidjson::Value toJSON() const;
     rapidjson::Value toJSON(rapidjson::Document &doc) const;
-    std::vector<xlarig::String> split(char sep) const;
+    std::vector<xmrig::String> split(char sep) const;
     String &toLower();
+    String &toUpper();
 
-    static String join(const std::vector<xlarig::String> &vec, char sep);
+    static String join(const std::vector<xmrig::String> &vec, char sep);
 
 private:
     void copy(const char *str);
@@ -96,12 +97,12 @@ private:
     void move(char *str);
     void move(String &&other);
 
-    char *m_data;
-    size_t m_size;
+    char *m_data    = nullptr;
+    size_t m_size   = 0;
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_STRING_H */

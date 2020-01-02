@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,48 +23,28 @@
  */
 
 
-#include "backend/cpu/Cpu.h"
 #include "backend/cpu/CpuConfig.h"
+#include "backend/cpu/CpuConfig_gen.h"
+#include "backend/cpu/Cpu.h"
 #include "base/io/json/Json.h"
 #include "rapidjson/document.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
-static const char *kCn                  = "cn";
 static const char *kEnabled             = "enabled";
 static const char *kHugePages           = "huge-pages";
 static const char *kHwAes               = "hw-aes";
+static const char *kMaxThreadsHint      = "max-threads-hint";
+static const char *kMemoryPool          = "memory-pool";
 static const char *kPriority            = "priority";
+static const char *kYield               = "yield";
 
 #ifdef XMRIG_FEATURE_ASM
 static const char *kAsm = "asm";
 #endif
 
-#ifdef XMRIG_ALGO_CN_GPU
-static const char *kCnGPU = "cn/gpu";
-#endif
-
-#ifdef XMRIG_ALGO_CN_LITE
-static const char *kCnLite = "cn-lite";
-#endif
-
-#ifdef XMRIG_ALGO_CN_HEAVY
-static const char *kCnHeavy = "cn-heavy";
-#endif
-
-#ifdef XMRIG_ALGO_CN_PICO
-static const char *kCnPico = "cn-pico";
-#endif
-
-#ifdef XMRIG_ALGO_RANDOMX
-static const char *kRx    = "rx";
-static const char *kRxWOW = "rx/wow";
-static const char *kDefyX = "defyx";
-#endif
-
 #ifdef XMRIG_ALGO_ARGON2
-static const char *kArgon2     = "argon2";
 static const char *kArgon2Impl = "argon2-impl";
 #endif
 
@@ -73,18 +53,13 @@ extern template class Threads<CpuThreads>;
 }
 
 
-xlarig::CpuConfig::CpuConfig()
-{
-}
-
-
-bool xlarig::CpuConfig::isHwAES() const
+bool xmrig::CpuConfig::isHwAES() const
 {
     return (m_aes == AES_AUTO ? (Cpu::info()->hasAES() ? AES_HW : AES_SOFT) : m_aes) == AES_HW;
 }
 
 
-rapidjson::Value xlarig::CpuConfig::toJSON(rapidjson::Document &doc) const
+rapidjson::Value xmrig::CpuConfig::toJSON(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
@@ -95,6 +70,12 @@ rapidjson::Value xlarig::CpuConfig::toJSON(rapidjson::Document &doc) const
     obj.AddMember(StringRef(kHugePages),    m_hugePages, allocator);
     obj.AddMember(StringRef(kHwAes),        m_aes == AES_AUTO ? Value(kNullType) : Value(m_aes == AES_HW), allocator);
     obj.AddMember(StringRef(kPriority),     priority() != -1 ? Value(priority()) : Value(kNullType), allocator);
+    obj.AddMember(StringRef(kMemoryPool),   m_memoryPool < 1 ? Value(m_memoryPool < 0) : Value(m_memoryPool), allocator);
+    obj.AddMember(StringRef(kYield),        m_yield, allocator);
+
+    if (m_threads.isEmpty()) {
+        obj.AddMember(StringRef(kMaxThreadsHint), m_limit, allocator);
+    }
 
 #   ifdef XMRIG_FEATURE_ASM
     obj.AddMember(StringRef(kAsm), m_assembly.toJSON(), allocator);
@@ -110,7 +91,13 @@ rapidjson::Value xlarig::CpuConfig::toJSON(rapidjson::Document &doc) const
 }
 
 
-std::vector<xlarig::CpuLaunchData> xlarig::CpuConfig::get(const Miner *miner, const Algorithm &algorithm) const
+size_t xmrig::CpuConfig::memPoolSize() const
+{
+    return m_memoryPool < 0 ? Cpu::info()->threads() : m_memoryPool;
+}
+
+
+std::vector<xmrig::CpuLaunchData> xmrig::CpuConfig::get(const Miner *miner, const Algorithm &algorithm) const
 {
     std::vector<CpuLaunchData> out;
     const CpuThreads &threads = m_threads.get(algorithm);
@@ -122,21 +109,24 @@ std::vector<xlarig::CpuLaunchData> xlarig::CpuConfig::get(const Miner *miner, co
     out.reserve(threads.count());
 
     for (const CpuThread &thread : threads.data()) {
-        out.push_back(CpuLaunchData(miner, algorithm, *this, thread));
+        out.emplace_back(miner, algorithm, *this, thread);
     }
 
     return out;
 }
 
 
-void xlarig::CpuConfig::read(const rapidjson::Value &value, uint32_t version)
+void xmrig::CpuConfig::read(const rapidjson::Value &value)
 {
     if (value.IsObject()) {
-        m_enabled       = Json::getBool(value, kEnabled, m_enabled);
-        m_hugePages     = Json::getBool(value, kHugePages, m_hugePages);
+        m_enabled    = Json::getBool(value, kEnabled, m_enabled);
+        m_hugePages  = Json::getBool(value, kHugePages, m_hugePages);
+        m_limit      = Json::getUint(value, kMaxThreadsHint, m_limit);
+        m_yield      = Json::getBool(value, kYield, m_yield);
 
         setAesMode(Json::getValue(value, kHwAes));
         setPriority(Json::getInt(value,  kPriority, -1));
+        setMemoryPool(Json::getValue(value, kMemoryPool));
 
 #       ifdef XMRIG_FEATURE_ASM
         m_assembly = Json::getValue(value, kAsm);
@@ -146,16 +136,14 @@ void xlarig::CpuConfig::read(const rapidjson::Value &value, uint32_t version)
         m_argon2Impl = Json::getString(value, kArgon2Impl);
 #       endif
 
-        if (!m_threads.read(value)) {
-            generate();
-        }
+        m_threads.read(value);
 
-        if (version == 0) {
-            generateArgon2();
-        }
+        generate();
     }
-    else if (value.IsBool() && value.IsFalse()) {
-        m_enabled = false;
+    else if (value.IsBool()) {
+        m_enabled = value.GetBool();
+
+        generate();
     }
     else {
         generate();
@@ -163,55 +151,42 @@ void xlarig::CpuConfig::read(const rapidjson::Value &value, uint32_t version)
 }
 
 
-void xlarig::CpuConfig::generate()
+void xmrig::CpuConfig::generate()
 {
-    m_shouldSave  = true;
-    ICpuInfo *cpu = Cpu::info();
+    if (!isEnabled() || m_threads.has("*")) {
+        return;
+    }
 
-    m_threads.disable(Algorithm::CN_0);
-    m_threads.move(kCn, cpu->threads(Algorithm::CN_0));
+    size_t count = 0;
 
-#   ifdef XMRIG_ALGO_CN_GPU
-    m_threads.move(kCnGPU, cpu->threads(Algorithm::CN_GPU));
-#   endif
+    count += xmrig::generate<Algorithm::CN>(m_threads, m_limit);
+    count += xmrig::generate<Algorithm::CN_LITE>(m_threads, m_limit);
+    count += xmrig::generate<Algorithm::CN_HEAVY>(m_threads, m_limit);
+    count += xmrig::generate<Algorithm::CN_PICO>(m_threads, m_limit);
+    count += xmrig::generate<Algorithm::RANDOM_X>(m_threads, m_limit);
+    count += xmrig::generate<Algorithm::ARGON2>(m_threads, m_limit);
 
-#   ifdef XMRIG_ALGO_CN_LITE
-    m_threads.disable(Algorithm::CN_LITE_0);
-    m_threads.move(kCnLite, cpu->threads(Algorithm::CN_LITE_1));
-#   endif
-
-#   ifdef XMRIG_ALGO_CN_HEAVY
-    m_threads.move(kCnHeavy, cpu->threads(Algorithm::CN_HEAVY_0));
-#   endif
-
-#   ifdef XMRIG_ALGO_CN_PICO
-    m_threads.move(kCnPico, cpu->threads(Algorithm::CN_PICO_0));
-#   endif
-
-#   ifdef XMRIG_ALGO_RANDOMX
-    m_threads.move(kRx, cpu->threads(Algorithm::RX_0));
-    m_threads.move(kRxWOW, cpu->threads(Algorithm::RX_WOW));
-    m_threads.move(kDefyX, cpu->threads(Algorithm::DEFYX));
-#   endif
-
-    generateArgon2();
+    m_shouldSave = count > 0;
 }
 
 
-void xlarig::CpuConfig::generateArgon2()
+void xmrig::CpuConfig::setAesMode(const rapidjson::Value &value)
 {
-#   ifdef XMRIG_ALGO_ARGON2
-    m_threads.move(kArgon2, Cpu::info()->threads(Algorithm::AR2_CHUKWA));
-#   endif
-}
-
-
-void xlarig::CpuConfig::setAesMode(const rapidjson::Value &aesMode)
-{
-    if (aesMode.IsBool()) {
-        m_aes = aesMode.GetBool() ? AES_HW : AES_SOFT;
+    if (value.IsBool()) {
+        m_aes = value.GetBool() ? AES_HW : AES_SOFT;
     }
     else {
         m_aes = AES_AUTO;
+    }
+}
+
+
+void xmrig::CpuConfig::setMemoryPool(const rapidjson::Value &value)
+{
+    if (value.IsBool()) {
+        m_memoryPool = value.GetBool() ? -1 : 0;
+    }
+    else if (value.IsInt()) {
+        m_memoryPool = value.GetInt();
     }
 }

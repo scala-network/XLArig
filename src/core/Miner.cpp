@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 
 
 #include <algorithm>
+#include <mutex>
 #include <thread>
-#include <uv.h>
 
 
 #include "backend/common/Hashrate.h"
@@ -34,6 +34,7 @@
 #include "base/io/log/Log.h"
 #include "base/kernel/Platform.h"
 #include "base/net/stratum/Job.h"
+#include "base/tools/Object.h"
 #include "base/tools/Timer.h"
 #include "core/config/Config.h"
 #include "core/Controller.h"
@@ -50,26 +51,38 @@
 #endif
 
 
-namespace xlarig {
+#ifdef XMRIG_FEATURE_OPENCL
+#   include "backend/opencl/OclBackend.h"
+#endif
+
+
+#ifdef XMRIG_FEATURE_CUDA
+#   include "backend/cuda/CudaBackend.h"
+#endif
+
+
+#ifdef XMRIG_ALGO_RANDOMX
+#   include "crypto/rx/RxConfig.h"
+#endif
+
+
+namespace xmrig {
+
+
+static std::mutex mutex;
 
 
 class MinerPrivate
 {
 public:
-    inline MinerPrivate(Controller *controller) : controller(controller)
-    {
-        uv_rwlock_init(&rwlock);
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(MinerPrivate)
 
-#       ifdef XMRIG_ALGO_RANDOMX
-        Rx::init();
-#       endif
-    }
+
+    inline MinerPrivate(Controller *controller) : controller(controller) {}
 
 
     inline ~MinerPrivate()
     {
-        uv_rwlock_destroy(&rwlock);
-
         delete timer;
 
         for (IBackend *backend : backends) {
@@ -85,7 +98,7 @@ public:
     bool isEnabled(const Algorithm &algorithm) const
     {
         for (IBackend *backend : backends) {
-            if (backend->isEnabled(algorithm)) {
+            if (backend->isEnabled() && backend->isEnabled(algorithm)) {
                 return true;
             }
         }
@@ -108,20 +121,19 @@ public:
     }
 
 
-    inline void handleJobChange(bool reset)
+    inline void handleJobChange()
     {
         active = true;
+
+        if (reset) {
+            Nonce::reset(job.index());
+        }
 
         for (IBackend *backend : backends) {
             backend->setJob(job);
         }
 
-        if (reset) {
-            Nonce::reset(job.index());
-        }
-        else {
-            Nonce::touch();
-        }
+        Nonce::touch();
 
         if (enabled) {
             Nonce::pause(false);;
@@ -135,7 +147,7 @@ public:
 
 
 #   ifdef XMRIG_FEATURE_API
-    void getMiner(rapidjson::Value &reply, rapidjson::Document &doc, int version) const
+    void getMiner(rapidjson::Value &reply, rapidjson::Document &doc, int) const
     {
         using namespace rapidjson;
         auto &allocator = doc.GetAllocator();
@@ -144,26 +156,8 @@ public:
         reply.AddMember("kind",         APP_KIND, allocator);
         reply.AddMember("ua",           StringRef(Platform::userAgent()), allocator);
         reply.AddMember("cpu",          Cpu::toJSON(doc), allocator);
-
-        Value hugepages;
-
-        if (!backends.empty() && backends.front()->type() == "cpu") {
-            const auto pages = static_cast<CpuBackend *>(backends.front())->hugePages();
-            if (version > 1) {
-                hugepages.SetArray();
-                hugepages.PushBack(pages.first, allocator);
-                hugepages.PushBack(pages.second, allocator);
-            }
-            else {
-                hugepages = pages.first == pages.second;
-            }
-        }
-        else {
-            hugepages = false;
-        }
-
-        reply.AddMember("hugepages",    hugepages, allocator);
         reply.AddMember("donate_level", controller->config()->pools().donateLevel(), allocator);
+        reply.AddMember("paused",       !enabled, allocator);
 
         Value algo(kArrayType);
 
@@ -239,10 +233,16 @@ public:
 #   endif
 
 
+#   ifdef XMRIG_ALGO_RANDOMX
+    inline bool initRX() { return Rx::init(job, controller->config()->rx(), controller->config()->cpu()); }
+#   endif
+
+
     Algorithm algorithm;
     Algorithms algorithms;
     bool active         = false;
     bool enabled        = true;
+    bool reset          = true;
     Controller *controller;
     Job job;
     mutable std::map<Algorithm::Id, double> maxHashrate;
@@ -250,17 +250,25 @@ public:
     String userJobId;
     Timer *timer        = nullptr;
     uint64_t ticks      = 0;
-    uv_rwlock_t rwlock;
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 
-xlarig::Miner::Miner(Controller *controller)
+xmrig::Miner::Miner(Controller *controller)
     : d_ptr(new MinerPrivate(controller))
 {
+    const int priority = controller->config()->cpu().priority();
+    if (priority >= 0) {
+        Platform::setThreadPriority(std::min(priority + 1, 5));
+    }
+
+#   ifdef XMRIG_ALGO_RANDOMX
+    Rx::init(this);
+#   endif
+
     controller->addListener(this);
 
 #   ifdef XMRIG_FEATURE_API
@@ -269,53 +277,88 @@ xlarig::Miner::Miner(Controller *controller)
 
     d_ptr->timer = new Timer(this);
 
+    d_ptr->backends.reserve(3);
     d_ptr->backends.push_back(new CpuBackend(controller));
+
+#   ifdef XMRIG_FEATURE_OPENCL
+    d_ptr->backends.push_back(new OclBackend(controller));
+#   endif
+
+#   ifdef XMRIG_FEATURE_CUDA
+    d_ptr->backends.push_back(new CudaBackend(controller));
+#   endif
 
     d_ptr->rebuild();
 }
 
 
-xlarig::Miner::~Miner()
+xmrig::Miner::~Miner()
 {
     delete d_ptr;
 }
 
 
-bool xlarig::Miner::isEnabled() const
+bool xmrig::Miner::isEnabled() const
 {
     return d_ptr->enabled;
 }
 
 
-bool xlarig::Miner::isEnabled(const Algorithm &algorithm) const
+bool xmrig::Miner::isEnabled(const Algorithm &algorithm) const
 {
     return std::find(d_ptr->algorithms.begin(), d_ptr->algorithms.end(), algorithm) != d_ptr->algorithms.end();
 }
 
 
-const xlarig::Algorithms &xlarig::Miner::algorithms() const
+const xmrig::Algorithms &xmrig::Miner::algorithms() const
 {
     return d_ptr->algorithms;
 }
 
 
-const std::vector<xlarig::IBackend *> &xlarig::Miner::backends() const
+const std::vector<xmrig::IBackend *> &xmrig::Miner::backends() const
 {
     return d_ptr->backends;
 }
 
 
-xlarig::Job xlarig::Miner::job() const
+xmrig::Job xmrig::Miner::job() const
 {
-    uv_rwlock_rdlock(&d_ptr->rwlock);
-    Job job = d_ptr->job;
-    uv_rwlock_rdunlock(&d_ptr->rwlock);
+    std::lock_guard<std::mutex> lock(mutex);
 
-    return job;
+    return d_ptr->job;
 }
 
 
-void xlarig::Miner::pause()
+void xmrig::Miner::execCommand(char command)
+{
+    switch (command) {
+    case 'h':
+    case 'H':
+        printHashrate(true);
+        break;
+
+    case 'p':
+    case 'P':
+        setEnabled(false);
+        break;
+
+    case 'r':
+    case 'R':
+        setEnabled(true);
+        break;
+
+    default:
+        break;
+    }
+
+    for (auto backend : d_ptr->backends) {
+        backend->execCommand(command);
+    }
+}
+
+
+void xmrig::Miner::pause()
 {
     d_ptr->active = false;
 
@@ -324,7 +367,7 @@ void xlarig::Miner::pause()
 }
 
 
-void xlarig::Miner::printHashrate(bool details)
+void xmrig::Miner::printHashrate(bool details)
 {
     char num[8 * 4] = { 0 };
     double speed[3] = { 0.0 };
@@ -349,7 +392,7 @@ void xlarig::Miner::printHashrate(bool details)
 }
 
 
-void xlarig::Miner::setEnabled(bool enabled)
+void xmrig::Miner::setEnabled(bool enabled)
 {
     if (d_ptr->enabled == enabled) {
         return;
@@ -373,26 +416,26 @@ void xlarig::Miner::setEnabled(bool enabled)
 }
 
 
-void xlarig::Miner::setJob(const Job &job, bool donate)
+void xmrig::Miner::setJob(const Job &job, bool donate)
 {
     for (IBackend *backend : d_ptr->backends) {
         backend->prepare(job);
     }
 
 #   ifdef XMRIG_ALGO_RANDOMX
-    if (d_ptr->algorithm.family() == Algorithm::RANDOM_X && job.algorithm().family() == Algorithm::RANDOM_X && !Rx::isReady(job)) {
+    if (job.algorithm().family() == Algorithm::RANDOM_X && !Rx::isReady(job)) {
         stop();
     }
 #   endif
 
     d_ptr->algorithm = job.algorithm();
 
-    uv_rwlock_wrlock(&d_ptr->rwlock);
+    mutex.lock();
 
     const uint8_t index = donate ? 1 : 0;
-    const bool reset    = !(d_ptr->job.index() == 1 && index == 0 && d_ptr->userJobId == job.id());
 
-    d_ptr->job = job;
+    d_ptr->reset = !(d_ptr->job.index() == 1 && index == 0 && d_ptr->userJobId == job.id());
+    d_ptr->job   = job;
     d_ptr->job.setIndex(index);
 
     if (index == 0) {
@@ -400,20 +443,20 @@ void xlarig::Miner::setJob(const Job &job, bool donate)
     }
 
 #   ifdef XMRIG_ALGO_RANDOMX
-    Rx::init(d_ptr->job,
-             d_ptr->controller->config()->rx().threads(),
-             d_ptr->controller->config()->cpu().isHugePages(),
-             d_ptr->controller->config()->rx().isNUMA()
-             );
+    const bool ready = d_ptr->initRX();
+#   else
+    constexpr const bool ready = true;
 #   endif
 
-    uv_rwlock_wrunlock(&d_ptr->rwlock);
+    mutex.unlock();
 
-    d_ptr->handleJobChange(reset);
+    if (ready) {
+        d_ptr->handleJobChange();
+    }
 }
 
 
-void xlarig::Miner::stop()
+void xmrig::Miner::stop()
 {
     Nonce::stop();
 
@@ -423,7 +466,7 @@ void xlarig::Miner::stop()
 }
 
 
-void xlarig::Miner::onConfigChanged(Config *config, Config *previousConfig)
+void xmrig::Miner::onConfigChanged(Config *config, Config *previousConfig)
 {
     d_ptr->rebuild();
 
@@ -439,7 +482,7 @@ void xlarig::Miner::onConfigChanged(Config *config, Config *previousConfig)
 }
 
 
-void xlarig::Miner::onTimer(const Timer *)
+void xmrig::Miner::onTimer(const Timer *)
 {
     double maxHashrate = 0.0;
 
@@ -453,7 +496,8 @@ void xlarig::Miner::onTimer(const Timer *)
 
     d_ptr->maxHashrate[d_ptr->algorithm] = std::max(d_ptr->maxHashrate[d_ptr->algorithm], maxHashrate);
 
-    if ((d_ptr->ticks % (d_ptr->controller->config()->printTime() * 2)) == 0) {
+    auto seconds = d_ptr->controller->config()->printTime();
+    if (seconds && (d_ptr->ticks % (seconds * 2)) == 0) {
         printHashrate(false);
     }
 
@@ -462,7 +506,7 @@ void xlarig::Miner::onTimer(const Timer *)
 
 
 #ifdef XMRIG_FEATURE_API
-void xlarig::Miner::onRequest(IApiRequest &request)
+void xmrig::Miner::onRequest(IApiRequest &request)
 {
     if (request.method() == IApiRequest::METHOD_GET) {
         if (request.type() == IApiRequest::REQ_SUMMARY) {
@@ -488,6 +532,27 @@ void xlarig::Miner::onRequest(IApiRequest &request)
 
             setEnabled(true);
         }
+        else if (request.rpcMethod() == "stop") {
+            request.accept();
+
+            stop();
+        }
     }
+
+    for (IBackend *backend : d_ptr->backends) {
+        backend->handleRequest(request);
+    }
+}
+#endif
+
+
+#ifdef XMRIG_ALGO_RANDOMX
+void xmrig::Miner::onDatasetReady()
+{
+    if (!Rx::isReady(job())) {
+        return;
+    }
+
+    d_ptr->handleJobChange();
 }
 #endif

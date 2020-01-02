@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,9 +27,10 @@
 
 
 #include "base/kernel/Base.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Job;
@@ -40,12 +41,12 @@ class Network;
 class Controller : public Base
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(Controller)
+
     Controller(Process *process);
     ~Controller() override;
 
-    bool isReady() const override;
     int init() override;
-    void pre_start();
     void start() override;
     void stop() override;
 
@@ -58,7 +59,7 @@ private:
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_CONTROLLER_H */

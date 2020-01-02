@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
  */
 
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <uv.h>
 
 
@@ -33,49 +33,54 @@
 #include "base/io/Console.h"
 #include "base/io/log/Log.h"
 #include "base/kernel/Signals.h"
+#include "base/kernel/Platform.h"
 #include "core/config/Config.h"
 #include "core/Controller.h"
 #include "core/Miner.h"
-#include "crypto/common/VirtualMemory.h"
 #include "net/Network.h"
 #include "Summary.h"
 #include "version.h"
 
 
-xlarig::App::App(Process *process) :
-    m_console(nullptr),
-    m_signals(nullptr)
+xmrig::App::App(Process *process)
 {
     m_controller = new Controller(process);
-    if (m_controller->init() != 0) {
-        return;
-    }
-
-    if (!m_controller->config()->isBackground()) {
-        m_console = new Console(this);
-    }
 }
 
 
-xlarig::App::~App()
+xmrig::App::~App()
 {
+    Cpu::release();
+
     delete m_signals;
     delete m_console;
     delete m_controller;
 }
 
 
-int xlarig::App::exec()
+int xmrig::App::exec()
 {
     if (!m_controller->isReady()) {
+        LOG_EMERG("no valid configuration found.");
+
         return 2;
     }
 
     m_signals = new Signals(this);
 
-    background();
+    int rc = 0;
+    if (background(rc)) {
+        return rc;
+    }
 
-    VirtualMemory::init(m_controller->config()->cpu().isHugePages());
+    rc = m_controller->init();
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (!m_controller->isBackground()) {
+        m_console = new Console(this);
+    }
 
     Summary::print(m_controller);
 
@@ -85,53 +90,28 @@ int xlarig::App::exec()
         return 0;
     }
 
-    m_controller->pre_start();
-    m_controller->config()->benchmark().set_controller(m_controller);
+    m_controller->start();
 
-    if (m_controller->config()->benchmark().isNewBenchRun() || m_controller->config()->isRebenchAlgo()) {
-        //m_controller->config()->benchmark().start();
-        m_controller->start();
-    } else {
-        m_controller->start();
-    }
-
-    const int r = uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+    rc = uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     uv_loop_close(uv_default_loop());
 
-    return r;
+    return rc;
 }
 
 
-void xlarig::App::onConsoleCommand(char command)
+void xmrig::App::onConsoleCommand(char command)
 {
-    switch (command) {
-    case 'h':
-    case 'H':
-        m_controller->miner()->printHashrate(true);
-        break;
-
-    case 'p':
-    case 'P':
-        m_controller->miner()->setEnabled(false);
-        break;
-
-    case 'r':
-    case 'R':
-        m_controller->miner()->setEnabled(true);
-        break;
-
-    case 3:
+    if (command == 3) {
         LOG_WARN("Ctrl+C received, exiting");
         close();
-        break;
-
-    default:
-        break;
+    }
+    else {
+        m_controller->miner()->execCommand(command);
     }
 }
 
 
-void xlarig::App::onSignal(int signum)
+void xmrig::App::onSignal(int signum)
 {
     switch (signum)
     {
@@ -155,10 +135,14 @@ void xlarig::App::onSignal(int signum)
 }
 
 
-void xlarig::App::close()
+void xmrig::App::close()
 {
     m_signals->stop();
-    m_console->stop();
+
+    if (m_console) {
+        m_console->stop();
+    }
+
     m_controller->stop();
 
     Log::destroy();

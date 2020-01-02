@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
  */
 
 
-#include <inttypes.h>
-#include <stdio.h>
+#include <cinttypes>
+#include <cstdio>
 #include <uv.h>
 
 
@@ -39,7 +39,12 @@
 #include "version.h"
 
 
-namespace xlarig {
+#ifdef XMRIG_ALGO_RANDOMX
+#   include "crypto/rx/RxConfig.h"
+#endif
+
+
+namespace xmrig {
 
 
 #ifdef XMRIG_FEATURE_ASM
@@ -59,24 +64,36 @@ inline static const char *asmName(Assembly::Id assembly)
 #endif
 
 
-static void print_memory(Config *) {
-#   ifdef _WIN32
+static void print_memory(Config *config)
+{
+#   ifdef XMRIG_OS_WIN
     Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") "%s",
-               "HUGE PAGES", VirtualMemory::isHugepagesAvailable() ? GREEN_BOLD("permission granted") : RED_BOLD("unavailable"));
+               "HUGE PAGES", config->cpu().isHugePages() ? (VirtualMemory::isHugepagesAvailable() ? GREEN_BOLD("permission granted") : RED_BOLD("unavailable")) : RED_BOLD("disabled"));
+#   else
+    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") "%s", "HUGE PAGES",  config->cpu().isHugePages() ? GREEN_BOLD("supported") : RED_BOLD("disabled"));
+#   endif
+
+#   ifdef XMRIG_ALGO_RANDOMX
+#   ifdef XMRIG_OS_LINUX
+    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") "%s",
+               "1GB PAGES", (VirtualMemory::isOneGbPagesAvailable() ? (config->rx().isOneGbPages() ? GREEN_BOLD("supported") : YELLOW_BOLD("disabled")) : YELLOW_BOLD("unavailable")));
+#   else
+    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") "%s", "1GB PAGES", YELLOW_BOLD("unavailable"));
+#   endif
 #   endif
 }
 
 
 static void print_cpu(Config *)
 {
-    const ICpuInfo *info = Cpu::info();
+    const auto info = Cpu::info();
 
     Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s%s (%zu)") " %sx64 %sAES",
                "CPU",
                info->brand(),
                info->packages(),
-               info->isX64()   ? GREEN_BOLD_S : RED_BOLD_S "-",
-               info->hasAES()  ? GREEN_BOLD_S : RED_BOLD_S "-"
+               info->isX64()          ? GREEN_BOLD_S : RED_BOLD_S "-",
+               info->hasAES()         ? GREEN_BOLD_S : RED_BOLD_S "-"
                );
 #   if defined(XMRIG_FEATURE_LIBCPUID) || defined (XMRIG_FEATURE_HWLOC)
     Log::print(WHITE_BOLD("   %-13s") BLACK_BOLD("L2:") WHITE_BOLD("%.1f MB") BLACK_BOLD(" L3:") WHITE_BOLD("%.1f MB")
@@ -99,6 +116,23 @@ static void print_cpu(Config *)
                info->threads()
                );
 #   endif
+}
+
+
+static void print_memory()
+{
+    constexpr size_t oneGiB = 1024U * 1024U * 1024U;
+    const auto freeMem      = static_cast<double>(uv_get_free_memory());
+    const auto totalMem     = static_cast<double>(uv_get_total_memory());
+
+    const double percent = freeMem > 0 ? ((totalMem - freeMem) / totalMem * 100.0) : 100.0;
+
+    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") CYAN_BOLD("%.1f/%.1f GB") BLACK_BOLD(" (%.0f%%)"),
+               "MEMORY",
+               (totalMem - freeMem) / oneGiB,
+               totalMem / oneGiB,
+               percent
+               );
 }
 
 
@@ -125,10 +159,10 @@ static void print_threads(Config *config)
 
 static void print_commands(Config *)
 {
-    if (Log::colors) {
-        Log::print(GREEN_BOLD(" * ") WHITE_BOLD("COMMANDS     ") MAGENTA_BOLD("h") WHITE_BOLD("ashrate, ")
-                                                                     MAGENTA_BOLD("p") WHITE_BOLD("ause, ")
-                                                                     MAGENTA_BOLD("r") WHITE_BOLD("esume"));
+    if (Log::isColors()) {
+        Log::print(GREEN_BOLD(" * ") WHITE_BOLD("COMMANDS     ") MAGENTA_BG(WHITE_BOLD_S "h") WHITE_BOLD("ashrate, ")
+                                                                     MAGENTA_BG(WHITE_BOLD_S "p") WHITE_BOLD("ause, ")
+                                                                     MAGENTA_BG(WHITE_BOLD_S "r") WHITE_BOLD("esume"));
     }
     else {
         Log::print(" * COMMANDS     'h' hashrate, 'p' pause, 'r' resume");
@@ -136,14 +170,15 @@ static void print_commands(Config *)
 }
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-void xlarig::Summary::print(Controller *controller)
+void xmrig::Summary::print(Controller *controller)
 {
     controller->config()->printVersions();
     print_memory(controller->config());
     print_cpu(controller->config());
+    print_memory();
     print_threads(controller->config());
     controller->config()->pools().print();
 

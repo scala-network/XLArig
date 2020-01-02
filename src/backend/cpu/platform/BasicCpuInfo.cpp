@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 #include <algorithm>
-#include <string.h>
+#include <cstring>
 #include <thread>
 
 
@@ -45,6 +45,10 @@
 #   define bit_AVX2 (1 << 5)
 #endif
 
+#ifndef bit_PDPE1GB
+#   define bit_PDPE1GB (1 << 26)
+#endif
+
 
 #include "backend/cpu/platform/BasicCpuInfo.h"
 #include "crypto/common/Assembly.h"
@@ -53,6 +57,7 @@
 #define VENDOR_ID                  (0)
 #define PROCESSOR_INFO             (1)
 #define EXTENDED_FEATURES          (7)
+#define PROCESSOR_EXT_INFO         (0x80000001)
 #define PROCESSOR_BRAND_STRING_1   (0x80000002)
 #define PROCESSOR_BRAND_STRING_2   (0x80000003)
 #define PROCESSOR_BRAND_STRING_3   (0x80000004)
@@ -63,7 +68,7 @@
 #define EDX_Reg  (3)
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 static inline void cpuid(uint32_t level, int32_t output[4])
@@ -108,7 +113,7 @@ static void cpu_brand_string(char out[64 + 6]) {
 }
 
 
-static bool has_feature(uint32_t level, uint32_t reg, int32_t bit)
+static inline bool has_feature(uint32_t level, uint32_t reg, int32_t bit)
 {
     int32_t cpu_info[4] = { 0 };
     cpuid(level, cpu_info);
@@ -136,15 +141,20 @@ static inline bool has_avx2()
 }
 
 
-} // namespace xlarig
+static inline bool has_pdpe1gb()
+{
+    return has_feature(PROCESSOR_EXT_INFO, EDX_Reg, bit_PDPE1GB);
+}
 
 
-xlarig::BasicCpuInfo::BasicCpuInfo() :
-    m_brand(),
+} // namespace xmrig
+
+
+xmrig::BasicCpuInfo::BasicCpuInfo() :
     m_threads(std::thread::hardware_concurrency()),
-    m_assembly(Assembly::NONE),
     m_aes(has_aes_ni()),
-    m_avx2(has_avx2())
+    m_avx2(has_avx2()),
+    m_pdpe1gb(has_pdpe1gb())
 {
     cpu_brand_string(m_brand);
 
@@ -160,26 +170,36 @@ xlarig::BasicCpuInfo::BasicCpuInfo() :
         memcpy(vendor + 8, &data[2], 4);
 
         if (memcmp(vendor, "AuthenticAMD", 12) == 0) {
+            m_vendor = VENDOR_AMD;
+
             cpuid(PROCESSOR_INFO, data);
             const int32_t family = get_masked(data[EAX_Reg], 12, 8) + get_masked(data[EAX_Reg], 28, 20);
 
-            m_assembly = family >= 23 ? Assembly::RYZEN : Assembly::BULLDOZER;
+            if (family >= 23) {
+                m_assembly = Assembly::RYZEN;
+                m_msrMod   = MSR_MOD_RYZEN;
+            }
+            else {
+                m_assembly = Assembly::BULLDOZER;
+            }
         }
-        else {
+        else if (memcmp(vendor, "GenuineIntel", 12) == 0) {
+            m_vendor   = VENDOR_INTEL;
             m_assembly = Assembly::INTEL;
+            m_msrMod   = MSR_MOD_INTEL;
         }
     }
 #   endif
 }
 
 
-const char *xlarig::BasicCpuInfo::backend() const
+const char *xmrig::BasicCpuInfo::backend() const
 {
     return "basic";
 }
 
 
-xlarig::CpuThreads xlarig::BasicCpuInfo::threads(const Algorithm &algorithm) const
+xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint32_t) const
 {
     const size_t count = std::thread::hardware_concurrency();
 

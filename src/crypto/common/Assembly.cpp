@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      SChernykh   <https://github.com/SChernykh>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 #include "rapidjson/document.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 static const char *asmNames[] = {
@@ -49,10 +49,10 @@ static const char *asmNames[] = {
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
-xlarig::Assembly::Id xlarig::Assembly::parse(const char *assembly, Id defaultValue)
+xmrig::Assembly::Id xmrig::Assembly::parse(const char *assembly, Id defaultValue)
 {
     constexpr size_t const size = sizeof(asmNames) / sizeof((asmNames)[0]);
     static_assert(size == MAX, "asmNames size mismatch");
@@ -71,7 +71,7 @@ xlarig::Assembly::Id xlarig::Assembly::parse(const char *assembly, Id defaultVal
 }
 
 
-xlarig::Assembly::Id xlarig::Assembly::parse(const rapidjson::Value &value, Id defaultValue)
+xmrig::Assembly::Id xmrig::Assembly::parse(const rapidjson::Value &value, Id defaultValue)
 {
     if (value.IsBool()) {
         return value.GetBool() ? AUTO : NONE;
@@ -85,13 +85,13 @@ xlarig::Assembly::Id xlarig::Assembly::parse(const rapidjson::Value &value, Id d
 }
 
 
-const char *xlarig::Assembly::toString() const
+const char *xmrig::Assembly::toString() const
 {
     return asmNames[m_id];
 }
 
 
-rapidjson::Value xlarig::Assembly::toJSON() const
+rapidjson::Value xmrig::Assembly::toJSON() const
 {
     using namespace rapidjson;
 

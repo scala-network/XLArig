@@ -7,7 +7,7 @@
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -303,7 +303,7 @@ inline void mix_and_propagate(__m128i& x0, __m128i& x1, __m128i& x2, __m128i& x3
 }
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 template<Algorithm::Id ALGO, bool SOFT_AES>
@@ -469,7 +469,7 @@ static inline void cn_implode_scratchpad(const __m128i *input, __m128i *output)
 }
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 static inline __m128i aes_round_tweak_div(const __m128i &in, const __m128i &key)
@@ -514,11 +514,10 @@ static inline __m128i int_sqrt_v2(const uint64_t n0)
 }
 
 
-void wow_soft_aes_compile_code(const V4_Instruction *code, int code_size, void *machine_code, xlarig::Assembly ASM);
-void v4_soft_aes_compile_code(const V4_Instruction *code, int code_size, void *machine_code, xlarig::Assembly ASM);
+void v4_soft_aes_compile_code(const V4_Instruction *code, int code_size, void *machine_code, xmrig::Assembly ASM);
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 template<Algorithm::Id ALGO>
@@ -576,10 +575,7 @@ inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t si
             V4_Instruction code[256];
             const int code_size = v4_random_math_init<ALGO>(code, height);
 
-            if (ALGO == Algorithm::CN_WOW) {
-                wow_soft_aes_compile_code(code, code_size, reinterpret_cast<void*>(ctx[0]->generated_code), Assembly::NONE);
-            }
-            else if (ALGO == Algorithm::CN_R) {
+            if (ALGO == Algorithm::CN_R) {
                 v4_soft_aes_compile_code(code, code_size, reinterpret_cast<void*>(ctx[0]->generated_code), Assembly::NONE);
             }
 
@@ -703,7 +699,7 @@ inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t si
 }
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #ifdef XMRIG_ALGO_CN_GPU
@@ -715,7 +711,7 @@ template<size_t ITER, uint32_t MASK>
 void cn_gpu_inner_ssse3(const uint8_t *spad, uint8_t *lpad);
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 template<size_t MEM>
@@ -728,15 +724,15 @@ void cn_explode_scratchpad_gpu(const uint8_t *input, uint8_t *output)
         memcpy(hash, input, hash_size);
         hash[0] ^= i;
 
-        xlarig::keccakf(hash, 24);
+        xmrig::keccakf(hash, 24);
         memcpy(output, hash, 160);
         output += 160;
 
-        xlarig::keccakf(hash, 24);
+        xmrig::keccakf(hash, 24);
         memcpy(output, hash, 176);
         output += 176;
 
-        xlarig::keccakf(hash, 24);
+        xmrig::keccakf(hash, 24);
         memcpy(output, hash, 176);
         output += 176;
     }
@@ -757,7 +753,7 @@ inline void cryptonight_single_hash_gpu(const uint8_t *__restrict__ input, size_
     fesetround(FE_TONEAREST);
 #   endif
 
-    if (xlarig::Cpu::info()->hasAVX2()) {
+    if (xmrig::Cpu::info()->hasAVX2()) {
         cn_gpu_inner_avx<props.iterations(), props.mask()>(ctx[0]->state, ctx[0]->memory);
     } else {
         cn_gpu_inner_ssse3<props.iterations(), props.mask()>(ctx[0]->state, ctx[0]->memory);
@@ -769,7 +765,7 @@ inline void cryptonight_single_hash_gpu(const uint8_t *__restrict__ input, size_
 }
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 #endif
 
 
@@ -782,7 +778,7 @@ extern "C" void cnv2_rwz_mainloop_asm(cryptonight_ctx **ctx);
 extern "C" void cnv2_rwz_double_mainloop_asm(cryptonight_ctx **ctx);
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 typedef void (*cn_mainloop_fun)(cryptonight_ctx **ctx);
@@ -809,44 +805,28 @@ extern cn_mainloop_fun cn_double_mainloop_bulldozer_asm;
 extern cn_mainloop_fun cn_double_double_mainloop_sandybridge_asm;
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-void wow_compile_code(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM);
-void v4_compile_code(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM);
-void wow_compile_code_double(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM);
-void v4_compile_code_double(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM);
+void v4_compile_code(const V4_Instruction* code, int code_size, void* machine_code, xmrig::Assembly ASM);
+void v4_compile_code_double(const V4_Instruction* code, int code_size, void* machine_code, xmrig::Assembly ASM);
 
 
-template<xlarig::Algorithm::Id ALGO>
-void cn_r_compile_code(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM)
+template<xmrig::Algorithm::Id ALGO>
+void cn_r_compile_code(const V4_Instruction* code, int code_size, void* machine_code, xmrig::Assembly ASM)
 {
     v4_compile_code(code, code_size, machine_code, ASM);
 }
 
 
-template<xlarig::Algorithm::Id ALGO>
-void cn_r_compile_code_double(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM)
+template<xmrig::Algorithm::Id ALGO>
+void cn_r_compile_code_double(const V4_Instruction* code, int code_size, void* machine_code, xmrig::Assembly ASM)
 {
     v4_compile_code_double(code, code_size, machine_code, ASM);
 }
 
 
-template<>
-void cn_r_compile_code<xlarig::Algorithm::CN_WOW>(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM)
-{
-    wow_compile_code(code, code_size, machine_code, ASM);
-}
-
-
-template<>
-void cn_r_compile_code_double<xlarig::Algorithm::CN_WOW>(const V4_Instruction* code, int code_size, void* machine_code, xlarig::Assembly ASM)
-{
-    wow_compile_code_double(code, code_size, machine_code, ASM);
-}
-
-
-namespace xlarig {
+namespace xmrig {
 
 
 template<Algorithm::Id ALGO, Assembly::Id ASM>
@@ -989,11 +969,11 @@ inline void cryptonight_double_hash_asm(const uint8_t *__restrict__ input, size_
 }
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 #endif
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 template<Algorithm::Id ALGO, bool SOFT_AES>
@@ -1558,7 +1538,7 @@ inline void cryptonight_penta_hash(const uint8_t *__restrict__ input, size_t siz
 }
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_CRYPTONIGHT_X86_H */

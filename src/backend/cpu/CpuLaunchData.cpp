@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,18 +24,21 @@
  */
 
 
-#include <algorithm>
-
-
 #include "backend/cpu/CpuLaunchData.h"
+
+#include "backend/common/Tags.h"
 #include "backend/cpu/CpuConfig.h"
 
 
-xlarig::CpuLaunchData::CpuLaunchData(const Miner *miner, const Algorithm &algorithm, const CpuConfig &config, const CpuThread &thread) :
+#include <algorithm>
+
+
+xmrig::CpuLaunchData::CpuLaunchData(const Miner *miner, const Algorithm &algorithm, const CpuConfig &config, const CpuThread &thread) :
     algorithm(algorithm),
     assembly(config.assembly()),
     hugePages(config.isHugePages()),
     hwAES(config.isHwAES()),
+    yield(config.isYield()),
     priority(config.priority()),
     affinity(thread.affinity()),
     miner(miner),
@@ -44,7 +47,7 @@ xlarig::CpuLaunchData::CpuLaunchData(const Miner *miner, const Algorithm &algori
 }
 
 
-bool xlarig::CpuLaunchData::isEqual(const CpuLaunchData &other) const
+bool xmrig::CpuLaunchData::isEqual(const CpuLaunchData &other) const
 {
     return (algorithm.l3()      == other.algorithm.l3()
             && assembly         == other.assembly
@@ -57,11 +60,17 @@ bool xlarig::CpuLaunchData::isEqual(const CpuLaunchData &other) const
 }
 
 
-xlarig::CnHash::AlgoVariant xlarig::CpuLaunchData::av() const
+xmrig::CnHash::AlgoVariant xmrig::CpuLaunchData::av() const
 {
     if (intensity <= 2) {
         return static_cast<CnHash::AlgoVariant>(!hwAES ? (intensity + 2) : intensity);
     }
 
     return static_cast<CnHash::AlgoVariant>(!hwAES ? (intensity + 5) : (intensity + 2));
+}
+
+
+const char *xmrig::CpuLaunchData::tag()
+{
+    return cpu_tag();
 }

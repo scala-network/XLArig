@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,14 +28,17 @@
 #define XMRIG_RX_ALGO_H
 
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 
 #include "crypto/common/Algorithm.h"
 
 
-namespace xlarig
+struct RandomX_ConfigurationBase;
+
+
+namespace xmrig
 {
 
 
@@ -43,10 +46,24 @@ class RxAlgo
 {
 public:
     static Algorithm::Id apply(Algorithm::Id algorithm);
+    static const RandomX_ConfigurationBase *base(Algorithm::Id algorithm);
+    static uint32_t programCount(Algorithm::Id algorithm);
+    static uint32_t programIterations(Algorithm::Id algorithm);
+    static uint32_t programSize(Algorithm::Id algorithm);
+    static uint32_t version(Algorithm::Id algorithm);
+
+    static inline Algorithm::Id id(Algorithm::Id algorithm)
+    {
+        if (algorithm == Algorithm::RX_SFX || algorithm == Algorithm::RX_V) {
+            return Algorithm::RX_0;
+        }
+
+        return algorithm;
+    }
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_RX_ALGO_H */

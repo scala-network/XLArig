@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,13 +26,14 @@
 #define XMRIG_CPUBACKEND_H
 
 
+#include "backend/common/interfaces/IBackend.h"
+#include "base/tools/Object.h"
+
+
 #include <utility>
 
 
-#include "backend/common/interfaces/IBackend.h"
-
-
-namespace xlarig {
+namespace xmrig {
 
 
 class Controller;
@@ -43,12 +44,14 @@ class Miner;
 class CpuBackend : public IBackend
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(CpuBackend)
+
     CpuBackend(Controller *controller);
     ~CpuBackend() override;
 
-    std::pair<unsigned, unsigned> hugePages() const;
-
 protected:
+    inline void execCommand(char) override {}
+
     bool isEnabled() const override;
     bool isEnabled(const Algorithm &algorithm) const override;
     const Hashrate *hashrate() const override;
@@ -57,12 +60,13 @@ protected:
     void prepare(const Job &nextJob) override;
     void printHashrate(bool details) override;
     void setJob(const Job &job) override;
-    void start(IWorker *worker) override;
+    void start(IWorker *worker, bool ready) override;
     void stop() override;
     void tick(uint64_t ticks) override;
 
 #   ifdef XMRIG_FEATURE_API
     rapidjson::Value toJSON(rapidjson::Document &doc) const override;
+    void handleRequest(IApiRequest &request) override;
 #   endif
 
 private:
@@ -70,7 +74,7 @@ private:
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_CPUBACKEND_H */

@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,28 +26,50 @@
 #include "base/kernel/interfaces/IClientListener.h"
 #include "base/net/stratum/BaseClient.h"
 #include "base/net/stratum/SubmitResult.h"
+#include "rapidjson/document.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 int64_t BaseClient::m_sequence = 1;
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
-xlarig::BaseClient::BaseClient(int id, IClientListener *listener) :
-    m_quiet(false),
+xmrig::BaseClient::BaseClient(int id, IClientListener *listener) :
     m_listener(listener),
-    m_id(id),
-    m_retries(5),
-    m_failures(0),
-    m_state(UnconnectedState),
-    m_retryPause(5000)
+    m_id(id)
 {
 }
 
 
-bool xlarig::BaseClient::handleSubmitResponse(int64_t id, const char *error)
+bool xmrig::BaseClient::handleResponse(int64_t id, const rapidjson::Value &result, const rapidjson::Value &error)
+{
+    if (id == 1) {
+        return false;
+    }
+
+    auto it = m_callbacks.find(id);
+    if (it != m_callbacks.end()) {
+        const uint64_t elapsed = Chrono::steadyMSecs() - it->second.ts;
+
+        if (error.IsObject()) {
+            it->second.callback(error, false, elapsed);
+        }
+        else {
+            it->second.callback(result, true, elapsed);
+        }
+
+        m_callbacks.erase(it);
+
+        return true;
+    }
+
+    return false;
+}
+
+
+bool xmrig::BaseClient::handleSubmitResponse(int64_t id, const char *error)
 {
     auto it = m_results.find(id);
     if (it != m_results.end()) {

@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,9 +30,10 @@
 
 #include "base/net/http/HttpContext.h"
 #include "base/kernel/interfaces/IDnsListener.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class String;
@@ -41,6 +42,8 @@ class String;
 class HttpClient : public HttpContext, public IDnsListener
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(HttpClient);
+
     HttpClient(int method, const String &url, IHttpListener *listener, const char *data = nullptr, size_t size = 0);
     ~HttpClient() override;
 
@@ -57,17 +60,17 @@ protected:
     virtual void read(const char *data, size_t size);
     virtual void write(const std::string &header);
 
-    bool m_quiet;
+    bool m_quiet = false;
 
 private:
     static void onConnect(uv_connect_t *req, int status);
 
     Dns *m_dns;
-    uint16_t m_port;
+    uint16_t m_port = 0;
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif // XMRIG_HTTPCLIENT_H

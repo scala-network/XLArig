@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
  */
 
 
-#include <assert.h>
+#include <cassert>
 #include <openssl/ssl.h>
 #include <uv.h>
 
@@ -39,7 +39,7 @@
 #endif
 
 
-xlarig::HttpsClient::HttpsClient(int method, const String &url, IHttpListener *listener, const char *data, size_t size, const String &fingerprint) :
+xmrig::HttpsClient::HttpsClient(int method, const String &url, IHttpListener *listener, const char *data, size_t size, const String &fingerprint) :
     HttpClient(method, url, listener, data, size),
     m_ready(false),
     m_buf(),
@@ -59,7 +59,7 @@ xlarig::HttpsClient::HttpsClient(int method, const String &url, IHttpListener *l
 }
 
 
-xlarig::HttpsClient::~HttpsClient()
+xmrig::HttpsClient::~HttpsClient()
 {
     if (m_ctx) {
         SSL_CTX_free(m_ctx);
@@ -71,19 +71,19 @@ xlarig::HttpsClient::~HttpsClient()
 }
 
 
-const char *xlarig::HttpsClient::fingerprint() const
+const char *xmrig::HttpsClient::fingerprint() const
 {
     return m_ready ? m_fingerprint : nullptr;
 }
 
 
-const char *xlarig::HttpsClient::version() const
+const char *xmrig::HttpsClient::version() const
 {
     return m_ready ? SSL_get_version(m_ssl) : nullptr;
 }
 
 
-void xlarig::HttpsClient::handshake()
+void xmrig::HttpsClient::handshake()
 {
     m_ssl = SSL_new(m_ctx);
     assert(m_ssl != nullptr);
@@ -102,7 +102,7 @@ void xlarig::HttpsClient::handshake()
 }
 
 
-void xlarig::HttpsClient::read(const char *data, size_t size)
+void xmrig::HttpsClient::read(const char *data, size_t size)
 {
     BIO_write(m_readBio, data, size);
 
@@ -134,7 +134,7 @@ void xlarig::HttpsClient::read(const char *data, size_t size)
 }
 
 
-void xlarig::HttpsClient::write(const std::string &header)
+void xmrig::HttpsClient::write(const std::string &header)
 {
     SSL_write(m_ssl, (header + body).c_str(), header.size() + body.size());
     body.clear();
@@ -143,7 +143,7 @@ void xlarig::HttpsClient::write(const std::string &header)
 }
 
 
-bool xlarig::HttpsClient::verify(X509 *cert)
+bool xmrig::HttpsClient::verify(X509 *cert)
 {
     if (cert == nullptr) {
         return false;
@@ -166,7 +166,7 @@ bool xlarig::HttpsClient::verify(X509 *cert)
 }
 
 
-bool xlarig::HttpsClient::verifyFingerprint(X509 *cert)
+bool xmrig::HttpsClient::verifyFingerprint(X509 *cert)
 {
     const EVP_MD *digest = EVP_get_digestbyname("sha256");
     if (digest == nullptr) {
@@ -186,7 +186,7 @@ bool xlarig::HttpsClient::verifyFingerprint(X509 *cert)
 }
 
 
-void xlarig::HttpsClient::flush()
+void xmrig::HttpsClient::flush()
 {
     uv_buf_t buf;
     buf.len = BIO_get_mem_data(m_writeBio, &buf.base);

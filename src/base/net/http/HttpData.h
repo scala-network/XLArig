@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -32,18 +32,18 @@
 #include <string>
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class HttpData
 {
 public:
-    inline HttpData(uint64_t id) : method(0), status(0), m_id(id) {}
+    inline HttpData(uint64_t id) : m_id(id) {}
 
     inline uint64_t id() const { return m_id; }
 
-    int method;
-    int status;
+    int method  = 0;
+    int status  = 0;
     std::map<const std::string, const std::string> headers;
     std::string body;
     std::string url;
@@ -53,7 +53,7 @@ private:
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif // XMRIG_HTTPDATA_H

@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2014-2019 heapwolf    <https://github.com/heapwolf>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,14 +28,15 @@
 #define XMRIG_HTTPSERVER_H
 
 
-typedef struct http_parser http_parser;
-typedef struct http_parser_settings http_parser_settings;
+using http_parser           = struct http_parser;
+using http_parser_settings  = struct http_parser_settings;
 
 
 #include "base/kernel/interfaces/ITcpServerListener.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class IHttpListener;
@@ -44,6 +45,8 @@ class IHttpListener;
 class HttpServer : public ITcpServerListener
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(HttpServer)
+
     HttpServer(IHttpListener *listener);
     ~HttpServer() override;
 
@@ -55,7 +58,7 @@ private:
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif // XMRIG_HTTPSERVER_H

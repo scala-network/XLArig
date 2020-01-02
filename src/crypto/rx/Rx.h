@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,32 +28,42 @@
 #define XMRIG_RX_H
 
 
-#include <stdint.h>
+#include <cstdint>
 #include <utility>
 
 
-namespace xlarig
+#include "crypto/common/HugePagesInfo.h"
+
+
+namespace xmrig
 {
 
 
 class Algorithm;
-class RxDataset;
+class CpuConfig;
+class IRxListener;
 class Job;
+class RxConfig;
+class RxDataset;
 
 
 class Rx
 {
 public:
+    static bool init(const Job &job, const RxConfig &config, const CpuConfig &cpu);
     static bool isReady(const Job &job);
+    static HugePagesInfo hugePages();
     static RxDataset *dataset(const Job &job, uint32_t nodeId);
-    static std::pair<unsigned, unsigned> hugePages();
     static void destroy();
-    static void init();
-    static void init(const Job &job, int initThreads, bool hugePages, bool numa);
+    static void init(IRxListener *listener);
+
+private:
+    static void msrInit(const RxConfig &config);
+    static void msrDestroy();
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_RX_H */

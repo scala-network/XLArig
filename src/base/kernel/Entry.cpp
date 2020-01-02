@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 
-#include <stdio.h>
+#include <cstdio>
 #include <uv.h>
 
 
@@ -35,13 +35,18 @@
 #   include <hwloc.h>
 #endif
 
+#ifdef XMRIG_FEATURE_OPENCL
+#   include "backend/opencl/wrappers/OclLib.h"
+#   include "backend/opencl/wrappers/OclPlatform.h"
+#endif
+
 #include "base/kernel/Entry.h"
 #include "base/kernel/Process.h"
 #include "core/config/usage.h"
 #include "version.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 static int showVersion()
@@ -122,10 +127,10 @@ static int exportTopology(const Process &process)
 #endif
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-xlarig::Entry::Id xlarig::Entry::get(const Process &process)
+xmrig::Entry::Id xmrig::Entry::get(const Process &process)
 {
     const Arguments &args = process.arguments();
     if (args.hasArg("-h") || args.hasArg("--help")) {
@@ -142,15 +147,21 @@ xlarig::Entry::Id xlarig::Entry::get(const Process &process)
     }
 #   endif
 
+#   ifdef XMRIG_FEATURE_OPENCL
+    if (args.hasArg("--print-platforms")) {
+        return Platforms;
+    }
+#   endif
+
     return Default;
 }
 
 
-int xlarig::Entry::exec(const Process &process, Id id)
+int xmrig::Entry::exec(const Process &process, Id id)
 {
     switch (id) {
     case Usage:
-        printf(usage);
+        printf("%s\n", usage().c_str());
         return 0;
 
     case Version:
@@ -159,6 +170,14 @@ int xlarig::Entry::exec(const Process &process, Id id)
 #   ifdef XMRIG_FEATURE_HWLOC
     case Topo:
         return exportTopology(process);
+#   endif
+
+#   ifdef XMRIG_FEATURE_OPENCL
+    case Platforms:
+        if (OclLib::init()) {
+            OclPlatform::print();
+        }
+        return 0;
 #   endif
 
     default:

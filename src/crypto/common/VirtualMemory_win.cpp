@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -34,6 +34,12 @@
 #include "base/io/log/Log.h"
 #include "crypto/common/portable/mm_malloc.h"
 #include "crypto/common/VirtualMemory.h"
+
+
+namespace xmrig {
+
+
+static bool hugepagesAvailable = false;
 
 
 /*****************************************************************
@@ -83,7 +89,7 @@ static BOOL SetLockPagesPrivilege() {
 static LSA_UNICODE_STRING StringToLsaUnicodeString(LPCTSTR string) {
     LSA_UNICODE_STRING lsaString;
 
-    DWORD dwLen = (DWORD) wcslen(string);
+    const auto dwLen = (DWORD) wcslen(string);
     lsaString.Buffer = (LPWSTR) string;
     lsaString.Length = (USHORT)((dwLen) * sizeof(WCHAR));
     lsaString.MaximumLength = (USHORT)((dwLen + 1) * sizeof(WCHAR));
@@ -141,47 +147,28 @@ static BOOL TrySetLockPagesPrivilege() {
 }
 
 
-int xlarig::VirtualMemory::m_globalFlags = 0;
+} // namespace xmrig
 
 
-xlarig::VirtualMemory::VirtualMemory(size_t size, bool hugePages, size_t align) :
-    m_size(VirtualMemory::align(size))
+bool xmrig::VirtualMemory::isHugepagesAvailable()
 {
-    if (hugePages) {
-        m_scratchpad = static_cast<uint8_t*>(allocateLargePagesMemory(m_size));
-        if (m_scratchpad) {
-            m_flags |= HUGEPAGES;
-
-            return;
-        }
-    }
-
-    m_scratchpad = static_cast<uint8_t*>(_mm_malloc(m_size, align));
+    return hugepagesAvailable;
 }
 
 
-xlarig::VirtualMemory::~VirtualMemory()
+bool xmrig::VirtualMemory::isOneGbPagesAvailable()
 {
-    if (!m_scratchpad) {
-        return;
-    }
-
-    if (isHugePages()) {
-        freeLargePagesMemory(m_scratchpad, m_size);
-    }
-    else {
-        _mm_free(m_scratchpad);
-    }
+    return false;
 }
 
 
-void *xlarig::VirtualMemory::allocateExecutableMemory(size_t size)
+void *xmrig::VirtualMemory::allocateExecutableMemory(size_t size)
 {
     return VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 }
 
 
-void *xlarig::VirtualMemory::allocateLargePagesMemory(size_t size)
+void *xmrig::VirtualMemory::allocateLargePagesMemory(size_t size)
 {
     const size_t min = GetLargePageMinimum();
     void *mem        = nullptr;
@@ -194,41 +181,66 @@ void *xlarig::VirtualMemory::allocateLargePagesMemory(size_t size)
 }
 
 
-void xlarig::VirtualMemory::flushInstructionCache(void *p, size_t size)
+void *xmrig::VirtualMemory::allocateOneGbPagesMemory(size_t)
+{
+    return nullptr;
+}
+
+
+void xmrig::VirtualMemory::flushInstructionCache(void *p, size_t size)
 {
     ::FlushInstructionCache(GetCurrentProcess(), p, size);
 }
 
 
-void xlarig::VirtualMemory::freeLargePagesMemory(void *p, size_t)
+void xmrig::VirtualMemory::freeLargePagesMemory(void *p, size_t)
 {
     VirtualFree(p, 0, MEM_RELEASE);
 }
 
 
-void xlarig::VirtualMemory::init(bool hugePages)
-{
-    if (!hugePages) {
-        return;
-    }
-
-    m_globalFlags = HUGEPAGES;
-
-    if (TrySetLockPagesPrivilege()) {
-        m_globalFlags |= HUGEPAGES_AVAILABLE;
-    }
-}
-
-
-void xlarig::VirtualMemory::protectExecutableMemory(void *p, size_t size)
+void xmrig::VirtualMemory::protectExecutableMemory(void *p, size_t size)
 {
     DWORD oldProtect;
     VirtualProtect(p, size, PAGE_EXECUTE_READ, &oldProtect);
 }
 
 
-void xlarig::VirtualMemory::unprotectExecutableMemory(void *p, size_t size)
+void xmrig::VirtualMemory::unprotectExecutableMemory(void *p, size_t size)
 {
     DWORD oldProtect;
     VirtualProtect(p, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+}
+
+
+void xmrig::VirtualMemory::osInit(bool hugePages)
+{
+    if (hugePages) {
+        hugepagesAvailable = TrySetLockPagesPrivilege();
+    }
+}
+
+
+bool xmrig::VirtualMemory::allocateLargePagesMemory()
+{
+    m_scratchpad = static_cast<uint8_t*>(allocateLargePagesMemory(m_size));
+    if (m_scratchpad) {
+        m_flags.set(FLAG_HUGEPAGES, true);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool xmrig::VirtualMemory::allocateOneGbPagesMemory()
+{
+    m_scratchpad = nullptr;
+    return false;
+}
+
+
+void xmrig::VirtualMemory::freeLargePagesMemory()
+{
+    freeLargePagesMemory(m_scratchpad, m_size);
 }

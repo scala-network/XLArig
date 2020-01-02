@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,18 +23,13 @@
  */
 
 
+#include "base/net/stratum/strategies/FailoverStrategy.h"
+#include "base/kernel/interfaces/IClient.h"
 #include "base/kernel/interfaces/IStrategyListener.h"
 #include "base/kernel/Platform.h"
-#include "base/net/stratum/Client.h"
-#include "base/net/stratum/strategies/FailoverStrategy.h"
 
 
-#ifdef XMRIG_FEATURE_HTTP
-#   include "base/net/stratum/DaemonClient.h"
-#endif
-
-
-xlarig::FailoverStrategy::FailoverStrategy(const std::vector<Pool> &pools, int retryPause, int retries, IStrategyListener *listener, bool quiet) :
+xmrig::FailoverStrategy::FailoverStrategy(const std::vector<Pool> &pools, int retryPause, int retries, IStrategyListener *listener, bool quiet) :
     m_quiet(quiet),
     m_retries(retries),
     m_retryPause(retryPause),
@@ -48,7 +43,7 @@ xlarig::FailoverStrategy::FailoverStrategy(const std::vector<Pool> &pools, int r
 }
 
 
-xlarig::FailoverStrategy::FailoverStrategy(int retryPause, int retries, IStrategyListener *listener, bool quiet) :
+xmrig::FailoverStrategy::FailoverStrategy(int retryPause, int retries, IStrategyListener *listener, bool quiet) :
     m_quiet(quiet),
     m_retries(retries),
     m_retryPause(retryPause),
@@ -59,7 +54,7 @@ xlarig::FailoverStrategy::FailoverStrategy(int retryPause, int retries, IStrateg
 }
 
 
-xlarig::FailoverStrategy::~FailoverStrategy()
+xmrig::FailoverStrategy::~FailoverStrategy()
 {
     for (IClient *client : m_pools) {
         client->deleteLater();
@@ -67,18 +62,10 @@ xlarig::FailoverStrategy::~FailoverStrategy()
 }
 
 
-void xlarig::FailoverStrategy::add(const Pool &pool)
+void xmrig::FailoverStrategy::add(const Pool &pool)
 {
-    const int id = static_cast<int>(m_pools.size());
+    IClient *client = pool.createClient(static_cast<int>(m_pools.size()), this);
 
-#   ifdef XMRIG_FEATURE_HTTP
-    IClient *client = !pool.isDaemon() ? static_cast<IClient *>(new Client(id, Platform::userAgent(), this))
-                                       : static_cast<IClient *>(new DaemonClient(id, this));
-#   else
-    IClient *client = new Client(id, Platform::userAgent(), this);
-#   endif
-
-    client->setPool(pool);
     client->setRetries(m_retries);
     client->setRetryPause(m_retryPause * 1000);
     client->setQuiet(m_quiet);
@@ -87,7 +74,7 @@ void xlarig::FailoverStrategy::add(const Pool &pool)
 }
 
 
-int64_t xlarig::FailoverStrategy::submit(const JobResult &result)
+int64_t xmrig::FailoverStrategy::submit(const JobResult &result)
 {
     if (!isActive()) {
         return -1;
@@ -97,13 +84,13 @@ int64_t xlarig::FailoverStrategy::submit(const JobResult &result)
 }
 
 
-void xlarig::FailoverStrategy::connect()
+void xmrig::FailoverStrategy::connect()
 {
     m_pools[m_index]->connect();
 }
 
 
-void xlarig::FailoverStrategy::resume()
+void xmrig::FailoverStrategy::resume()
 {
     if (!isActive()) {
         return;
@@ -113,7 +100,7 @@ void xlarig::FailoverStrategy::resume()
 }
 
 
-void xlarig::FailoverStrategy::setAlgo(const Algorithm &algo)
+void xmrig::FailoverStrategy::setAlgo(const Algorithm &algo)
 {
     for (IClient *client : m_pools) {
         client->setAlgo(algo);
@@ -121,10 +108,10 @@ void xlarig::FailoverStrategy::setAlgo(const Algorithm &algo)
 }
 
 
-void xlarig::FailoverStrategy::stop()
+void xmrig::FailoverStrategy::stop()
 {
-    for (size_t i = 0; i < m_pools.size(); ++i) {
-        m_pools[i]->disconnect();
+    for (auto &pool : m_pools) {
+        pool->disconnect();
     }
 
     m_index  = 0;
@@ -134,7 +121,7 @@ void xlarig::FailoverStrategy::stop()
 }
 
 
-void xlarig::FailoverStrategy::tick(uint64_t now)
+void xmrig::FailoverStrategy::tick(uint64_t now)
 {
     for (IClient *client : m_pools) {
         client->tick(now);
@@ -142,7 +129,7 @@ void xlarig::FailoverStrategy::tick(uint64_t now)
 }
 
 
-void xlarig::FailoverStrategy::onClose(IClient *client, int failures)
+void xmrig::FailoverStrategy::onClose(IClient *client, int failures)
 {
     if (failures == -1) {
         return;
@@ -163,13 +150,13 @@ void xlarig::FailoverStrategy::onClose(IClient *client, int failures)
 }
 
 
-void xlarig::FailoverStrategy::onLogin(IClient *client, rapidjson::Document &doc, rapidjson::Value &params)
+void xmrig::FailoverStrategy::onLogin(IClient *client, rapidjson::Document &doc, rapidjson::Value &params)
 {
     m_listener->onLogin(this, client, doc, params);
 }
 
 
-void xlarig::FailoverStrategy::onJobReceived(IClient *client, const Job &job, const rapidjson::Value &)
+void xmrig::FailoverStrategy::onJobReceived(IClient *client, const Job &job, const rapidjson::Value &)
 {
     if (m_active == client->id()) {
         m_listener->onJob(this, client, job);
@@ -177,7 +164,7 @@ void xlarig::FailoverStrategy::onJobReceived(IClient *client, const Job &job, co
 }
 
 
-void xlarig::FailoverStrategy::onLoginSuccess(IClient *client)
+void xmrig::FailoverStrategy::onLoginSuccess(IClient *client)
 {
     int active = m_active;
 
@@ -198,13 +185,13 @@ void xlarig::FailoverStrategy::onLoginSuccess(IClient *client)
 }
 
 
-void xlarig::FailoverStrategy::onResultAccepted(IClient *client, const SubmitResult &result, const char *error)
+void xmrig::FailoverStrategy::onResultAccepted(IClient *client, const SubmitResult &result, const char *error)
 {
     m_listener->onResultAccepted(this, client, result, error);
 }
 
 
-void xlarig::FailoverStrategy::onVerifyAlgorithm(const IClient *client, const Algorithm &algorithm, bool *ok)
+void xmrig::FailoverStrategy::onVerifyAlgorithm(const IClient *client, const Algorithm &algorithm, bool *ok)
 {
     m_listener->onVerifyAlgorithm(this, client, algorithm, ok);
 }

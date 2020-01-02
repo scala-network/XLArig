@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2019      Spudz76     <https://github.com/Spudz76>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,19 +27,22 @@
 #define XMRIG_CONSOLELOG_H
 
 
-typedef struct uv_stream_s uv_stream_t;
-typedef struct uv_tty_s uv_tty_t;
+using uv_stream_t = struct uv_stream_s;
+using uv_tty_t    = struct uv_tty_s;
 
 
 #include "base/kernel/interfaces/ILogBackend.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class ConsoleLog : public ILogBackend
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE(ConsoleLog)
+
     ConsoleLog();
     ~ConsoleLog() override;
 
@@ -47,14 +50,19 @@ protected:
     void print(int level, const char *line, size_t offset, size_t size, bool colors) override;
 
 private:
+    bool isSupported() const;
+
+    uv_tty_t *m_tty = nullptr;
+
+#   ifdef _WIN32
     bool isWritable() const;
 
-    uv_stream_t *m_stream;
-    uv_tty_t *m_tty;
+    uv_stream_t *m_stream = nullptr;
+#   endif
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif /* XMRIG_CONSOLELOG_H */

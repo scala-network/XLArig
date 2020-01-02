@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,19 +26,22 @@
 #define XMRIG_HASHRATE_H
 
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 
+#include "base/tools/Object.h"
 #include "rapidjson/fwd.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Hashrate
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(Hashrate)
+
     enum Intervals {
         ShortInterval  = 10000,
         MediumInterval = 60000,
@@ -50,19 +53,21 @@ public:
     double calc(size_t ms) const;
     double calc(size_t threadId, size_t ms) const;
     void add(size_t threadId, uint64_t count, uint64_t timestamp);
-    void updateHighest();
 
-    inline double highest() const { return m_highest; }
     inline size_t threads() const { return m_threads; }
 
     static const char *format(double h, char *buf, size_t size);
     static rapidjson::Value normalize(double d);
 
+#   ifdef XMRIG_FEATURE_API
+    rapidjson::Value toJSON(rapidjson::Document &doc) const;
+    rapidjson::Value toJSON(size_t threadId, rapidjson::Document &doc) const;
+#   endif
+
 private:
     constexpr static size_t kBucketSize = 2 << 11;
     constexpr static size_t kBucketMask = kBucketSize - 1;
 
-    double m_highest;
     size_t m_threads;
     uint32_t* m_top;
     uint64_t** m_counts;
@@ -70,7 +75,7 @@ private:
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_HASHRATE_H */

@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 #endif
 
 
-xlarig::Client::Tls::Tls(Client *client) :
+xmrig::Client::Tls::Tls(Client *client) :
     m_ready(false),
     m_buf(),
     m_fingerprint(),
@@ -58,7 +58,7 @@ xlarig::Client::Tls::Tls(Client *client) :
 }
 
 
-xlarig::Client::Tls::~Tls()
+xmrig::Client::Tls::~Tls()
 {
     if (m_ctx) {
         SSL_CTX_free(m_ctx);
@@ -70,7 +70,7 @@ xlarig::Client::Tls::~Tls()
 }
 
 
-bool xlarig::Client::Tls::handshake()
+bool xmrig::Client::Tls::handshake()
 {
     m_ssl = SSL_new(m_ctx);
     assert(m_ssl != nullptr);
@@ -87,7 +87,7 @@ bool xlarig::Client::Tls::handshake()
 }
 
 
-bool xlarig::Client::Tls::send(const char *data, size_t size)
+bool xmrig::Client::Tls::send(const char *data, size_t size)
 {
     SSL_write(m_ssl, data, size);
 
@@ -95,19 +95,19 @@ bool xlarig::Client::Tls::send(const char *data, size_t size)
 }
 
 
-const char *xlarig::Client::Tls::fingerprint() const
+const char *xmrig::Client::Tls::fingerprint() const
 {
     return m_ready ? m_fingerprint : nullptr;
 }
 
 
-const char *xlarig::Client::Tls::version() const
+const char *xmrig::Client::Tls::version() const
 {
     return m_ready ? SSL_get_version(m_ssl) : nullptr;
 }
 
 
-void xlarig::Client::Tls::read(const char *data, size_t size)
+void xmrig::Client::Tls::read(const char *data, size_t size)
 {
     BIO_write(m_readBio, data, size);
 
@@ -141,13 +141,13 @@ void xlarig::Client::Tls::read(const char *data, size_t size)
 }
 
 
-bool xlarig::Client::Tls::send()
+bool xmrig::Client::Tls::send()
 {
     return m_client->send(m_writeBio);
 }
 
 
-bool xlarig::Client::Tls::verify(X509 *cert)
+bool xmrig::Client::Tls::verify(X509 *cert)
 {
     if (cert == nullptr) {
         LOG_ERR("[%s] Failed to get server certificate", m_client->url());
@@ -171,7 +171,7 @@ bool xlarig::Client::Tls::verify(X509 *cert)
 }
 
 
-bool xlarig::Client::Tls::verifyFingerprint(X509 *cert)
+bool xmrig::Client::Tls::verifyFingerprint(X509 *cert)
 {
     const EVP_MD *digest = EVP_get_digestbyname("sha256");
     if (digest == nullptr) {

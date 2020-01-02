@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #define XMRIG_CONFIG_DEFAULT_H
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 #ifdef XMRIG_FEATURE_EMBEDDED_CONFIG
@@ -50,6 +50,7 @@ R"===(
     "colors": true,
     "randomx": {
         "init": -1,
+        "mode": "auto",
         "numa": true
     },
     "cpu": {
@@ -57,18 +58,37 @@ R"===(
         "huge-pages": true,
         "hw-aes": null,
         "priority": null,
+        "memory-pool": false,
+        "yield": true,
+        "max-threads-hint": 100,
         "asm": true,
         "argon2-impl": null,
         "cn/0": false,
         "cn-lite/0": false
     },
-    "donate-level": 0,
+    "opencl": {
+        "enabled": false,
+        "cache": true,
+        "loader": null,
+        "platform": "AMD",
+        "cn/0": false,
+        "cn-lite/0": false
+    },
+    "cuda": {
+        "enabled": false,
+        "loader": null,
+        "nvml": true,
+        "cn/0": false,
+        "cn-lite/0": false
+    },
+    "donate-level": 5,
     "donate-over-proxy": 1,
     "log-file": null,
     "pools": [
         {
             "algo": null,
-            "url": "donate.v2.xlarig.com:3333",
+            "coin": null,
+            "url": "donate.v2.xmrig.com:3333",
             "user": "YOUR_WALLET_ADDRESS",
             "pass": "x",
             "rig-id": null,
@@ -77,10 +97,12 @@ R"===(
             "enabled": true,
             "tls": false,
             "tls-fingerprint": null,
-            "daemon": false
+            "daemon": false,
+            "self-select": null
         }
     ],
     "print-time": 60,
+    "health-print-time": 60,
     "retries": 5,
     "retry-pause": 5,
     "syslog": false,
@@ -91,7 +113,7 @@ R"===(
 #endif
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_CONFIG_DEFAULT_H */
