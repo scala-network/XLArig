@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "rapidjson/error/en.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 static const char *kError  = "error";
@@ -57,10 +57,10 @@ static inline const char *rpcError(int code) {
 }
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-xlarig::HttpApiRequest::HttpApiRequest(const HttpData &req, bool restricted) :
+xmrig::HttpApiRequest::HttpApiRequest(const HttpData &req, bool restricted) :
     ApiRequest(SOURCE_HTTP, restricted),
     m_req(req),
     m_res(req.id()),
@@ -102,7 +102,7 @@ xlarig::HttpApiRequest::HttpApiRequest(const HttpData &req, bool restricted) :
 }
 
 
-bool xlarig::HttpApiRequest::accept()
+bool xmrig::HttpApiRequest::accept()
 {
     using namespace rapidjson;
 
@@ -127,19 +127,19 @@ bool xlarig::HttpApiRequest::accept()
 }
 
 
-const rapidjson::Value &xlarig::HttpApiRequest::json() const
+const rapidjson::Value &xmrig::HttpApiRequest::json() const
 {
     return m_body;
 }
 
 
-xlarig::IApiRequest::Method xlarig::HttpApiRequest::method() const
+xmrig::IApiRequest::Method xmrig::HttpApiRequest::method() const
 {
     return static_cast<IApiRequest::Method>(m_req.method);
 }
 
 
-void xlarig::HttpApiRequest::done(int status)
+void xmrig::HttpApiRequest::done(int status)
 {
     ApiRequest::done(status);
 

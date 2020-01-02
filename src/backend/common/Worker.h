@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,13 +28,13 @@
 
 
 #include <atomic>
-#include <stdint.h>
+#include <cstdint>
 
 
 #include "backend/common/interfaces/IWorker.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Worker : public IWorker
@@ -54,12 +54,12 @@ protected:
     const size_t m_id;
     std::atomic<uint64_t> m_hashCount;
     std::atomic<uint64_t> m_timestamp;
-    uint32_t m_node = 0;
-    uint64_t m_count;
+    uint32_t m_node     = 0;
+    uint64_t m_count    = 0;
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_WORKER_H */

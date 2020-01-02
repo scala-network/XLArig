@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 #include "net/NetworkState.h"
 
 
-xlarig::NetworkState::NetworkState() :
+xmrig::NetworkState::NetworkState() :
     pool(),
     accepted(0),
     diff(0),
@@ -48,7 +48,7 @@ xlarig::NetworkState::NetworkState() :
 }
 
 
-uint32_t xlarig::NetworkState::avgTime() const
+uint32_t xmrig::NetworkState::avgTime() const
 {
     if (m_latency.empty()) {
         return 0;
@@ -58,7 +58,7 @@ uint32_t xlarig::NetworkState::avgTime() const
 }
 
 
-uint32_t xlarig::NetworkState::latency() const
+uint32_t xmrig::NetworkState::latency() const
 {
     const size_t calls = m_latency.size();
     if (calls == 0) {
@@ -72,13 +72,13 @@ uint32_t xlarig::NetworkState::latency() const
 }
 
 
-uint64_t xlarig::NetworkState::connectionTime() const
+uint64_t xmrig::NetworkState::connectionTime() const
 {
     return m_active ? ((Chrono::steadyMSecs() - m_connectionTime) / 1000) : 0;
 }
 
 
-void xlarig::NetworkState::add(const SubmitResult &result, const char *error)
+void xmrig::NetworkState::add(const SubmitResult &result, const char *error)
 {
     if (error) {
         rejected++;
@@ -98,7 +98,7 @@ void xlarig::NetworkState::add(const SubmitResult &result, const char *error)
 }
 
 
-void xlarig::NetworkState::onActive(IClient *client)
+void xmrig::NetworkState::onActive(IClient *client)
 {
     snprintf(pool, sizeof(pool) - 1, "%s:%d", client->pool().host().data(), client->pool().port());
 
@@ -110,7 +110,7 @@ void xlarig::NetworkState::onActive(IClient *client)
 }
 
 
-void xlarig::NetworkState::stop()
+void xmrig::NetworkState::stop()
 {
     m_active      = false;
     diff          = 0;

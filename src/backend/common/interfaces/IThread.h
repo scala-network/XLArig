@@ -4,7 +4,7 @@
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2018 XLARig       <support@xmrig.com>
+ * Copyright 2016-2018 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 #include "rapidjson/fwd.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class IThread
@@ -71,7 +71,7 @@ public:
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif // XMRIG_ITHREAD_H

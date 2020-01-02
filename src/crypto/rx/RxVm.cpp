@@ -8,7 +8,7 @@
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,27 +31,29 @@
 #include "crypto/rx/RxVm.h"
 
 
-xlarig::RxVm::RxVm(RxDataset *dataset, uint8_t *scratchpad, bool softAes)
+xmrig::RxVm::RxVm(RxDataset *dataset, uint8_t *scratchpad, bool softAes, xmrig::Assembly assembly)
 {
-#   ifndef XMRIG_ARM
     if (!softAes) {
        m_flags |= RANDOMX_FLAG_HARD_AES;
     }
-#   endif
 
     if (dataset->get()) {
         m_flags |= RANDOMX_FLAG_FULL_MEM;
     }
 
-    if (dataset->cache()->isJIT()) {
+    if (!dataset->cache() || dataset->cache()->isJIT()) {
         m_flags |= RANDOMX_FLAG_JIT;
     }
 
-    m_vm = randomx_create_vm(static_cast<randomx_flags>(m_flags), dataset->cache()->get(), dataset->get(), scratchpad);
+    if ((assembly == Assembly::RYZEN) || ((assembly == Assembly::AUTO) && (Cpu::info()->assembly() == Assembly::RYZEN))) {
+        m_flags |= RANDOMX_FLAG_RYZEN;
+    }
+
+    m_vm = randomx_create_vm(static_cast<randomx_flags>(m_flags), dataset->cache() ? dataset->cache()->get() : nullptr, dataset->get(), scratchpad);
 }
 
 
-xlarig::RxVm::~RxVm()
+xmrig::RxVm::~RxVm()
 {
     if (m_vm) {
         randomx_destroy_vm(m_vm);

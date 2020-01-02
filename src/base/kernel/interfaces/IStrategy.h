@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@
 #define XMRIG_ISTRATEGY_H
 
 
-#include <stdint.h>
+#include <cstdint>
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Algorithm;
@@ -53,7 +53,7 @@ public:
 };
 
 
-} /* namespace xlarig */
+} /* namespace xmrig */
 
 
 #endif // XMRIG_ISTRATEGY_H

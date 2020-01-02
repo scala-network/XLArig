@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,60 +23,54 @@
  */
 
 
-#include <assert.h>
-
-
-#include "backend/cpu/Cpu.h"
 #include "core/Controller.h"
+#include "backend/cpu/Cpu.h"
+#include "core/config/Config.h"
 #include "core/Miner.h"
+#include "crypto/common/VirtualMemory.h"
 #include "net/Network.h"
 
 
-xlarig::Controller::Controller(Process *process) :
+#include <cassert>
+
+
+xmrig::Controller::Controller(Process *process) :
     Base(process)
 {
 }
 
 
-xlarig::Controller::~Controller()
+xmrig::Controller::~Controller()
 {
     delete m_network;
+
+    VirtualMemory::destroy();
 }
 
 
-bool xlarig::Controller::isReady() const
+int xmrig::Controller::init()
 {
-    return Base::isReady() && m_network;
-}
+    Base::init();
 
-
-int xlarig::Controller::init()
-{
-    Cpu::init();
-
-    const int rc = Base::init();
-    if (rc != 0) {
-        return rc;
-    }
+    VirtualMemory::init(config()->cpu().memPoolSize(), config()->cpu().isHugePages());
 
     m_network = new Network(this);
+
     return 0;
 }
 
-void xlarig::Controller::pre_start()
-{
-    m_miner = new Miner(this);
-}
 
-
-void xlarig::Controller::start()
+void xmrig::Controller::start()
 {
     Base::start();
+
+    m_miner = new Miner(this);
+
     network()->connect();
 }
 
 
-void xlarig::Controller::stop()
+void xmrig::Controller::stop()
 {
     Base::stop();
 
@@ -90,7 +84,7 @@ void xlarig::Controller::stop()
 }
 
 
-xlarig::Miner *xlarig::Controller::miner() const
+xmrig::Miner *xmrig::Controller::miner() const
 {
     assert(m_miner != nullptr);
 
@@ -98,7 +92,7 @@ xlarig::Miner *xlarig::Controller::miner() const
 }
 
 
-xlarig::Network *xlarig::Controller::network() const
+xmrig::Network *xmrig::Controller::network() const
 {
     assert(m_network != nullptr);
 

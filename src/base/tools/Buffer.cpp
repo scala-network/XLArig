@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,10 +31,12 @@ static inline uint8_t hf_hex2bin(uint8_t c, bool &err)
     if (c >= '0' && c <= '9') {
         return c - '0';
     }
-    else if (c >= 'a' && c <= 'f') {
+
+    if (c >= 'a' && c <= 'f') {
         return c - 'a' + 0xA;
     }
-    else if (c >= 'A' && c <= 'F') {
+
+    if (c >= 'A' && c <= 'F') {
         return c - 'A' + 0xA;
     }
 
@@ -53,14 +55,7 @@ static inline uint8_t hf_bin2hex(uint8_t c)
 }
 
 
-xlarig::Buffer::Buffer() :
-    m_data(nullptr),
-    m_size(0)
-{
-}
-
-
-xlarig::Buffer::Buffer(Buffer &&other) :
+xmrig::Buffer::Buffer(Buffer &&other) noexcept :
     m_data(other.m_data),
     m_size(other.m_size)
 {
@@ -69,32 +64,34 @@ xlarig::Buffer::Buffer(Buffer &&other) :
 }
 
 
-xlarig::Buffer::Buffer(const Buffer &other)
+xmrig::Buffer::Buffer(const Buffer &other)
 {
     copy(other.data(), other.size());
 }
 
 
-xlarig::Buffer::Buffer(const char *data, size_t size)
+xmrig::Buffer::Buffer(const char *data, size_t size)
 {
     copy(data, size);
 }
 
 
-xlarig::Buffer::Buffer(size_t size) :
+xmrig::Buffer::Buffer(size_t size) :
     m_size(size)
 {
-    m_data = new char[size]();
+    if (size > 0) {
+        m_data = new char[size]();
+    }
 }
 
 
-xlarig::Buffer::~Buffer()
+xmrig::Buffer::~Buffer()
 {
     delete [] m_data;
 }
 
 
-void xlarig::Buffer::from(const char *data, size_t size)
+void xmrig::Buffer::from(const char *data, size_t size)
 {
     if (m_size > 0) {
         if (m_size == size) {
@@ -110,8 +107,12 @@ void xlarig::Buffer::from(const char *data, size_t size)
 }
 
 
-xlarig::Buffer xlarig::Buffer::allocUnsafe(size_t size)
+xmrig::Buffer xmrig::Buffer::allocUnsafe(size_t size)
 {
+    if (size == 0) {
+        return {};
+    }
+
     Buffer buf;
     buf.m_size = size;
     buf.m_data = new char[size];
@@ -120,7 +121,7 @@ xlarig::Buffer xlarig::Buffer::allocUnsafe(size_t size)
 }
 
 
-bool xlarig::Buffer::fromHex(const uint8_t *in, size_t size, uint8_t *out)
+bool xmrig::Buffer::fromHex(const uint8_t *in, size_t size, uint8_t *out)
 {
     bool error = false;
     for (size_t i = 0; i < size; i += 2) {
@@ -135,20 +136,22 @@ bool xlarig::Buffer::fromHex(const uint8_t *in, size_t size, uint8_t *out)
 }
 
 
-xlarig::Buffer xlarig::Buffer::fromHex(const char *data, size_t size)
+xmrig::Buffer xmrig::Buffer::fromHex(const char *data, size_t size)
 {
     if (data == nullptr || size % 2 != 0) {
-        return Buffer();
+        return {};
     }
 
     Buffer buf(size / 2);
-    fromHex(data, size, buf.data());
+    if (!fromHex(data, size, buf.data())) {
+        return {};
+    }
 
     return buf;
 }
 
 
-void xlarig::Buffer::toHex(const uint8_t *in, size_t size, uint8_t *out)
+void xmrig::Buffer::toHex(const uint8_t *in, size_t size, uint8_t *out)
 {
     for (size_t i = 0; i < size; i++) {
         out[i * 2]     = hf_bin2hex((in[i] & 0xF0) >> 4);
@@ -157,13 +160,7 @@ void xlarig::Buffer::toHex(const uint8_t *in, size_t size, uint8_t *out)
 }
 
 
-xlarig::String xlarig::Buffer::toHex(const uint8_t *in, size_t size)
-{
-    return Buffer(reinterpret_cast<const char *>(in), size).toHex();
-}
-
-
-xlarig::String xlarig::Buffer::toHex() const
+xmrig::String xmrig::Buffer::toHex() const
 {
     if (m_size == 0) {
         return String();
@@ -178,8 +175,15 @@ xlarig::String xlarig::Buffer::toHex() const
 }
 
 
-void xlarig::Buffer::copy(const char *data, size_t size)
+void xmrig::Buffer::copy(const char *data, size_t size)
 {
+    if (size == 0) {
+        m_data = nullptr;
+        m_size = 0;
+
+        return;
+    }
+
     m_data = new char[size];
     m_size = size;
 
@@ -187,7 +191,7 @@ void xlarig::Buffer::copy(const char *data, size_t size)
 }
 
 
-void xlarig::Buffer::move(Buffer &&other)
+void xmrig::Buffer::move(Buffer &&other)
 {
     if (m_size > 0) {
         delete [] m_data;

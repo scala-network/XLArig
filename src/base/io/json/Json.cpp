@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,15 +27,21 @@
 #include "rapidjson/document.h"
 
 
-namespace xlarig {
+#include <cassert>
+#include <cmath>
+
+
+namespace xmrig {
 
 static const rapidjson::Value kNullValue;
 
 }
 
 
-bool xlarig::Json::getBool(const rapidjson::Value &obj, const char *key, bool defaultValue)
+bool xmrig::Json::getBool(const rapidjson::Value &obj, const char *key, bool defaultValue)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsBool()) {
         return i->value.GetBool();
@@ -45,8 +51,10 @@ bool xlarig::Json::getBool(const rapidjson::Value &obj, const char *key, bool de
 }
 
 
-const char *xlarig::Json::getString(const rapidjson::Value &obj, const char *key,  const char *defaultValue)
+const char *xmrig::Json::getString(const rapidjson::Value &obj, const char *key, const char *defaultValue)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsString()) {
         return i->value.GetString();
@@ -56,8 +64,10 @@ const char *xlarig::Json::getString(const rapidjson::Value &obj, const char *key
 }
 
 
-const rapidjson::Value &xlarig::Json::getArray(const rapidjson::Value &obj, const char *key)
+const rapidjson::Value &xmrig::Json::getArray(const rapidjson::Value &obj, const char *key)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsArray()) {
         return i->value;
@@ -67,8 +77,10 @@ const rapidjson::Value &xlarig::Json::getArray(const rapidjson::Value &obj, cons
 }
 
 
-const rapidjson::Value &xlarig::Json::getObject(const rapidjson::Value &obj, const char *key)
+const rapidjson::Value &xmrig::Json::getObject(const rapidjson::Value &obj, const char *key)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsObject()) {
         return i->value;
@@ -78,8 +90,10 @@ const rapidjson::Value &xlarig::Json::getObject(const rapidjson::Value &obj, con
 }
 
 
-const rapidjson::Value &xlarig::Json::getValue(const rapidjson::Value &obj, const char *key)
+const rapidjson::Value &xmrig::Json::getValue(const rapidjson::Value &obj, const char *key)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd()) {
         return i->value;
@@ -89,8 +103,10 @@ const rapidjson::Value &xlarig::Json::getValue(const rapidjson::Value &obj, cons
 }
 
 
-int xlarig::Json::getInt(const rapidjson::Value &obj, const char *key, int defaultValue)
+int xmrig::Json::getInt(const rapidjson::Value &obj, const char *key, int defaultValue)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsInt()) {
         return i->value.GetInt();
@@ -100,8 +116,10 @@ int xlarig::Json::getInt(const rapidjson::Value &obj, const char *key, int defau
 }
 
 
-int64_t xlarig::Json::getInt64(const rapidjson::Value &obj, const char *key, int64_t defaultValue)
+int64_t xmrig::Json::getInt64(const rapidjson::Value &obj, const char *key, int64_t defaultValue)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsInt64()) {
         return i->value.GetInt64();
@@ -111,8 +129,10 @@ int64_t xlarig::Json::getInt64(const rapidjson::Value &obj, const char *key, int
 }
 
 
-uint64_t xlarig::Json::getUint64(const rapidjson::Value &obj, const char *key, uint64_t defaultValue)
+uint64_t xmrig::Json::getUint64(const rapidjson::Value &obj, const char *key, uint64_t defaultValue)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsUint64()) {
         return i->value.GetUint64();
@@ -122,8 +142,10 @@ uint64_t xlarig::Json::getUint64(const rapidjson::Value &obj, const char *key, u
 }
 
 
-unsigned xlarig::Json::getUint(const rapidjson::Value &obj, const char *key, unsigned defaultValue)
+unsigned xmrig::Json::getUint(const rapidjson::Value &obj, const char *key, unsigned defaultValue)
 {
+    assert(obj.IsObject());
+
     auto i = obj.FindMember(key);
     if (i != obj.MemberEnd() && i->value.IsUint()) {
         return i->value.GetUint();
@@ -133,7 +155,19 @@ unsigned xlarig::Json::getUint(const rapidjson::Value &obj, const char *key, uns
 }
 
 
-bool xlarig::JsonReader::isEmpty() const
+rapidjson::Value xmrig::Json::normalize(double value, bool zero)
+{
+    using namespace rapidjson;
+
+    if (!std::isnormal(value)) {
+        return zero ? Value(0.0) : Value(kNullType);
+    }
+
+    return Value(floor(value * 100.0) / 100.0);
+}
+
+
+bool xmrig::JsonReader::isEmpty() const
 {
     return !m_obj.IsObject() || m_obj.ObjectEmpty();
 }

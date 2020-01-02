@@ -6,7 +6,7 @@
  * Copyright 2014-2016 Wolf9466                  <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee                 <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak                  <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2016-2018 XLARig                     <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2018 XMRig                     <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ const uint64_t keccakf_rndc[24] =
 
 // update the state with given number of rounds
 
-void xlarig::keccakf(uint64_t st[25], int rounds)
+void xmrig::keccakf(uint64_t st[25], int rounds)
 {
     int i, j, round;
     uint64_t t, bc[5];
@@ -165,7 +165,7 @@ void xlarig::keccakf(uint64_t st[25], int rounds)
 typedef uint64_t state_t[25];
 
 
-void xlarig::keccak(const uint8_t *in, int inlen, uint8_t *md, int mdlen)
+void xmrig::keccak(const uint8_t *in, int inlen, uint8_t *md, int mdlen)
 {
     state_t st;
     uint8_t temp[144];
@@ -181,7 +181,7 @@ void xlarig::keccak(const uint8_t *in, int inlen, uint8_t *md, int mdlen)
             st[i] ^= ((uint64_t *) in)[i];
         }
 
-        xlarig::keccakf(st, KECCAK_ROUNDS);
+        xmrig::keccakf(st, KECCAK_ROUNDS);
     }
 
     // last block and padding

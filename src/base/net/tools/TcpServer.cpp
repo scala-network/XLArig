@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,10 +29,10 @@
 #include "base/tools/String.h"
 
 
-static const xlarig::String kLocalHost("127.0.0.1");
+static const xmrig::String kLocalHost("127.0.0.1");
 
 
-xlarig::TcpServer::TcpServer(const String &host, uint16_t port, ITcpServerListener *listener) :
+xmrig::TcpServer::TcpServer(const String &host, uint16_t port, ITcpServerListener *listener) :
     m_host(host.isNull() ? kLocalHost : host),
     m_version(0),
     m_listener(listener),
@@ -54,13 +54,13 @@ xlarig::TcpServer::TcpServer(const String &host, uint16_t port, ITcpServerListen
 }
 
 
-xlarig::TcpServer::~TcpServer()
+xmrig::TcpServer::~TcpServer()
 {
     Handle::close(m_tcp);
 }
 
 
-int xlarig::TcpServer::bind()
+int xmrig::TcpServer::bind()
 {
     if (!m_version) {
         return UV_EAI_ADDRFAMILY;
@@ -86,7 +86,7 @@ int xlarig::TcpServer::bind()
 }
 
 
-void xlarig::TcpServer::create(uv_stream_t *stream, int status)
+void xmrig::TcpServer::create(uv_stream_t *stream, int status)
 {
     if (status < 0) {
         return;
@@ -96,7 +96,7 @@ void xlarig::TcpServer::create(uv_stream_t *stream, int status)
 }
 
 
-void xlarig::TcpServer::onConnection(uv_stream_t *stream, int status)
+void xmrig::TcpServer::onConnection(uv_stream_t *stream, int status)
 {
     static_cast<TcpServer *>(stream->data)->create(stream, status);
 }

@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,9 +29,20 @@
 
 #include "backend/common/Thread.h"
 #include "backend/cpu/CpuLaunchData.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+#ifdef XMRIG_FEATURE_OPENCL
+#   include "backend/opencl/OclLaunchData.h"
+#endif
+
+
+#ifdef XMRIG_FEATURE_CUDA
+#   include "backend/cuda/CudaLaunchData.h"
+#endif
+
+
+namespace xmrig {
 
 
 class Hashrate;
@@ -42,6 +53,8 @@ template<class T>
 class Workers
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE(Workers)
+
     Workers();
     ~Workers();
 
@@ -52,7 +65,7 @@ public:
     void tick(uint64_t ticks);
 
 private:
-    static IWorker *create(Thread<CpuLaunchData> *handle);
+    static IWorker *create(Thread<T> *handle);
     static void onReady(void *arg);
 
     std::vector<Thread<T> *> m_workers;
@@ -62,12 +75,24 @@ private:
 
 template<>
 IWorker *Workers<CpuLaunchData>::create(Thread<CpuLaunchData> *handle);
-
-
 extern template class Workers<CpuLaunchData>;
 
 
-} // namespace xlarig
+#ifdef XMRIG_FEATURE_OPENCL
+template<>
+IWorker *Workers<OclLaunchData>::create(Thread<OclLaunchData> *handle);
+extern template class Workers<OclLaunchData>;
+#endif
+
+
+#ifdef XMRIG_FEATURE_CUDA
+template<>
+IWorker *Workers<CudaLaunchData>::create(Thread<CudaLaunchData> *handle);
+extern template class Workers<CudaLaunchData>;
+#endif
+
+
+} // namespace xmrig
 
 
 #endif /* XMRIG_WORKERS_H */

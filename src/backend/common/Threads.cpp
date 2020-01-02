@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,20 +25,32 @@
 
 #include "backend/common/Threads.h"
 #include "backend/cpu/CpuThreads.h"
+#include "crypto/cn/CnAlgo.h"
 #include "rapidjson/document.h"
 
 
-namespace xlarig {
+#ifdef XMRIG_FEATURE_OPENCL
+#   include "backend/opencl/OclThreads.h"
+#endif
+
+
+#ifdef XMRIG_FEATURE_CUDA
+#   include "backend/cuda/CudaThreads.h"
+#endif
+
+
+namespace xmrig {
 
 
 static const char *kAsterisk = "*";
+static const char *kCn2      = "cn/2";
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 template <class T>
-const T &xlarig::Threads<T>::get(const String &profileName) const
+const T &xmrig::Threads<T>::get(const String &profileName) const
 {
     static T empty;
     if (profileName.isNull() || !has(profileName)) {
@@ -50,7 +62,7 @@ const T &xlarig::Threads<T>::get(const String &profileName) const
 
 
 template <class T>
-size_t xlarig::Threads<T>::read(const rapidjson::Value &value)
+size_t xmrig::Threads<T>::read(const rapidjson::Value &value)
 {
     using namespace rapidjson;
 
@@ -94,7 +106,7 @@ size_t xlarig::Threads<T>::read(const rapidjson::Value &value)
 
 
 template <class T>
-xlarig::String xlarig::Threads<T>::profileName(const Algorithm &algorithm, bool strict) const
+xmrig::String xmrig::Threads<T>::profileName(const Algorithm &algorithm, bool strict) const
 {
     if (isDisabled(algorithm)) {
         return String();
@@ -113,12 +125,18 @@ xlarig::String xlarig::Threads<T>::profileName(const Algorithm &algorithm, bool 
         return String();
     }
 
+    if (algorithm.family() == Algorithm::CN && CnAlgo<>::base(algorithm) == Algorithm::CN_2 && has(kCn2)) {
+        return kCn2;
+    }
+
     if (name.contains("/")) {
         const String base = name.split('/').at(0);
         if (has(base)) {
             return base;
         }
     }
+
+	if (name == "defyx" && has("rx")) return "rx";
 
     if (has(kAsterisk)) {
         return kAsterisk;
@@ -129,7 +147,7 @@ xlarig::String xlarig::Threads<T>::profileName(const Algorithm &algorithm, bool 
 
 
 template <class T>
-void xlarig::Threads<T>::toJSON(rapidjson::Value &out, rapidjson::Document &doc) const
+void xmrig::Threads<T>::toJSON(rapidjson::Value &out, rapidjson::Document &doc) const
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
@@ -148,8 +166,16 @@ void xlarig::Threads<T>::toJSON(rapidjson::Value &out, rapidjson::Document &doc)
 }
 
 
-namespace xlarig {
+namespace xmrig {
 
 template class Threads<CpuThreads>;
 
-} // namespace xlarig
+#ifdef XMRIG_FEATURE_OPENCL
+template class Threads<OclThreads>;
+#endif
+
+#ifdef XMRIG_FEATURE_CUDA
+template class Threads<CudaThreads>;
+#endif
+
+} // namespace xmrig

@@ -14,6 +14,11 @@ option(WITH_DEBUG_LOG       "Enable debug log output" OFF)
 option(WITH_TLS             "Enable OpenSSL support" ON)
 option(WITH_ASM             "Enable ASM PoW implementations" ON)
 option(WITH_EMBEDDED_CONFIG "Enable internal embedded JSON config" OFF)
+option(WITH_OPENCL          "Enable OpenCL backend" OFF)
+option(WITH_CUDA            "Enable CUDA backend" OFF)
+option(WITH_NVML            "Enable NVML (NVIDIA Management Library) support (only if CUDA backend enabled)" OFF)
+option(WITH_STRICT_CACHE    "Enable strict checks for OpenCL cache" ON)
+option(WITH_INTERLEAVE_DEBUG_LOG "Enable debug log for threads interleave" OFF)
 
 option(BUILD_STATIC         "Build static binary" OFF)
 option(ARM_TARGET           "Force use specific ARM target 8 or 7" 0)
@@ -25,6 +30,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 include (CheckIncludeFile)
 include (cmake/cpu.cmake)
+include (cmake/os.cmake)
 include (src/base/base.cmake)
 include (src/backend/backend.cmake)
 
@@ -52,6 +58,7 @@ set(HEADERS
    )
 
 set(HEADERS_CRYPTO
+    src/backend/common/interfaces/IMemoryPool.h
     src/crypto/cn/asm/CryptonightR_template.h
     src/crypto/cn/c_blake256.h
     src/crypto/cn/c_groestl.h
@@ -68,7 +75,10 @@ set(HEADERS_CRYPTO
     src/crypto/cn/skein_port.h
     src/crypto/cn/soft_aes.h
     src/crypto/common/Algorithm.h
+    src/crypto/common/Coin.h
+    src/crypto/common/HugePagesInfo.h
     src/crypto/common/keccak.h
+    src/crypto/common/MemoryPool.h
     src/crypto/common/Nonce.h
     src/crypto/common/portable/mm_malloc.h
     src/crypto/common/VirtualMemory.h
@@ -89,7 +99,6 @@ set(SOURCES
     src/core/config/ConfigTransform.cpp
     src/core/Controller.cpp
     src/core/Miner.cpp
-    src/core/Benchmark.cpp
     src/net/JobResults.cpp
     src/net/Network.cpp
     src/net/NetworkState.cpp
@@ -106,45 +115,55 @@ set(SOURCES_CRYPTO
     src/crypto/cn/CnCtx.cpp
     src/crypto/cn/CnHash.cpp
     src/crypto/common/Algorithm.cpp
+    src/crypto/common/Coin.cpp
+    src/crypto/common/HugePagesInfo.cpp
     src/crypto/common/keccak.cpp
+    src/crypto/common/MemoryPool.cpp
     src/crypto/common/Nonce.cpp
     src/crypto/common/VirtualMemory.cpp
    )
 
-if (WIN32)
-    set(SOURCES_OS
-        "${SOURCES_OS}"
+if (WITH_HWLOC)
+    list(APPEND HEADERS_CRYPTO
+        src/crypto/common/NUMAMemoryPool.h
+        )
+
+    list(APPEND SOURCES_CRYPTO
+        src/crypto/common/NUMAMemoryPool.cpp
+        src/crypto/common/VirtualMemory_hwloc.cpp
+        )
+endif()
+
+if (XMRIG_OS_WIN)
+    list(APPEND SOURCES_OS
         res/app.rc
         src/App_win.cpp
         src/crypto/common/VirtualMemory_win.cpp
         )
 
-    add_definitions(/DWIN32)
     set(EXTRA_LIBS ws2_32 psapi iphlpapi userenv)
-elseif (APPLE)
-    set(SOURCES_OS
-        "${SOURCES_OS}"
+elseif (XMRIG_OS_APPLE)
+    list(APPEND SOURCES_OS
         src/App_unix.cpp
         src/crypto/common/VirtualMemory_unix.cpp
         )
 else()
-    set(SOURCES_OS
-        "${SOURCES_OS}"
+    list(APPEND SOURCES_OS
         src/App_unix.cpp
         src/crypto/common/VirtualMemory_unix.cpp
         )
 
-    if (CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
-        set(EXTRA_LIBS kvm pthread)
-    else()
-        set(EXTRA_LIBS pthread rt dl)
-    endif()
-endif()
+    if (XMRIG_OS_ANDROID)
+        set(EXTRA_LIBS pthread rt dl log)
+    elseif (XMRIG_OS_LINUX)
+        list(APPEND SOURCES_OS
+            src/crypto/common/LinuxMemory.h
+            src/crypto/common/LinuxMemory.cpp
+            )
 
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    EXECUTE_PROCESS(COMMAND uname -o COMMAND tr -d '\n' OUTPUT_VARIABLE OPERATING_SYSTEM)
-    if (OPERATING_SYSTEM MATCHES "Android")
-        set(EXTRA_LIBS ${EXTRA_LIBS} log)
+        set(EXTRA_LIBS pthread rt dl)
+    elseif (XMRIG_OS_FREEBSD)
+        set(EXTRA_LIBS kvm pthread)
     endif()
 endif()
 
@@ -190,3 +209,8 @@ endif()
 
 add_executable(${CMAKE_PROJECT_NAME} ${HEADERS} ${SOURCES} ${SOURCES_OS} ${SOURCES_CPUID} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} ${SOURCES_SYSLOG} ${TLS_SOURCES} ${XMRIG_ASM_SOURCES} ${CN_GPU_SOURCES})
 target_link_libraries(${CMAKE_PROJECT_NAME} ${XMRIG_ASM_LIBRARY} ${OPENSSL_LIBRARIES} ${UV_LIBRARIES} ${EXTRA_LIBS} ${CPUID_LIB} ${ARGON2_LIBRARY})
+
+if (WIN32)
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/bin/WinRing0/WinRing0x64.sys" $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>)
+endif()

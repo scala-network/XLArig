@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "base/tools/String.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Http
@@ -38,7 +38,7 @@ class Http
 public:
     Http();
 
-    inline bool isAuthRequired() const         { return m_restricted == false || !m_token.isNull(); }
+    inline bool isAuthRequired() const         { return !m_restricted || !m_token.isNull(); }
     inline bool isEnabled() const              { return m_enabled; }
     inline bool isRestricted() const           { return m_restricted; }
     inline const String &host() const          { return m_host; }
@@ -58,15 +58,15 @@ public:
     void setPort(int port);
 
 private:
-    bool m_enabled;
-    bool m_restricted;
+    bool m_enabled      = false;
+    bool m_restricted   = true;
     String m_host;
     String m_token;
-    uint16_t m_port;
+    uint16_t m_port     = 0;
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif // XMRIG_HTTP_H

@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,13 +27,14 @@
 
 
 #include "base/kernel/interfaces/IConfigTransform.h"
+#include "crypto/common/Coin.h"
 #include "rapidjson/document.h"
 
 
 struct option;
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class IConfigTransform;
@@ -44,8 +45,6 @@ class Process;
 class BaseTransform : public IConfigTransform
 {
 public:
-    BaseTransform();
-
     static void load(JsonChain &chain, Process *process, IConfigTransform &transform);
 
 protected:
@@ -99,11 +98,14 @@ protected:
 
 protected:
     Algorithm m_algorithm;
+    Coin m_coin;
 
 
 private:
     void transformBoolean(rapidjson::Document &doc, int key, bool enable);
     void transformUint64(rapidjson::Document &doc, int key, uint64_t arg);
+
+    bool m_http = false;
 };
 
 
@@ -121,7 +123,7 @@ inline void BaseTransform::set(rapidjson::Document &doc, rapidjson::Value &obj, 
 }
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_BASETRANSFORM_H */

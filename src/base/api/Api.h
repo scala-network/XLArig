@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,13 +27,14 @@
 
 
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 
 
 #include "base/kernel/interfaces/IBaseListener.h"
+#include "base/tools/Object.h"
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 class Base;
@@ -47,6 +48,8 @@ class String;
 class Api : public IBaseListener
 {
 public:
+    XMRIG_DISABLE_COPY_MOVE_DEFAULT(Api)
+
     Api(Base *base);
     ~Api() override;
 
@@ -67,15 +70,15 @@ private:
     void genWorkerId(const String &id);
 
     Base *m_base;
-    char m_id[32];
-    char m_workerId[128];
+    char m_id[32]{};
+    char m_workerId[128]{};
     const uint64_t m_timestamp;
-    Httpd *m_httpd;
+    Httpd *m_httpd = nullptr;
     std::vector<IApiListener *> m_listeners;
 };
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
 #endif /* XMRIG_API_H */

@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
+#include <cstring>
 #include <thread>
 
 
@@ -35,11 +35,8 @@
 #include "backend/cpu/platform/BasicCpuInfo.h"
 
 
-xlarig::BasicCpuInfo::BasicCpuInfo() :
-    m_brand(),
-    m_threads(std::thread::hardware_concurrency()),
-    m_aes(false),
-    m_avx2(false)
+xmrig::BasicCpuInfo::BasicCpuInfo() :
+    m_threads(std::thread::hardware_concurrency())
 {
 #   ifdef XMRIG_ARMv8
     memcpy(m_brand, "ARMv8", 5);
@@ -57,13 +54,13 @@ xlarig::BasicCpuInfo::BasicCpuInfo() :
 }
 
 
-const char *xlarig::BasicCpuInfo::backend() const
+const char *xmrig::BasicCpuInfo::backend() const
 {
     return "basic_arm";
 }
 
 
-xlarig::CpuThreads xlarig::BasicCpuInfo::threads(const Algorithm &) const
+xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &, uint32_t) const
 {
     return CpuThreads(threads());
 }

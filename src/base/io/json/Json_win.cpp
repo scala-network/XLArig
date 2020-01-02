@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 
 #ifdef __GNUC__
 #   include <fcntl.h>
+#   include <sys/stat.h>
 #   include <ext/stdio_filebuf.h>
 #endif
 
@@ -59,7 +60,7 @@ static std::wstring toUtf16(const char *str)
 #endif
 
 
-bool xlarig::Json::get(const char *fileName, rapidjson::Document &doc)
+bool xmrig::Json::get(const char *fileName, rapidjson::Document &doc)
 {
     using namespace rapidjson;
     constexpr const std::ios_base::openmode mode = std::ios_base::in | std::ios_base::binary;
@@ -91,7 +92,7 @@ bool xlarig::Json::get(const char *fileName, rapidjson::Document &doc)
 }
 
 
-bool xlarig::Json::save(const char *fileName, const rapidjson::Document &doc)
+bool xmrig::Json::save(const char *fileName, const rapidjson::Document &doc)
 {
     using namespace rapidjson;
     constexpr const std::ios_base::openmode mode = std::ios_base::out | std::ios_base::binary | std::ios_base::trunc;
@@ -102,7 +103,7 @@ bool xlarig::Json::save(const char *fileName, const rapidjson::Document &doc)
         return false;
     }
 #   elif defined(__GNUC__)
-    const int fd = _wopen(toUtf16(fileName).c_str(), _O_WRONLY | _O_BINARY | _O_CREAT | _O_TRUNC);
+    const int fd = _wopen(toUtf16(fileName).c_str(), _O_WRONLY | _O_BINARY | _O_CREAT | _O_TRUNC, _S_IWRITE);
     if (fd == -1) {
         return false;
     }

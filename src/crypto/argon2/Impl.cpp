@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -29,17 +29,17 @@
 
 
 
-namespace xlarig {
+namespace xmrig {
 
 
 static bool selected = false;
 static String implName;
 
 
-} // namespace xlarig
+} // namespace xmrig
 
 
-bool xlarig::argon2::Impl::select(const String &nameHint)
+bool xmrig::argon2::Impl::select(const String &nameHint)
 {
     if (!selected) {
         if (nameHint.isEmpty() || argon2_select_impl_by_name(nameHint) == 0) {
@@ -56,7 +56,7 @@ bool xlarig::argon2::Impl::select(const String &nameHint)
 }
 
 
-const xlarig::String &xlarig::argon2::Impl::name()
+const xmrig::String &xmrig::argon2::Impl::name()
 {
     return implName;
 }

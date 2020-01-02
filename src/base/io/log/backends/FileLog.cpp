@@ -7,7 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2019      Spudz76     <https://github.com/Spudz76>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,14 +24,15 @@
  */
 
 
-#include <string.h>
-#include <uv.h>
-
-
 #include "base/io/log/backends/FileLog.h"
 
 
-xlarig::FileLog::FileLog(const char *fileName)
+#include <cassert>
+#include <cstring>
+#include <uv.h>
+
+
+xmrig::FileLog::FileLog(const char *fileName)
 {
     uv_fs_t req;
     m_file = uv_fs_open(uv_default_loop(), &req, fileName, O_CREAT | O_APPEND | O_WRONLY, 0644, nullptr);
@@ -39,26 +40,25 @@ xlarig::FileLog::FileLog(const char *fileName)
 }
 
 
-void xlarig::FileLog::print(int, const char *line, size_t, size_t size, bool colors)
+void xmrig::FileLog::print(int, const char *line, size_t, size_t size, bool colors)
 {
     if (m_file < 0 || colors) {
         return;
     }
 
-#   ifdef _WIN32
-    uv_buf_t buf = uv_buf_init(strdup(line), static_cast<unsigned int>(size));
-#   else
-    uv_buf_t buf = uv_buf_init(strdup(line), size);
-#   endif
+    assert(strlen(line) == size);
 
-    uv_fs_t *req = new uv_fs_t;
+    uv_buf_t buf = uv_buf_init(new char[size], size);
+    memcpy(buf.base, line, size);
+
+    auto req = new uv_fs_t;
     req->data = buf.base;
 
     uv_fs_write(uv_default_loop(), req, m_file, &buf, 1, -1, FileLog::onWrite);
 }
 
 
-void xlarig::FileLog::onWrite(uv_fs_t *req)
+void xmrig::FileLog::onWrite(uv_fs_t *req)
 {
     delete [] static_cast<char *>(req->data);
 

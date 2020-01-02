@@ -6,7 +6,7 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XLARig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -32,11 +32,11 @@
 #include "rapidjson/document.h"
 
 
-xlarig::Pools::Pools() :
-    m_donateLevel(0),
+xmrig::Pools::Pools() :
+    m_donateLevel(kDefaultDonateLevel),
     m_retries(5),
     m_retryPause(5),
-    m_proxyDonate(PROXY_DONATE_NONE)
+    m_proxyDonate(PROXY_DONATE_AUTO)
 {
 #   ifdef XMRIG_PROXY_PROJECT
     m_retries    = 2;
@@ -45,7 +45,7 @@ xlarig::Pools::Pools() :
 }
 
 
-bool xlarig::Pools::isEqual(const Pools &other) const
+bool xmrig::Pools::isEqual(const Pools &other) const
 {
     if (m_data.size() != other.m_data.size() || m_retries != other.m_retries || m_retryPause != other.m_retryPause) {
         return false;
@@ -55,7 +55,7 @@ bool xlarig::Pools::isEqual(const Pools &other) const
 }
 
 
-xlarig::IStrategy *xlarig::Pools::createStrategy(IStrategyListener *listener) const
+xmrig::IStrategy *xmrig::Pools::createStrategy(IStrategyListener *listener) const
 {
     if (active() == 1) {
         for (const Pool &pool : m_data) {
@@ -65,7 +65,7 @@ xlarig::IStrategy *xlarig::Pools::createStrategy(IStrategyListener *listener) co
         }
     }
 
-    FailoverStrategy *strategy = new FailoverStrategy(retryPause(), retries(), listener);
+    auto strategy = new FailoverStrategy(retryPause(), retries(), listener);
     for (const Pool &pool : m_data) {
         if (pool.isEnabled()) {
             strategy->add(pool);
@@ -76,7 +76,7 @@ xlarig::IStrategy *xlarig::Pools::createStrategy(IStrategyListener *listener) co
 }
 
 
-rapidjson::Value xlarig::Pools::toJSON(rapidjson::Document &doc) const
+rapidjson::Value xmrig::Pools::toJSON(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
@@ -91,7 +91,7 @@ rapidjson::Value xlarig::Pools::toJSON(rapidjson::Document &doc) const
 }
 
 
-size_t xlarig::Pools::active() const
+size_t xmrig::Pools::active() const
 {
     size_t count = 0;
     for (const Pool &pool : m_data) {
@@ -104,7 +104,7 @@ size_t xlarig::Pools::active() const
 }
 
 
-void xlarig::Pools::load(const IJsonReader &reader)
+void xmrig::Pools::load(const IJsonReader &reader)
 {
     m_data.clear();
 
@@ -113,7 +113,6 @@ void xlarig::Pools::load(const IJsonReader &reader)
         return;
     }
 
-    bool mo = false;
     for (const rapidjson::Value &value : pools.GetArray()) {
         if (!value.IsObject()) {
             continue;
@@ -121,29 +120,22 @@ void xlarig::Pools::load(const IJsonReader &reader)
 
         Pool pool(value);
         if (pool.isValid()) {
-            if (m_data.empty() && strstr(pool.host(), "moneroocean.stream")) mo = true;
             m_data.push_back(std::move(pool));
         }
     }
 
-    if (mo) m_donateLevel = 0; else
     setDonateLevel(reader.getInt("donate-level", kDefaultDonateLevel));
-    setProxyDonate(reader.getInt("donate-over-proxy", PROXY_DONATE_NONE));
+    setProxyDonate(reader.getInt("donate-over-proxy", PROXY_DONATE_AUTO));
     setRetries(reader.getInt("retries"));
     setRetryPause(reader.getInt("retry-pause"));
 }
 
 
-void xlarig::Pools::print() const
+void xmrig::Pools::print() const
 {
     size_t i = 1;
     for (const Pool &pool : m_data) {
-        Log::print(GREEN_BOLD(" * ") WHITE_BOLD("POOL #%-7zu") CSI "1;%dm%s" CLEAR " algo " WHITE_BOLD("%s"),
-                   i,
-                   (pool.isEnabled() ? (pool.isTLS() ? 32 : 36) : 31),
-                   pool.url().data(),
-                   pool.algorithm().isValid() ? pool.algorithm().shortName() : "auto"
-                   );
+        Log::print(GREEN_BOLD(" * ") WHITE_BOLD("POOL #%-7zu") "%s", i, pool.printableName().c_str());
 
         i++;
     }
@@ -158,7 +150,7 @@ void xlarig::Pools::print() const
 }
 
 
-void xlarig::Pools::setDonateLevel(int level)
+void xmrig::Pools::setDonateLevel(int level)
 {
     if (level >= kMinimumDonateLevel && level <= 99) {
         m_donateLevel = level;
@@ -166,7 +158,7 @@ void xlarig::Pools::setDonateLevel(int level)
 }
 
 
-void xlarig::Pools::setProxyDonate(int value)
+void xmrig::Pools::setProxyDonate(int value)
 {
     switch (value) {
     case PROXY_DONATE_NONE:
@@ -177,7 +169,7 @@ void xlarig::Pools::setProxyDonate(int value)
 }
 
 
-void xlarig::Pools::setRetries(int retries)
+void xmrig::Pools::setRetries(int retries)
 {
     if (retries > 0 && retries <= 1000) {
         m_retries = retries;
@@ -185,7 +177,7 @@ void xlarig::Pools::setRetries(int retries)
 }
 
 
-void xlarig::Pools::setRetryPause(int retryPause)
+void xmrig::Pools::setRetryPause(int retryPause)
 {
     if (retryPause > 0 && retryPause <= 3600) {
         m_retryPause = retryPause;
