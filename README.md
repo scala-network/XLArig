@@ -86,12 +86,12 @@ The building instructions has been moved [here](doc/building.md)
 The donation mining in XLArig has been turned off, if you wish to help the original creators or the Scala Project team donate to the addresses below.
 
 * Original Creators addresses: 
-	XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
-	BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
+  *	XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
+  *	BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
 	
 * The Scala Project Team addresses:
-	BTC: `1XTLY5LqdBXRW6hcHtnuMU7c68mAyW6qm`
-	XLA: `SEiTBcLGpfm3uj5b5RaZDGSUoAGnLCyG5aJjAwko67jqRwWEH26NFPd26EUpdL1zh4RTmTdRWLz8WCmk5F4umYaFByMtJT6RLjD6vzApQJWfi`
+  *	BTC: `1XTLY5LqdBXRW6hcHtnuMU7c68mAyW6qm`
+  *	XLA: `SEiTBcLGpfm3uj5b5RaZDGSUoAGnLCyG5aJjAwko67jqRwWEH26NFPd26EUpdL1zh4RTmTdRWLz8WCmk5F4umYaFByMtJT6RLjD6vzApQJWfi`
 
 
 ## Contacts
