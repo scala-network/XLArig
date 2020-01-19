@@ -1,6 +1,11 @@
+# v5.0.2
+
+- Rebase from XMRig v5.5.1 [(changelog)](doc/CHANGELOG.md)
+
+
 # v5.0.1
 
-- Rebase from XMRig v5.4.0 [(changelog)](doc/CHANGELOG.md)
+- Rebase from XMRig v5.4.0
 
 
 # v5.0.0
