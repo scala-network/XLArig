@@ -1,5 +1,5 @@
-#ifdef __SSE2__
-#include "yescrypt-simd.c"
+#ifdef __ARM__
+#include "yescrypt-neon.c"
 #else
 #include "yescrypt-opt.c"
 #endif
