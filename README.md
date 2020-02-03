@@ -23,7 +23,7 @@ Network:
   -u, --user=USERNAME           username for mining server
   -p, --pass=PASSWORD           password for mining server
   -O, --userpass=U:P            username:password pair for mining server
-  -k, --keepalive               send keepalived packet for prevent timeout (needs pool support)
+  -k, --keepalive               send keepalive packet for prevent timeout (needs pool support)
       --nicehash                enable nicehash.com support
       --rig-id=ID               rig identifier for pool-side statistics (needs pool support)
       --tls                     enable SSL/TLS support (needs pool support)
@@ -47,11 +47,12 @@ CPU backend:
       --cpu-no-yield            prefer maximum hashrate rather than system response/stability
       --no-huge-pages           disable huge pages support
       --asm=ASM                 ASM optimizations, possible values: auto, none, intel, ryzen, bulldozer
-      --randomx-init=N          threads count to initialize RandomX dataset
+      --randomx-init=N          thread count to initialize RandomX dataset
       --randomx-no-numa         disable NUMA support for RandomX
       --randomx-mode=MODE       RandomX mode: auto, fast, light
       --randomx-1gb-pages       use 1GB hugepages for dataset (Linux only)
-      --randomx-wrmsr=N         write value (0-15) to Intel MSR register 0x1a4 or do nothing (-1) (Linux only)
+      --randomx-wrmsr=N         write custom value (0-15) to Intel MSR register 0x1a4 or disable MSR mod (-1)
+      --randomx-no-rdmsr        disable reverting initial MSR values on exit
 
 API:
       --api-worker-id=ID        custom worker-id for API
@@ -84,9 +85,13 @@ The building instructions has been moved [here](doc/building.md)
 ## Donations
 The donation mining in XLArig has been turned off, if you wish to help the original creators or the Scala Project team donate to the addresses below.
 
-* XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
-* BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
-* XLA: `SEiTBcLGpfm3uj5b5RaZDGSUoAGnLCyG5aJjAwko67jqRwWEH26NFPd26EUpdL1zh4RTmTdRWLz8WCmk5F4umYaFByMtJT6RLjD6vzApQJWfi`
+* Original Creators addresses: 
+  *	XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
+  *	BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
+	
+* The Scala Project Team addresses:
+  *	BTC: `1XTLY5LqdBXRW6hcHtnuMU7c68mAyW6qm`
+  *	XLA: `SEiTBcLGpfm3uj5b5RaZDGSUoAGnLCyG5aJjAwko67jqRwWEH26NFPd26EUpdL1zh4RTmTdRWLz8WCmk5F4umYaFByMtJT6RLjD6vzApQJWfi`
 
 
 ## Contacts
