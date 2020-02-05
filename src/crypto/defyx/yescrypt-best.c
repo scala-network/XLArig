@@ -1,4 +1,4 @@
-#ifdef __ARM_NEON__
+#ifdef __ARM__
 #include "yescrypt-neon.c"
 #elif defined __SSE2__
 #include "yescrypt-simd.c"
