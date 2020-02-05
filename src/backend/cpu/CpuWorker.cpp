@@ -242,8 +242,8 @@ void xmrig::CpuWorker<N>::start()
                     m_job.nextRound(kReserveCount, 1);
                     randomx_calculate_hash_next(m_vm->get(), tempHash, m_job.blob(), job.size(), m_hash);
                 }
-}
-            else
+			}
+			} else
 #           endif
             {
                 fn(job.algorithm())(m_job.blob(), job.size(), m_hash, m_ctx, job.height());
