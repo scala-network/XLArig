@@ -131,6 +131,10 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
         count += generate("defyx", threads, Algorithm::DEFYX, limit);
     }
 
+    if (!threads.isExist(Algorithm::DEFYX2)) {
+        count += generate("defyx2", threads, Algorithm::DEFYX2, limit);
+    }
+
     count += generate("rx", threads, Algorithm::RX_0, limit);
 
     return count;

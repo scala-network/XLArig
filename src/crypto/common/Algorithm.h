@@ -72,6 +72,7 @@ public:
         AR2_CHUKWA,    // "argon2/chukwa"    Argon2id (Chukwa).
         AR2_WRKZ,      // "argon2/wrkz"      Argon2id (WRKZ)
         DEFYX,         // "defyx"            DefyX (Scala).	
+        DEFYX2,        // "defyx2"           DefyX v2 (Scala).			
         MAX
     };
 

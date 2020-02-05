@@ -1,5 +1,5 @@
 if (WITH_ASM AND NOT XMRIG_ARM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(XMRIG_ASM_LIBRARY "xmrig-asm")
+    set(XMRIG_ASM_LIBRARY "xlarig-asm")
 
     if (CMAKE_C_COMPILER_ID MATCHES MSVC)
         enable_language(ASM_MASM)

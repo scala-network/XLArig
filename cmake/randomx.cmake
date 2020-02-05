@@ -60,6 +60,11 @@ if (WITH_RANDOMX)
         src/crypto/defyx/sysendian.h
         src/crypto/defyx/yescrypt.h
         src/crypto/defyx/yescrypt-best.c
+
+        src/crypto/defyx/defyx2.cpp
+        src/crypto/defyx/defyx2.h
+ 		src/crypto/defyx/yespower.h		
+ 		src/crypto/defyx/yespower-opt.c
     )
 
     if (CMAKE_C_COMPILER_ID MATCHES MSVC)
