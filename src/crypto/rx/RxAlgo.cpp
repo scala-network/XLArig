@@ -27,7 +27,7 @@
 
 #include "crypto/randomx/randomx.h"
 #include "crypto/defyx/defyx.h"
-#include "crypto/defyx/defyx2.h"
+#include "crypto/randomx/panthera.h"
 #include "crypto/rx/RxAlgo.h"
 
 
@@ -57,7 +57,7 @@ const RandomX_ConfigurationBase *xmrig::RxAlgo::base(Algorithm::Id algorithm)
 	case Algorithm::DEFYX:
         return &RandomX_ScalaConfig;
 
-	case Algorithm::DEFYX2:
+	case Algorithm::RX_XLA:
         return &RandomX_ScalaConfig2;
 		
     default:

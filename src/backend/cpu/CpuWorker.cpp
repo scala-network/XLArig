@@ -42,7 +42,7 @@
 #ifdef XMRIG_ALGO_RANDOMX
 #   include "crypto/randomx/randomx.h"
 #	include "crypto/defyx/defyx.h"
-#	include "crypto/defyx/defyx2.h"
+#	include "crypto/randomx/panthera.h"
 #endif
 
 
@@ -227,7 +227,7 @@ void xmrig::CpuWorker<N>::start()
                     m_job.nextRound(kReserveCount, 1);
                     defyx_calculate_hash_next(m_vm->get(), tempHash, m_job.blob(), job.size(), m_hash);
                 } else {
-					if (job.algorithm() == Algorithm::DEFYX2) {
+					if (job.algorithm() == Algorithm::RX_XLA) {
 						if (first) {
 							first = false;
 							defyx2_calculate_hash_first(m_vm->get(), tempHash, m_job.blob(), job.size());

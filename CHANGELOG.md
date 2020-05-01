@@ -1,3 +1,7 @@
+# v5.1.0
+- Added Panthera Algo
+- Merged DefyX optimisations from Cryptoamity
+
 # v5.0.2
 
 - Rebase from XMRig v5.5.1 [(changelog)](doc/CHANGELOG.md)

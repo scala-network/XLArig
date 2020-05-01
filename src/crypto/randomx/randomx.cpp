@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "crypto/randomx/vm_compiled.hpp"
 #include "crypto/randomx/vm_compiled_light.hpp"
 #include "crypto/randomx/blake2/blake2.h"
+#include "panthera.h"
 
 #if defined(_M_X64) || defined(__x86_64__)
 #include "crypto/randomx/jit_compiler_x86_static.hpp"
@@ -42,6 +43,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <cassert>
+
+extern "C" {
+#include "panthera/yespower.h"
+#include "panthera/KangarooTwelve.h"
+} 
 
 RandomX_ConfigurationWownero::RandomX_ConfigurationWownero()
 {
@@ -95,6 +101,57 @@ RandomX_ConfigurationArqma::RandomX_ConfigurationArqma()
 RandomX_ConfigurationSafex::RandomX_ConfigurationSafex()
 {
 	ArgonSalt = "RandomSFX\x01";
+}
+
+RandomX_ConfigurationScala2::RandomX_ConfigurationScala2()
+{
+	ArgonMemory        = 262144;
+    ArgonIterations    = 4;
+	ArgonLanes		   = 2;
+	ArgonSalt          = "Panthera\x03";
+    CacheAccesses      = 8;
+    SuperscalarLatency = 170;
+    DatasetBaseSize    = 33554432;
+	DatasetExtraSize   = 33554368;
+    ProgramSize        = 320;
+    ProgramIterations  = 2048;
+	ProgramCount       = 3;
+	ScratchpadL3_Size  = 262144;
+	ScratchpadL2_Size  = 65536;
+	ScratchpadL1_Size  = 16384;
+	JumpBits		   = 8;
+	JumpOffset		   = 8;
+
+	RANDOMX_FREQ_IADD_RS 	=  25;
+	RANDOMX_FREQ_IADD_M     =   7;
+	RANDOMX_FREQ_ISUB_R     =  16;
+	RANDOMX_FREQ_ISUB_M     =   7;
+	RANDOMX_FREQ_IMUL_R     =  16;
+	RANDOMX_FREQ_IMUL_M     =   4;
+	RANDOMX_FREQ_IMULH_R    =   4;
+	RANDOMX_FREQ_IMULH_M    =   1;
+	RANDOMX_FREQ_ISMULH_R   =   4;
+	RANDOMX_FREQ_ISMULH_M   =   1;
+	RANDOMX_FREQ_IMUL_RCP   =   8;
+	RANDOMX_FREQ_INEG_R     =   2;
+	RANDOMX_FREQ_IXOR_R     =  15;
+	RANDOMX_FREQ_IXOR_M     =   5;
+	RANDOMX_FREQ_IROR_R     =   8;
+	RANDOMX_FREQ_IROL_R     =   2;
+	RANDOMX_FREQ_ISWAP_R    =   4;
+	RANDOMX_FREQ_FSWAP_R    =   4;
+	RANDOMX_FREQ_FADD_R     =  16;
+	RANDOMX_FREQ_FADD_M     =   5;
+	RANDOMX_FREQ_FSUB_R     =  16;
+	RANDOMX_FREQ_FSUB_M     =   5;
+	RANDOMX_FREQ_FSCAL_R    =   6;
+	RANDOMX_FREQ_FMUL_R     =  32;
+	RANDOMX_FREQ_FDIV_M     =   4;
+	RANDOMX_FREQ_FSQRT_R    =   6;
+	RANDOMX_FREQ_CBRANCH    =  16;
+	RANDOMX_FREQ_CFROUND    =   1;
+	RANDOMX_FREQ_ISTORE 	=  16;
+	RANDOMX_FREQ_NOP 		=   0;
 }
 
 RandomX_ConfigurationBase::RandomX_ConfigurationBase()
@@ -282,6 +339,69 @@ RandomX_ConfigurationWownero RandomX_WowneroConfig;
 RandomX_ConfigurationLoki RandomX_LokiConfig;
 RandomX_ConfigurationArqma RandomX_ArqmaConfig;
 RandomX_ConfigurationSafex RandomX_SafexConfig;
+
+RandomX_ConfigurationScala2 RandomX_ScalaConfig2;
+
+int yespower_hash(const void *data, size_t length, void *hash)
+{
+		yespower_params_t params = {
+		.version = YESPOWER_1_0,
+		.N = 2048,
+		.r = 8,
+		.pers = NULL
+		};
+
+		int finale_yespower = yespower_tls((const uint8_t *)data, length, &params, (yespower_binary_t *)hash);
+		return finale_yespower; //0 for success
+}
+
+int k12_yp(const void *data, size_t length, void *hash)
+{
+
+  int kDo = KangarooTwelve((const unsigned char *)data, length, (unsigned char *)hash, 32, 0, 0);
+  return kDo;
+}
+
+extern "C" {
+
+	void defyx2_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output) {
+		assert(machine != nullptr);
+		assert(inputSize == 0 || input != nullptr);
+		assert(output != nullptr);
+		alignas(16) uint64_t tempHash[8];
+		yespower_hash(input, inputSize, tempHash);
+		k12_yp(input, inputSize, tempHash);
+		machine->initScratchpad(&tempHash);
+		machine->resetRoundingMode();
+		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
+			machine->run(&tempHash);
+			rx_blake2b(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile), nullptr, 0);
+		}
+		machine->run(&tempHash);
+		machine->getFinalResult(output, RANDOMX_HASH_SIZE);
+	}
+
+	void defyx2_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize) {
+		yespower_hash(input, inputSize, tempHash);
+		k12_yp(input, inputSize, tempHash);
+		machine->initScratchpad(tempHash);
+	}
+
+	void defyx2_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output) {
+		machine->resetRoundingMode();
+		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
+			machine->run(&tempHash);
+			rx_blake2b(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile), nullptr, 0);
+		}
+		machine->run(&tempHash);
+
+		// Finish current hash and fill the scratchpad for the next hash at the same time
+		yespower_hash(nextInput, nextInputSize, tempHash);
+		k12_yp(nextInput, nextInputSize, tempHash);
+		machine->hashAndFill(output, RANDOMX_HASH_SIZE, tempHash);
+	}
+
+}
 
 RandomX_ConfigurationBase RandomX_CurrentConfig;
 

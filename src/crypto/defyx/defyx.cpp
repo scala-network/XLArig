@@ -61,8 +61,8 @@ RandomX_ConfigurationScala::RandomX_ConfigurationScala()
 	ScratchpadL2_Size = 131072;
 	ScratchpadL1_Size = 65536;
 
-	RANDOMX_FREQ_IADD_RS = 25;
-	RANDOMX_FREQ_CBRANCH = 16;
+	RANDOMX_FREQ_IADD_RS = 16;
+	RANDOMX_FREQ_CBRANCH = 25;
 }
 
 RandomX_ConfigurationScala RandomX_ScalaConfig;
