@@ -183,12 +183,44 @@ struct RandomX_ConfigurationWownero : public RandomX_ConfigurationBase { RandomX
 struct RandomX_ConfigurationLoki : public RandomX_ConfigurationBase { RandomX_ConfigurationLoki(); };
 struct RandomX_ConfigurationArqma : public RandomX_ConfigurationBase { RandomX_ConfigurationArqma(); };
 struct RandomX_ConfigurationSafex : public RandomX_ConfigurationBase { RandomX_ConfigurationSafex(); };
+struct RandomX_ConfigurationScala : public RandomX_ConfigurationBase { RandomX_ConfigurationScala(); };
+struct RandomX_ConfigurationScala2 : public RandomX_ConfigurationBase { RandomX_ConfigurationScala2(); };
 
 extern RandomX_ConfigurationMonero RandomX_MoneroConfig;
 extern RandomX_ConfigurationWownero RandomX_WowneroConfig;
 extern RandomX_ConfigurationLoki RandomX_LokiConfig;
 extern RandomX_ConfigurationArqma RandomX_ArqmaConfig;
 extern RandomX_ConfigurationSafex RandomX_SafexConfig;
+extern RandomX_ConfigurationScala RandomX_ScalaConfig;
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+RANDOMX_EXPORT void defyx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
+
+RANDOMX_EXPORT void defyx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
+RANDOMX_EXPORT void defyx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
+
+#if defined(__cplusplus)
+}
+#endif
+
+extern RandomX_ConfigurationScala2 RandomX_ScalaConfig2;
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+RANDOMX_EXPORT void defyx2_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
+RANDOMX_EXPORT void defyx2_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
+RANDOMX_EXPORT void defyx2_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
+
+#if defined(__cplusplus)
+}
+#endif
+
+
 
 extern RandomX_ConfigurationBase RandomX_CurrentConfig;
 

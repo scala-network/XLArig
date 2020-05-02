@@ -41,8 +41,6 @@
 
 #ifdef XMRIG_ALGO_RANDOMX
 #   include "crypto/randomx/randomx.h"
-#	include "crypto/defyx/defyx.h"
-#	include "crypto/randomx/panthera.h"
 #endif
 
 

@@ -119,7 +119,7 @@ static AlgoName const algorithm_names[] = {
     { "randomx/sfx",               "rx/sfx",           Algorithm::RX_SFX          },
     { "RandomSFX",                 nullptr,            Algorithm::RX_SFX          },
     { "DefyX",                     "defyx",            Algorithm::DEFYX           },
-    { "Panthera",                  "rx/xla",           Algorithm::RX_XLA          },	
+    { "Panthera",                  "panthera",         Algorithm::RX_XLA          },	
 #   endif
 #   ifdef XMRIG_ALGO_ARGON2
     { "argon2/chukwa",             nullptr,            Algorithm::AR2_CHUKWA      },

@@ -132,7 +132,7 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
     }
 
     if (!threads.isExist(Algorithm::RX_XLA)) {
-        count += generate("rx/xla", threads, Algorithm::RX_XLA, limit);
+        count += generate("panthera", threads, Algorithm::RX_XLA, limit);
     }
 
     count += generate("rx", threads, Algorithm::RX_0, limit);

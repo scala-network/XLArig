@@ -26,8 +26,6 @@
 
 
 #include "crypto/randomx/randomx.h"
-#include "crypto/defyx/defyx.h"
-#include "crypto/randomx/panthera.h"
 #include "crypto/rx/RxAlgo.h"
 
 

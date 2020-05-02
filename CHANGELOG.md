@@ -1,6 +1,6 @@
 # v5.1.0
 - Added Panthera Algo
-- Merged DefyX optimisations from Cryptoamity
+- Moved DefyX config data into RandomX.
 
 # v5.0.2
 
