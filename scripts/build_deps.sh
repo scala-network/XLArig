@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-UV_VERSION="1.34.0"
-OPENSSL_VERSION="1.1.1d"
-HWLOC_VERSION="2.1.0"
+UV_VERSION="1.37.0"
+OPENSSL_VERSION="1.1.1g"
+HWLOC_VERSION="2.2.0"
 
 mkdir deps
 mkdir deps/include
