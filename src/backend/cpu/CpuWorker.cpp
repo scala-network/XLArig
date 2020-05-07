@@ -271,7 +271,7 @@ void xmrig::CpuWorker<N>::start()
                 }
 
                 defyx2_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
-              } else {  
+				} else {  
                 if (first) {
                     first = false;
                     randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
@@ -283,8 +283,8 @@ void xmrig::CpuWorker<N>::start()
 
                 randomx_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
               }
-            }
-            else
+            } 
+			} else
 #           endif
             {
 #               ifdef XMRIG_ALGO_ASTROBWT

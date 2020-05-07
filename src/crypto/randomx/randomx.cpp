@@ -47,6 +47,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
+extern "C" {
+#include "defyx/yescrypt.h"	
+#include "panthera/yespower.h"
+#include "panthera/KangarooTwelve.h"
+} 
+
 RandomX_ConfigurationWownero::RandomX_ConfigurationWownero()
 {
 	ArgonSalt = "RandomWOW\x01";
