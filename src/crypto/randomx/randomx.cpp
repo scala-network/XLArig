@@ -41,13 +41,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "crypto/randomx/jit_compiler_a64_static.hpp"
 #endif
 
-#include <cassert>
+#include "backend/cpu/Cpu.h"
+#include "crypto/common/VirtualMemory.h"
+#include <mutex>
 
-extern "C" {
-#include "defyx/yescrypt.h"	
-#include "panthera/yespower.h"
-#include "panthera/KangarooTwelve.h"
-} 
+#include <cassert>
 
 RandomX_ConfigurationWownero::RandomX_ConfigurationWownero()
 {
@@ -181,6 +179,13 @@ RandomX_ConfigurationScala2::RandomX_ConfigurationScala2()
 	RANDOMX_FREQ_NOP 		=   0;
 }
 
+RandomX_ConfigurationKeva::RandomX_ConfigurationKeva()
+{
+	ArgonSalt = "RandomKV\x01";
+	ScratchpadL2_Size = 131072;
+	ScratchpadL3_Size = 1048576;
+}
+
 RandomX_ConfigurationBase::RandomX_ConfigurationBase()
 	: ArgonMemory(262144)
 	, ArgonIterations(3)
@@ -292,7 +297,7 @@ void RandomX_ConfigurationBase::Apply()
 	//*(uint32_t*)(codeReadDatasetTweaked + 9) = DatasetBaseMask;
 	//*(uint32_t*)(codeReadDatasetTweaked + 24) = DatasetBaseMask;
 	//*(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
-	
+
 	*(uint32_t*)(codePrefetchScratchpadTweaked + 4) = ScratchpadL3Mask64_Calculated;
 	*(uint32_t*)(codePrefetchScratchpadTweaked + 18) = ScratchpadL3Mask64_Calculated;
 
@@ -319,14 +324,29 @@ void RandomX_ConfigurationBase::Apply()
 	CEIL_##x = CEIL_##prev + RANDOMX_FREQ_##x; \
 	for (; k < CEIL_##x; ++k) { JIT_HANDLE(x, prev); }
 
+#define INST_HANDLE2(x, func_name, prev) \
+	CEIL_##x = CEIL_##prev + RANDOMX_FREQ_##x; \
+	for (; k < CEIL_##x; ++k) { JIT_HANDLE(func_name, prev); }
+
 	INST_HANDLE(IADD_RS, NULL);
 	INST_HANDLE(IADD_M, IADD_RS);
 	INST_HANDLE(ISUB_R, IADD_M);
 	INST_HANDLE(ISUB_M, ISUB_R);
 	INST_HANDLE(IMUL_R, ISUB_M);
 	INST_HANDLE(IMUL_M, IMUL_R);
-	INST_HANDLE(IMULH_R, IMUL_M);
-	INST_HANDLE(IMULH_M, IMULH_R);
+
+#if defined(_M_X64) || defined(__x86_64__)
+	if (xmrig::Cpu::info()->hasBMI2()) {
+		INST_HANDLE2(IMULH_R, IMULH_R_BMI2, IMUL_M);
+		INST_HANDLE2(IMULH_M, IMULH_M_BMI2, IMULH_R);
+	}
+	else
+#endif
+	{
+		INST_HANDLE(IMULH_R, IMUL_M);
+		INST_HANDLE(IMULH_M, IMULH_R);
+	}
+
 	INST_HANDLE(ISMULH_R, IMULH_M);
 	INST_HANDLE(ISMULH_M, ISMULH_R);
 	INST_HANDLE(IMUL_RCP, ISMULH_M);
@@ -346,7 +366,17 @@ void RandomX_ConfigurationBase::Apply()
 	INST_HANDLE(FDIV_M, FMUL_R);
 	INST_HANDLE(FSQRT_R, FDIV_M);
 	INST_HANDLE(CBRANCH, FSQRT_R);
-	INST_HANDLE(CFROUND, CBRANCH);
+
+#if defined(_M_X64) || defined(__x86_64__)
+	if (xmrig::Cpu::info()->hasBMI2()) {
+		INST_HANDLE2(CFROUND, CFROUND_BMI2, CBRANCH);
+	}
+	else
+#endif
+	{
+		INST_HANDLE(CFROUND, CBRANCH);
+	}
+
 	INST_HANDLE(ISTORE, CFROUND);
 	INST_HANDLE(NOP, ISTORE);
 #undef INST_HANDLE
@@ -356,6 +386,8 @@ RandomX_ConfigurationMonero RandomX_MoneroConfig;
 RandomX_ConfigurationWownero RandomX_WowneroConfig;
 RandomX_ConfigurationLoki RandomX_LokiConfig;
 RandomX_ConfigurationArqma RandomX_ArqmaConfig;
+RandomX_ConfigurationSafex RandomX_SafexConfig;
+RandomX_ConfigurationKeva RandomX_KevaConfig;
 RandomX_ConfigurationScala RandomX_ScalaConfig;
 
 #define YESCRYPT_FLAGS YESCRYPT_RW
@@ -488,9 +520,11 @@ extern "C" {
 	}
 
 }
-RandomX_ConfigurationSafex RandomX_SafexConfig;
 
-RandomX_ConfigurationBase RandomX_CurrentConfig;
+
+alignas(64) RandomX_ConfigurationBase RandomX_CurrentConfig;
+
+static std::mutex vm_pool_mutex;
 
 extern "C" {
 
@@ -576,45 +610,75 @@ extern "C" {
 		delete dataset;
 	}
 
-	randomx_vm *randomx_create_vm(randomx_flags flags, randomx_cache *cache, randomx_dataset *dataset, uint8_t *scratchpad) {
+	randomx_vm* randomx_create_vm(randomx_flags flags, randomx_cache* cache, randomx_dataset* dataset, uint8_t* scratchpad, uint32_t node) {
 		assert(cache != nullptr || (flags & RANDOMX_FLAG_FULL_MEM));
 		assert(cache == nullptr || cache->isInitialized());
 		assert(dataset != nullptr || !(flags & RANDOMX_FLAG_FULL_MEM));
 
-		randomx_vm *vm = nullptr;
+		randomx_vm* vm = nullptr;
+
+		std::lock_guard<std::mutex> lock(vm_pool_mutex);
+
+		static uint8_t* vm_pool[64] = {};
+		static size_t vm_pool_offset[64] = {};
+
+		constexpr size_t VM_POOL_SIZE = 2 * 1024 * 1024;
+
+		if (node >= 64) {
+			node = 0;
+		}
+
+		if (!vm_pool[node]) {
+			vm_pool[node] = (uint8_t*) xmrig::VirtualMemory::allocateLargePagesMemory(VM_POOL_SIZE);
+			if (!vm_pool[node]) {
+				vm_pool[node] = (uint8_t*) rx_aligned_alloc(VM_POOL_SIZE, 4096);
+			}
+		}
+
+
+		void* p = vm_pool[node] + vm_pool_offset[node];
+		size_t vm_size = 0;
 
 		try {
 			switch (flags & (RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES)) {
 				case RANDOMX_FLAG_DEFAULT:
-					vm = new randomx::InterpretedLightVmDefault();
+					vm = new(p) randomx::InterpretedLightVmDefault();
+					vm_size = sizeof(randomx::InterpretedLightVmDefault);
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM:
-					vm = new randomx::InterpretedVmDefault();
+					vm = new(p) randomx::InterpretedVmDefault();
+					vm_size = sizeof(randomx::InterpretedVmDefault);
 					break;
 
 				case RANDOMX_FLAG_JIT:
-					vm = new randomx::CompiledLightVmDefault();
+					vm = new(p) randomx::CompiledLightVmDefault();
+					vm_size = sizeof(randomx::CompiledLightVmDefault);
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT:
-					vm = new randomx::CompiledVmDefault();
+					vm = new(p) randomx::CompiledVmDefault();
+					vm_size = sizeof(randomx::CompiledVmDefault);
 					break;
 
 				case RANDOMX_FLAG_HARD_AES:
-					vm = new randomx::InterpretedLightVmHardAes();
+					vm = new(p) randomx::InterpretedLightVmHardAes();
+					vm_size = sizeof(randomx::InterpretedLightVmHardAes);
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_HARD_AES:
-					vm = new randomx::InterpretedVmHardAes();
+					vm = new(p) randomx::InterpretedVmHardAes();
+					vm_size = sizeof(randomx::InterpretedVmHardAes);
 					break;
 
 				case RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES:
-					vm = new randomx::CompiledLightVmHardAes();
+					vm = new(p) randomx::CompiledLightVmHardAes();
+					vm_size = sizeof(randomx::CompiledLightVmHardAes);
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES:
-					vm = new randomx::CompiledVmHardAes();
+					vm = new(p) randomx::CompiledVmHardAes();
+					vm_size = sizeof(randomx::CompiledVmHardAes);
 					break;
 
 				default:
@@ -633,8 +697,14 @@ extern "C" {
 			vm->setFlags(flags);
 		}
 		catch (std::exception &ex) {
-			delete vm;
 			vm = nullptr;
+		}
+
+		if (vm) {
+			vm_pool_offset[node] += vm_size;
+			if (vm_pool_offset[node] + 4096 > VM_POOL_SIZE) {
+				vm_pool_offset[node] = 0;
+			}
 		}
 
 		return vm;
@@ -652,9 +722,8 @@ extern "C" {
 		machine->setDataset(dataset);
 	}
 
-	void randomx_destroy_vm(randomx_vm *machine) {
-		assert(machine != nullptr);
-		delete machine;
+	void randomx_destroy_vm(randomx_vm* vm) {
+		vm->~randomx_vm();
 	}
 
 	void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output) {
