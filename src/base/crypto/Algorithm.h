@@ -73,6 +73,8 @@ public:
         AR2_CHUKWA,    // "argon2/chukwa"    Argon2id (Chukwa).
         AR2_WRKZ,      // "argon2/wrkz"      Argon2id (WRKZ)
         ASTROBWT_DERO, // "astrobwt"         AstroBWT (Dero)
+        DEFYX,         // "defyx"            DefyX (Scala).	
+        RX_XLA,        // "rx/xla"           Panthera (Scala).			
         MAX
     };
 
