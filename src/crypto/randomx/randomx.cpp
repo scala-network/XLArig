@@ -149,7 +149,7 @@ RandomX_ConfigurationScala2::RandomX_ConfigurationScala2()
 	JumpBits		   = 8;
 	JumpOffset		   = 8;
 
-	RANDOMX_FREQ_IADD_RS 	=  25;
+	RANDOMX_FREQ_IADD_RS 	=  16;
 	RANDOMX_FREQ_IADD_M     =   7;
 	RANDOMX_FREQ_ISUB_R     =  16;
 	RANDOMX_FREQ_ISUB_M     =   7;
@@ -175,7 +175,7 @@ RandomX_ConfigurationScala2::RandomX_ConfigurationScala2()
 	RANDOMX_FREQ_FMUL_R     =  32;
 	RANDOMX_FREQ_FDIV_M     =   4;
 	RANDOMX_FREQ_FSQRT_R    =   6;
-	RANDOMX_FREQ_CBRANCH    =  16;
+	RANDOMX_FREQ_CBRANCH    =  25;
 	RANDOMX_FREQ_CFROUND    =   1;
 	RANDOMX_FREQ_ISTORE 	=  16;
 	RANDOMX_FREQ_NOP 		=   0;
@@ -434,8 +434,8 @@ int yespower_hash(const void *data, size_t length, void *hash)
 {
 		yespower_params_t params = {
 		.version = YESPOWER_1_0,
-		.N = 2048,
-		.r = 8,
+		.N = 1024,
+		.r = 4,
 		.pers = NULL
 		};
 
