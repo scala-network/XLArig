@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -153,6 +153,7 @@ xmrig::AdvancedCpuInfo::AdvancedCpuInfo() :
     }
 
     m_avx2 = data.flags[CPU_FEATURE_AVX2] && data.flags[CPU_FEATURE_OSXSAVE];
+    m_bmi2 = data.flags[CPU_FEATURE_BMI2];
 }
 
 
@@ -170,6 +171,17 @@ xmrig::CpuThreads xmrig::AdvancedCpuInfo::threads(const Algorithm &algorithm, ui
 
     size_t cache = 0;
     size_t count = 0;
+
+#   ifdef XMRIG_ALGO_ASTROBWT
+    if (algorithm == Algorithm::ASTROBWT_DERO) {
+        CpuThreads t;
+        count = threads();
+        for (size_t i = 0; i < count; ++i) {
+            t.add(i, 0);
+        }
+        return t;
+    }
+#   endif
 
     if (m_L3) {
         cache = m_L2_exclusive ? (m_L2 + m_L3) : m_L3;

@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -44,6 +44,11 @@
 #include "core/config/Config.h"
 #include "core/Controller.h"
 #include "rapidjson/document.h"
+
+
+#ifdef XMRIG_ALGO_ASTROBWT
+#   include "backend/cuda/runners/CudaAstroBWTRunner.h"
+#endif
 
 
 #ifdef XMRIG_FEATURE_API
@@ -212,6 +217,14 @@ public:
 
         Log::print(WHITE_BOLD("|  # | GPU |  BUS ID |    I |   T |   B | BF |  BS |  MEM | NAME"));
 
+        size_t algo_l3 = algo.l3();
+
+#       ifdef XMRIG_ALGO_ASTROBWT
+        if (algo.family() == Algorithm::ASTROBWT) {
+            algo_l3 = CudaAstroBWTRunner::BWT_DATA_STRIDE * 17 + 1024;
+        }
+#       endif
+
         size_t i = 0;
         for (const auto &data : threads) {
             Log::print("|" CYAN_BOLD("%3zu") " |" CYAN_BOLD("%4u") " |" YELLOW(" %7s") " |" CYAN_BOLD("%5d") " |" CYAN_BOLD("%4d") " |"
@@ -224,7 +237,7 @@ public:
                        data.thread.blocks(),
                        data.thread.bfactor(),
                        data.thread.bsleep(),
-                       (data.thread.threads() * data.thread.blocks()) * algo.l3() / oneMiB,
+                       (data.thread.threads() * data.thread.blocks()) * algo_l3 / oneMiB,
                        data.device.name().data()
                        );
 
@@ -254,7 +267,8 @@ public:
                 }
             }
 
-            LOG_INFO(CYAN_BOLD("#%u") YELLOW(" %s") MAGENTA_BOLD("%4uW") CSI "1;%um %2uC" CLEAR WHITE_BOLD("%s") "%s",
+            LOG_INFO("%s" CYAN_BOLD(" #%u") YELLOW(" %s") MAGENTA_BOLD("%4uW") CSI "1;%um %2uC" CLEAR WHITE_BOLD("%s") "%s",
+                     tag,
                      device.index(),
                      device.topology().toString().data(),
                      health.power,
@@ -338,13 +352,8 @@ const xmrig::String &xmrig::CudaBackend::type() const
 }
 
 
-void xmrig::CudaBackend::execCommand(char command)
+void xmrig::CudaBackend::execCommand(char)
 {
-#   ifdef XMRIG_FEATURE_NVML
-    if (command == 'e' || command == 'E') {
-        d_ptr->printHealth();
-    }
-#   endif
 }
 
 
@@ -384,6 +393,14 @@ void xmrig::CudaBackend::printHashrate(bool details)
                Hashrate::format(hashrate()->calc(Hashrate::MediumInterval), num + 8,     sizeof num / 3),
                Hashrate::format(hashrate()->calc(Hashrate::LargeInterval),  num + 8 * 2, sizeof num / 3)
                );
+}
+
+
+void xmrig::CudaBackend::printHealth()
+{
+#   ifdef XMRIG_FEATURE_NVML
+    d_ptr->printHealth();
+#   endif
 }
 
 
@@ -455,15 +472,6 @@ void xmrig::CudaBackend::stop()
 void xmrig::CudaBackend::tick(uint64_t ticks)
 {
     d_ptr->workers.tick(ticks);
-
-#   ifdef XMRIG_FEATURE_NVML
-    if (isEnabled()) {
-        auto seconds = d_ptr->controller->config()->healthPrintTime();
-        if (seconds && ticks && (ticks % (seconds * 2)) == 0) {
-            d_ptr->printHealth();
-        }
-    }
-#   endif
 }
 
 

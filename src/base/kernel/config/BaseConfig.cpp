@@ -66,6 +66,11 @@ const char *BaseConfig::kVerbose        = "verbose";
 const char *BaseConfig::kWatch          = "watch";
 
 
+#ifdef XMRIG_FEATURE_TLS
+const char *BaseConfig::kTls            = "tls";
+#endif
+
+
 } // namespace xmrig
 
 
@@ -85,11 +90,15 @@ bool xmrig::BaseConfig::read(const IJsonReader &reader, const char *fileName)
     m_logFile      = reader.getString(kLogFile);
     m_userAgent    = reader.getString(kUserAgent);
 
+#   ifdef XMRIG_FEATURE_TLS
+    m_tls = reader.getValue(kTls);
+#   endif
+
     Log::setColors(reader.getBool(kColors, Log::isColors()));
     setPrintTime(reader.getUint(kPrintTime, 60));
     setVerbose(reader.getValue(kVerbose));
 
-    const rapidjson::Value &api = reader.getObject(kApi);
+    const auto &api = reader.getObject(kApi);
     if (api.IsObject()) {
         m_apiId       = Json::getString(api, kApiId);
         m_apiWorkerId = Json::getString(api, kApiWorkerId);
@@ -136,11 +145,16 @@ void xmrig::BaseConfig::printVersions()
 
     std::string libs;
 
-#   if defined(XMRIG_FEATURE_TLS) && defined(OPENSSL_VERSION_TEXT)
+#   if defined(XMRIG_FEATURE_TLS)
     {
+#       if defined(LIBRESSL_VERSION_TEXT)
+        snprintf(buf, sizeof buf, "LibreSSL/%s ", LIBRESSL_VERSION_TEXT + 9);
+        libs += buf;
+#       elif defined(OPENSSL_VERSION_TEXT)
         constexpr const char *v = OPENSSL_VERSION_TEXT + 8;
         snprintf(buf, sizeof buf, "OpenSSL/%.*s ", static_cast<int>(strchr(v, ' ') - v), v);
         libs += buf;
+#       endif
     }
 #   endif
 

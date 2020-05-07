@@ -6,8 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2019      Spudz76     <https://github.com/Spudz76>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,44 +25,25 @@
 
 
 #include "base/io/log/backends/FileLog.h"
-#include "base/kernel/Env.h"
 
 
 #include <cassert>
 #include <cstring>
-#include <uv.h>
 
 
-xmrig::FileLog::FileLog(const char *fileName)
+xmrig::FileLog::FileLog(const char *fileName) :
+    m_writer(fileName)
 {
-    uv_fs_t req;
-    m_file = uv_fs_open(uv_default_loop(), &req, Env::expand(fileName), O_CREAT | O_APPEND | O_WRONLY, 0644, nullptr);
-    uv_fs_req_cleanup(&req);
 }
 
 
 void xmrig::FileLog::print(int, const char *line, size_t, size_t size, bool colors)
 {
-    if (m_file < 0 || colors) {
+    if (!m_writer.isOpen() || colors) {
         return;
     }
 
     assert(strlen(line) == size);
 
-    uv_buf_t buf = uv_buf_init(new char[size], size);
-    memcpy(buf.base, line, size);
-
-    auto req = new uv_fs_t;
-    req->data = buf.base;
-
-    uv_fs_write(uv_default_loop(), req, m_file, &buf, 1, -1, FileLog::onWrite);
-}
-
-
-void xmrig::FileLog::onWrite(uv_fs_t *req)
-{
-    delete [] static_cast<char *>(req->data);
-
-    uv_fs_req_cleanup(req);
-    delete req;
+    m_writer.write(line, size);
 }

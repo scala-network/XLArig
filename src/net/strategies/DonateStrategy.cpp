@@ -28,6 +28,8 @@
 #include <iterator>
 
 
+#include "net/strategies/DonateStrategy.h"
+#include "base/crypto/keccak.h"
 #include "base/kernel/Platform.h"
 #include "base/net/stratum/Client.h"
 #include "base/net/stratum/Job.h"
@@ -38,9 +40,7 @@
 #include "core/config/Config.h"
 #include "core/Controller.h"
 #include "core/Miner.h"
-#include "crypto/common/keccak.h"
 #include "net/Network.h"
-#include "net/strategies/DonateStrategy.h"
 #include "rapidjson/document.h"
 
 
@@ -122,6 +122,12 @@ void xmrig::DonateStrategy::setAlgo(const xmrig::Algorithm &algo)
     m_algorithm = algo;
 
     m_strategy->setAlgo(algo);
+}
+
+
+void xmrig::DonateStrategy::setProxy(const ProxyUrl &proxy)
+{
+    m_strategy->setProxy(proxy);
 }
 
 
@@ -246,8 +252,9 @@ xmrig::IClient *xmrig::DonateStrategy::createProxy()
     const IClient *client = strategy->client();
     m_tls                 = client->hasExtension(IClient::EXT_TLS);
 
-    Pool pool(client->ip(), client->pool().port(), m_userId, client->pool().password(), 0, true, client->isTLS());
+    Pool pool(client->pool().proxy().isValid() ? client->pool().host() : client->ip(), client->pool().port(), m_userId, client->pool().password(), 0, true, client->isTLS());
     pool.setAlgo(client->pool().algorithm());
+    pool.setProxy(client->pool().proxy());
 
     IClient *proxy = new Client(-1, Platform::userAgent(), this);
     proxy->setPool(pool);
