@@ -134,55 +134,44 @@ RandomX_ConfigurationScala::RandomX_ConfigurationScala()
 	// End of DefyX DATASET
 }
 
+//RandomX_ConfigurationScala2::RandomX_ConfigurationScala2()
+//{
+//    ArgonIterations    = 4;
+//	ArgonLanes		   = 2;
+//	ArgonSalt          = "Panthera\x03";
+//    DatasetBaseSize    = 33554432;
+//    ProgramSize        = 320;
+//	ProgramCount       = 3;
+//	ScratchpadL3_Size  = 262144;
+//	ScratchpadL2_Size  = 65536;
+//
+//}
+
 RandomX_ConfigurationScala2::RandomX_ConfigurationScala2()
 {
-	ArgonMemory        = 262144;
-    ArgonIterations    = 4;
-	ArgonLanes		   = 2;
-	ArgonSalt          = "Panthera\x03";
-    CacheAccesses      = 8;
-    SuperscalarLatency = 170;
-    DatasetBaseSize    = 33554432;
-	DatasetExtraSize   = 33554368;
-    ProgramSize        = 320;
-    ProgramIterations  = 2048;
-	ProgramCount       = 3;
-	ScratchpadL3_Size  = 262144;
-	ScratchpadL2_Size  = 65536;
-	ScratchpadL1_Size  = 16384;
-	JumpBits		   = 8;
-	JumpOffset		   = 8;
+	ArgonMemory       = 131072;
+        ArgonIterations   = 2;
+	ArgonSalt         = "DefyXScala\x13";
+        CacheAccesses     = 2;
+        DatasetBaseSize   = 33554432;
+        ProgramSize       = 64;
+        ProgramIterations = 1024;
+	ProgramCount      = 4;
+	ScratchpadL3_Size = 262144;
+	ScratchpadL2_Size = 131072;
+	ScratchpadL1_Size = 65536;
 
-	RANDOMX_FREQ_IADD_RS 	=  16;
-	RANDOMX_FREQ_IADD_M     =   7;
-	RANDOMX_FREQ_ISUB_R     =  16;
-	RANDOMX_FREQ_ISUB_M     =   7;
-	RANDOMX_FREQ_IMUL_R     =  16;
-	RANDOMX_FREQ_IMUL_M     =   4;
-	RANDOMX_FREQ_IMULH_R    =   4;
-	RANDOMX_FREQ_IMULH_M    =   1;
-	RANDOMX_FREQ_ISMULH_R   =   4;
-	RANDOMX_FREQ_ISMULH_M   =   1;
-	RANDOMX_FREQ_IMUL_RCP   =   8;
-	RANDOMX_FREQ_INEG_R     =   2;
-	RANDOMX_FREQ_IXOR_R     =  15;
-	RANDOMX_FREQ_IXOR_M     =   5;
-	RANDOMX_FREQ_IROR_R     =   8;
-	RANDOMX_FREQ_IROL_R     =   2;
-	RANDOMX_FREQ_ISWAP_R    =   4;
-	RANDOMX_FREQ_FSWAP_R    =   4;
-	RANDOMX_FREQ_FADD_R     =  16;
-	RANDOMX_FREQ_FADD_M     =   5;
-	RANDOMX_FREQ_FSUB_R     =  16;
-	RANDOMX_FREQ_FSUB_M     =   5;
-	RANDOMX_FREQ_FSCAL_R    =   6;
-	RANDOMX_FREQ_FMUL_R     =  32;
-	RANDOMX_FREQ_FDIV_M     =   4;
-	RANDOMX_FREQ_FSQRT_R    =   6;
-	RANDOMX_FREQ_CBRANCH    =  25;
-	RANDOMX_FREQ_CFROUND    =   1;
-	RANDOMX_FREQ_ISTORE 	=  16;
-	RANDOMX_FREQ_NOP 		=   0;
+	RANDOMX_FREQ_IADD_RS = 25;
+	RANDOMX_FREQ_CBRANCH = 16;
+
+	// DefyX DATASET (thanks MoneroOcean for the fix !)
+	const uint32_t DatasetBaseMask = DatasetBaseSize - RANDOMX_DATASET_ITEM_SIZE;
+	*(uint32_t*)(codeReadDatasetRyzenTweaked + 9) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetRyzenTweaked + 24) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetTweaked + 7) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetTweaked + 23) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
+	// End of DefyX DATASET
 }
 
 RandomX_ConfigurationKeva::RandomX_ConfigurationKeva()
@@ -470,20 +459,13 @@ int yespower_hash(const void *data, size_t length, void *hash)
 {
 		yespower_params_t params = {
 		.version = YESPOWER_1_0,
-		.N = 1024,
-		.r = 4,
+		.N = 2048,
+		.r = 8,
 		.pers = NULL
 		};
 
 		int finale_yespower = yespower_tls((const uint8_t *)data, length, &params, (yespower_binary_t *)hash);
 		return finale_yespower; //0 for success
-}
-
-int k12_yp(const void *data, size_t length, void *hash)
-{
-
-  int kDo = KangarooTwelve((const unsigned char *)data, length, (unsigned char *)hash, 32, 0, 0);
-  return kDo;
 }
 
 extern "C" {
@@ -493,8 +475,9 @@ extern "C" {
 		assert(inputSize == 0 || input != nullptr);
 		assert(output != nullptr);
 		alignas(16) uint64_t tempHash[8];
-		yespower_hash(input, inputSize, tempHash);
-		k12_yp(input, inputSize, tempHash);
+		rx_blake2b(tempHash, sizeof(tempHash), input, inputSize, 0, 0);
+		yespower_hash(tempHash, sizeof(tempHash), tempHash);
+		k12(tempHash, sizeof(tempHash), tempHash);
 		machine->initScratchpad(&tempHash);
 		machine->resetRoundingMode();
 		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
@@ -506,8 +489,9 @@ extern "C" {
 	}
 
 	void defyx2_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize) {
-		yespower_hash(input, inputSize, tempHash);
-		k12_yp(input, inputSize, tempHash);
+		rx_blake2b(tempHash, sizeof(tempHash), input, inputSize, 0, 0);
+		yespower_hash(tempHash, sizeof(tempHash), tempHash);
+		k12(tempHash, sizeof(tempHash), tempHash);
 		machine->initScratchpad(tempHash);
 	}
 
@@ -520,8 +504,9 @@ extern "C" {
 		machine->run(&tempHash);
 
 		// Finish current hash and fill the scratchpad for the next hash at the same time
-		yespower_hash(nextInput, nextInputSize, tempHash);
-		k12_yp(nextInput, nextInputSize, tempHash);
+		rx_blake2b(tempHash, sizeof(tempHash), nextInput, nextInputSize, 0, 0);
+		yespower_hash(tempHash, sizeof(tempHash), tempHash);
+		k12(tempHash, sizeof(tempHash), tempHash);
 		machine->hashAndFill(output, RANDOMX_HASH_SIZE, tempHash);
 	}
 
