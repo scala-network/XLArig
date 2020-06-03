@@ -31,6 +31,7 @@
         "max-threads-hint": 100,
         "asm": true,
         "argon2-impl": null,
+        "astrobwt-max-size": 550,
         "cn/0": false,
         "cn-lite/0": false
     },
@@ -39,6 +40,7 @@
         "cache": true,
         "loader": null,
         "platform": "AMD",
+        "adl": true,
         "cn/0": false,
         "cn-lite/0": false
     },
@@ -66,6 +68,7 @@
             "tls": false,
             "tls-fingerprint": null,
             "daemon": false,
+            "socks5": null,
             "self-select": null
         }
     ],
@@ -74,6 +77,15 @@
     "retries": 5,
     "retry-pause": 5,
     "syslog": false,
+    "tls": {
+        "enabled": false,
+        "protocols": null,
+        "cert": null,
+        "cert_key": null,
+        "ciphers": null,
+        "ciphersuites": null,
+        "dhparam": null
+    },
     "user-agent": null,
     "verbose": 0,
     "watch": true

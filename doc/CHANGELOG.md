@@ -1,3 +1,66 @@
+# v5.11.1
+- [#1652](https://github.com/xmrig/xmrig/pull/1652) Up to 1% RandomX perfomance improvement on recent AMD CPUs.
+- [#1306](https://github.com/xmrig/xmrig/issues/1306) Fixed possible double connection to a pool.
+- [#1654](https://github.com/xmrig/xmrig/issues/1654) Fixed build with LibreSSL.
+
+# v5.11.0
+- **[#1632](https://github.com/xmrig/xmrig/pull/1632) Added AstroBWT CUDA support ([CUDA plugin](https://github.com/xmrig/xmrig-cuda) v3.0.0 or newer required).**
+- [#1605](https://github.com/xmrig/xmrig/pull/1605) Fixed AstroBWT OpenCL for NVIDIA GPUs.
+- [#1635](https://github.com/xmrig/xmrig/pull/1635) Added pooled memory allocation of RandomX VMs (+0.5% speedup on Zen2).
+- [#1641](https://github.com/xmrig/xmrig/pull/1641) RandomX JIT refactoring, smaller memory footprint and a bit faster overall.
+- [#1643](https://github.com/xmrig/xmrig/issues/1643) Fixed build on CentOS 7.
+
+# v5.10.0
+- [#1602](https://github.com/xmrig/xmrig/pull/1602) Added AMD GPUs support for AstroBWT algorithm.
+- [#1590](https://github.com/xmrig/xmrig/pull/1590) MSR mod automatically deactivated after switching from RandomX algorithms.
+- [#1592](https://github.com/xmrig/xmrig/pull/1592) Added AVX2 optimized code for AstroBWT algorithm.
+  - Added new config option `astrobwt-avx2` in `cpu` object and command line option `--astrobwt-avx2`.
+- [#1596](https://github.com/xmrig/xmrig/issues/1596) Major TLS (Transport Layer Security) subsystem update.
+  - Added new TLS options, please check [xmrig-proxy documentation](https://xmrig.com/docs/proxy/tls) for details.
+- `cn/gpu` algorithm now disabled by default and will be removed in next major (v6.x.x) release, no ETA for it right now.
+- Added command line option `--data-dir`.
+
+# v5.9.0
+- [#1578](https://github.com/xmrig/xmrig/pull/1578) Added new RandomKEVA algorithm for upcoming Kevacoin fork, as `"algo": "rx/keva"` or `"coin": "keva"`.
+- [#1584](https://github.com/xmrig/xmrig/pull/1584) Fixed invalid AstroBWT hashes after algorithm switching.
+- [#1585](https://github.com/xmrig/xmrig/issues/1585) Fixed build without HTTP support.
+- Added command line option `--astrobwt-max-size`.
+
+# v5.8.2
+- [#1580](https://github.com/xmrig/xmrig/pull/1580) AstroBWT algorithm 20-50% speedup.
+  - Added new option `astrobwt-max-size`.
+- [#1581](https://github.com/xmrig/xmrig/issues/1581) Fixed macOS build.
+
+# v5.8.1
+- [#1575](https://github.com/xmrig/xmrig/pull/1575) Fixed new block detection for DERO solo mining.
+
+# v5.8.0
+- [#1573](https://github.com/xmrig/xmrig/pull/1573) Added new AstroBWT algorithm for upcoming DERO fork, as `"algo": "astrobwt"` or `"coin": "dero"`.
+
+# v5.7.0
+- **Added SOCKS5 proxies support for Tor https://xmrig.com/docs/miner/tor.**
+- [#377](https://github.com/xmrig/xmrig-proxy/issues/377) Fixed duplicate jobs in daemon (solo) mining client.
+- [#1560](https://github.com/xmrig/xmrig/pull/1560) RandomX 0.3-0.4% speedup depending on CPU.
+- Fixed possible crashes in HTTP client.
+
+# v5.6.0
+- [#1536](https://github.com/xmrig/xmrig/pull/1536) Added workaround for new AMD GPU drivers.
+- [#1546](https://github.com/xmrig/xmrig/pull/1546) Fixed generic OpenCL code for AMD Navi GPUs.
+- [#1551](https://github.com/xmrig/xmrig/pull/1551) Added RandomX JIT for AMD Navi  GPUs.
+- Added health information for AMD GPUs (clocks/power/fan/temperature) via ADL (Windows) and sysfs (Linux).
+- Fixed possible nicehash nonce overflow in some conditions.
+- Fixed wrong OpenCL platform on macOS, option `platform` now ignored on this OS.
+
+# v5.5.3
+- [#1529](https://github.com/xmrig/xmrig/pull/1529) Fixed crash on Bulldozer CPUs.
+
+# v5.5.2
+- [#1500](https://github.com/xmrig/xmrig/pull/1500) Removed unnecessary code from RandomX JIT compiler.
+- [#1502](https://github.com/xmrig/xmrig/pull/1502) Optimizations for AMD Bulldozer.
+- [#1508](https://github.com/xmrig/xmrig/pull/1508) Added support for BMI2 instructions.
+- [#1510](https://github.com/xmrig/xmrig/pull/1510) Optimized `CFROUND` instruction for RandomX.
+- [#1520](https://github.com/xmrig/xmrig/pull/1520) Fixed thread affinity.
+
 # v5.5.1
 - [#1469](https://github.com/xmrig/xmrig/issues/1469) Fixed build with gcc 4.8.
 - [#1473](https://github.com/xmrig/xmrig/pull/1473) Added RandomX auto-config for mobile Ryzen APUs.

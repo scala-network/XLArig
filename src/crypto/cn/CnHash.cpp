@@ -6,8 +6,8 @@
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -40,6 +40,11 @@
 
 #ifdef XMRIG_ALGO_ARGON2
 #   include "crypto/argon2/Hash.h"
+#endif
+
+
+#ifdef XMRIG_ALGO_ASTROBWT
+#   include "crypto/astrobwt/AstroBWT.h"
 #endif
 
 
@@ -275,6 +280,11 @@ xmrig::CnHash::CnHash()
     m_map[Algorithm::AR2_CHUKWA][AV_SINGLE_SOFT][Assembly::NONE] = argon2::single_hash<Algorithm::AR2_CHUKWA>;
     m_map[Algorithm::AR2_WRKZ][AV_SINGLE][Assembly::NONE]        = argon2::single_hash<Algorithm::AR2_WRKZ>;
     m_map[Algorithm::AR2_WRKZ][AV_SINGLE_SOFT][Assembly::NONE]   = argon2::single_hash<Algorithm::AR2_WRKZ>;
+#   endif
+
+#   ifdef XMRIG_ALGO_ASTROBWT
+    m_map[Algorithm::ASTROBWT_DERO][AV_SINGLE][Assembly::NONE]      = astrobwt::single_hash<Algorithm::ASTROBWT_DERO>;
+    m_map[Algorithm::ASTROBWT_DERO][AV_SINGLE_SOFT][Assembly::NONE] = astrobwt::single_hash<Algorithm::ASTROBWT_DERO>;
 #   endif
 
 #   ifdef XMRIG_FEATURE_ASM

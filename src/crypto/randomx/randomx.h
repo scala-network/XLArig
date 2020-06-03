@@ -49,7 +49,7 @@ enum randomx_flags {
   RANDOMX_FLAG_FULL_MEM = 4,
   RANDOMX_FLAG_JIT = 8,
   RANDOMX_FLAG_1GB_PAGES = 16,
-  RANDOMX_FLAG_RYZEN = 64,
+  RANDOMX_FLAG_AMD = 64,
 };
 
 
@@ -119,9 +119,9 @@ struct RandomX_ConfigurationBase
 	rx_vec_i128 fillAes4Rx4_Key[8];
 
 	uint8_t codeShhPrefetchTweaked[20];
-	uint8_t codeReadDatasetTweaked[256];
+	uint8_t codeReadDatasetTweaked[64];
 	uint32_t codeReadDatasetTweakedSize;
-	uint8_t codeReadDatasetRyzenTweaked[256];
+	uint8_t codeReadDatasetRyzenTweaked[76];
 	uint32_t codeReadDatasetRyzenTweakedSize;
 	uint8_t codeReadDatasetLightSshInitTweaked[68];
 	uint8_t codePrefetchScratchpadTweaked[32];
@@ -183,12 +183,46 @@ struct RandomX_ConfigurationWownero : public RandomX_ConfigurationBase { RandomX
 struct RandomX_ConfigurationLoki : public RandomX_ConfigurationBase { RandomX_ConfigurationLoki(); };
 struct RandomX_ConfigurationArqma : public RandomX_ConfigurationBase { RandomX_ConfigurationArqma(); };
 struct RandomX_ConfigurationSafex : public RandomX_ConfigurationBase { RandomX_ConfigurationSafex(); };
+struct RandomX_ConfigurationScala : public RandomX_ConfigurationBase { RandomX_ConfigurationScala(); };
+struct RandomX_ConfigurationScala2 : public RandomX_ConfigurationBase { RandomX_ConfigurationScala2(); };
+struct RandomX_ConfigurationKeva : public RandomX_ConfigurationBase { RandomX_ConfigurationKeva(); };
 
 extern RandomX_ConfigurationMonero RandomX_MoneroConfig;
 extern RandomX_ConfigurationWownero RandomX_WowneroConfig;
 extern RandomX_ConfigurationLoki RandomX_LokiConfig;
 extern RandomX_ConfigurationArqma RandomX_ArqmaConfig;
 extern RandomX_ConfigurationSafex RandomX_SafexConfig;
+extern RandomX_ConfigurationScala RandomX_ScalaConfig;
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+RANDOMX_EXPORT void defyx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
+
+RANDOMX_EXPORT void defyx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
+RANDOMX_EXPORT void defyx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
+
+#if defined(__cplusplus)
+}
+#endif
+
+extern RandomX_ConfigurationScala2 RandomX_ScalaConfig2;
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+RANDOMX_EXPORT void defyx2_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
+RANDOMX_EXPORT void defyx2_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
+RANDOMX_EXPORT void defyx2_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
+
+#if defined(__cplusplus)
+}
+#endif
+
+
+extern RandomX_ConfigurationKeva RandomX_KevaConfig;
 
 extern RandomX_ConfigurationBase RandomX_CurrentConfig;
 
@@ -306,7 +340,7 @@ RANDOMX_EXPORT void randomx_release_dataset(randomx_dataset *dataset);
  *         (3) cache parameter is NULL and RANDOMX_FLAG_FULL_MEM is not set
  *         (4) dataset parameter is NULL and RANDOMX_FLAG_FULL_MEM is set
 */
-RANDOMX_EXPORT randomx_vm *randomx_create_vm(randomx_flags flags, randomx_cache *cache, randomx_dataset *dataset, uint8_t *scratchpad);
+RANDOMX_EXPORT randomx_vm *randomx_create_vm(randomx_flags flags, randomx_cache *cache, randomx_dataset *dataset, uint8_t *scratchpad, uint32_t node);
 
 /**
  * Reinitializes a virtual machine with a new Cache. This function should be called anytime

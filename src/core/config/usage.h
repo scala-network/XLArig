@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@ static inline const std::string &usage()
     u += "  -u, --user=USERNAME           username for mining server\n";
     u += "  -p, --pass=PASSWORD           password for mining server\n";
     u += "  -O, --userpass=U:P            username:password pair for mining server\n";
+    u += "  -x, --proxy=HOST:PORT         connect through a SOCKS5 proxy\n";
     u += "  -k, --keepalive               send keepalived packet for prevent timeout (needs pool support)\n";
     u += "      --nicehash                enable nicehash.com support\n";
     u += "      --rig-id=ID               rig identifier for pool-side statistics (needs pool support)\n";
@@ -93,6 +94,11 @@ static inline const std::string &usage()
     u += "      --randomx-no-rdmsr        disable reverting initial MSR values on exit\n";
 #   endif
 
+#   ifdef XMRIG_ALGO_ASTROBWT
+    u += "      --astrobwt-max-size=N     skip hashes with large stage 2 size, default: 550, min: 400, max: 1200\n";
+    u += "      --astrobwt-avx2           enable AVX2 optimizations for AstroBWT algorithm";
+#   endif
+
 #   ifdef XMRIG_FEATURE_HTTP
     u += "\nAPI:\n";
     u += "      --api-worker-id=ID        custom worker-id for API\n";
@@ -123,6 +129,17 @@ static inline const std::string &usage()
 #   endif
 #   ifdef XMRIG_FEATURE_NVML
     u += "      --no-nvml                 disable NVML (NVIDIA Management Library) support\n";
+#   endif
+
+#   ifdef XMRIG_FEATURE_TLS
+    u += "\nTLS:\n";
+    u += "      --tls-gen=HOSTNAME        generate TLS certificate for specific hostname\n";
+    u += "      --tls-cert=FILE           load TLS certificate chain from a file in the PEM format\n";
+    u += "      --tls-cert-key=FILE       load TLS certificate private key from a file in the PEM format\n";
+    u += "      --tls-dhparam=FILE        load DH parameters for DHE ciphers from a file in the PEM format\n";
+    u += "      --tls-protocols=N         enable specified TLS protocols, example: \"TLSv1 TLSv1.1 TLSv1.2 TLSv1.3\"\n";
+    u += "      --tls-ciphers=S           set list of available ciphers (TLSv1.2 and below)\n";
+    u += "      --tls-ciphersuites=S      set list of available TLSv1.3 ciphersuites\n";
 #   endif
 
     u += "\nLogging:\n";

@@ -22,8 +22,10 @@
 #define ALGO_RX_LOKI        21
 #define ALGO_RX_ARQMA       22
 #define ALGO_RX_SFX         23
-#define ALGO_AR2_CHUKWA     24
-#define ALGO_AR2_WRKZ       25
+#define ALGO_RX_KEVA        24
+#define ALGO_AR2_CHUKWA     25
+#define ALGO_AR2_WRKZ       26
+#define ALGO_ASTROBWT_DERO  27
 
 #define FAMILY_UNKNOWN      0
 #define FAMILY_CN           1
@@ -32,3 +34,4 @@
 #define FAMILY_CN_PICO      4
 #define FAMILY_RANDOM_X     5
 #define FAMILY_ARGON2       6
+#define FAMILY_ASTROBWT     7
