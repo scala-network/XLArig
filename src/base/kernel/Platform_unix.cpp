@@ -38,14 +38,11 @@
 #include <unistd.h>
 #include <uv.h>
 #include <thread>
+#include <fstream>
 
 
 #include "base/kernel/Platform.h"
 #include "version.h"
-
-#ifdef XMRIG_NVIDIA_PROJECT
-#   include "nvidia/cryptonight.h"
-#endif
 
 
 #ifdef __FreeBSD__
@@ -68,11 +65,6 @@ char *xmrig::Platform::createUserAgent()
     length += snprintf(buf + length, max - length, "arm) libuv/%s", uv_version_string());
 #   else
     length += snprintf(buf + length, max - length, "i686) libuv/%s", uv_version_string());
-#   endif
-
-#   ifdef XMRIG_NVIDIA_PROJECT
-    const int cudaVersion = cuda_get_runtime_version();
-    length += snprintf(buf + length, max - length, " CUDA/%d.%d", cudaVersion / 1000, cudaVersion % 100);
 #   endif
 
 #   ifdef __clang__
@@ -102,17 +94,6 @@ bool xmrig::Platform::setThreadAffinity(uint64_t cpu_id)
     return result;
 }
 #endif
-
-
-uint32_t xmrig::Platform::setTimerResolution(uint32_t resolution)
-{
-    return resolution;
-}
-
-
-void xmrig::Platform::restoreTimerResolution()
-{
-}
 
 
 void xmrig::Platform::setProcessPriority(int)
@@ -165,4 +146,20 @@ void xmrig::Platform::setThreadPriority(int priority)
         }
     }
 #   endif
+}
+
+
+bool xmrig::Platform::isOnBatteryPower()
+{
+    for (int i = 0; i <= 1; ++i) {
+        char buf[64];
+        snprintf(buf, 64, "/sys/class/power_supply/BAT%d/status", i);
+        std::ifstream f(buf);
+        if (f.is_open()) {
+            std::string status;
+            f >> status;
+            return (status == "Discharging");
+        }
+    }
+    return false;
 }

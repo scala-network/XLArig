@@ -28,7 +28,9 @@
 
 
 #include "backend/cuda/wrappers/CudaLib.h"
-#include "base/kernel/Env.h"
+#include "base/io/Env.h"
+#include "base/io/log/Log.h"
+#include "base/kernel/Process.h"
 #include "crypto/rx/RxAlgo.h"
 
 
@@ -44,6 +46,14 @@ enum Version : uint32_t
 
 
 static uv_lib_t cudaLib;
+
+#if defined(__APPLE__)
+static String defaultLoader = "/System/Library/Frameworks/OpenCL.framework/OpenCL";
+#elif defined(_WIN32)
+static String defaultLoader = "xmrig-cuda.dll";
+#else
+static String defaultLoader = "libxmrig-cuda.so";
+#endif
 
 
 static const char *kAlloc                               = "alloc";
@@ -64,9 +74,11 @@ static const char *kPluginVersion                       = "pluginVersion";
 static const char *kRelease                             = "release";
 static const char *kRxHash                              = "rxHash";
 static const char *kRxPrepare                           = "rxPrepare";
+static const char *kKawPowHash                          = "kawPowHash";
+static const char *kKawPowPrepare_v2                    = "kawPowPrepare_v2";
+static const char *kKawPowStopHash                      = "kawPowStopHash";
 static const char *kSetJob                              = "setJob";
 static const char *kSetJob_v2                           = "setJob_v2";
-static const char *kSymbolNotFound                      = "symbol not found";
 static const char *kVersion                             = "version";
 
 
@@ -88,6 +100,9 @@ using pluginVersion_t                                   = const char * (*)();
 using release_t                                         = void (*)(nvid_ctx *);
 using rxHash_t                                          = bool (*)(nvid_ctx *, uint32_t, uint64_t, uint32_t *, uint32_t *);
 using rxPrepare_t                                       = bool (*)(nvid_ctx *, const void *, size_t, bool, uint32_t);
+using kawPowHash_t                                      = bool (*)(nvid_ctx *, uint8_t*, uint64_t, uint32_t *, uint32_t *, uint32_t *);
+using kawPowPrepare_v2_t                                = bool (*)(nvid_ctx *, const void *, size_t, const void *, size_t, uint32_t, const uint64_t*);
+using kawPowStopHash_t                                  = bool (*)(nvid_ctx *);
 using setJob_t                                          = bool (*)(nvid_ctx *, const void *, size_t, int32_t);
 using setJob_v2_t                                       = bool (*)(nvid_ctx *, const void *, size_t, const char *);
 using version_t                                         = uint32_t (*)(Version);
@@ -111,16 +126,20 @@ static pluginVersion_t pPluginVersion                   = nullptr;
 static release_t pRelease                               = nullptr;
 static rxHash_t pRxHash                                 = nullptr;
 static rxPrepare_t pRxPrepare                           = nullptr;
+static kawPowHash_t pKawPowHash                         = nullptr;
+static kawPowPrepare_v2_t pKawPowPrepare_v2             = nullptr;
+static kawPowStopHash_t pKawPowStopHash                 = nullptr;
 static setJob_t pSetJob                                 = nullptr;
 static setJob_v2_t pSetJob_v2                           = nullptr;
 static version_t pVersion                               = nullptr;
 
 
-#define DLSYM(x) if (uv_dlsym(&cudaLib, k##x, reinterpret_cast<void**>(&p##x)) == -1) { throw std::runtime_error(kSymbolNotFound); }
+#define DLSYM(x) if (uv_dlsym(&cudaLib, k##x, reinterpret_cast<void**>(&p##x)) == -1) { throw std::runtime_error(std::string("symbol not found: ") + k##x); }
 
 
 bool CudaLib::m_initialized = false;
 bool CudaLib::m_ready       = false;
+String CudaLib::m_error;
 String CudaLib::m_loader;
 
 
@@ -130,9 +149,22 @@ String CudaLib::m_loader;
 bool xmrig::CudaLib::init(const char *fileName)
 {
     if (!m_initialized) {
-        m_loader      = fileName == nullptr ? defaultLoader() : Env::expand(fileName);
-        m_ready       = uv_dlopen(m_loader, &cudaLib) == 0 && load();
         m_initialized = true;
+        m_loader      = fileName == nullptr ? defaultLoader : Env::expand(fileName);
+
+        if (!open()) {
+            return false;
+        }
+
+        try {
+            load();
+        } catch (std::exception &ex) {
+            m_error = (std::string(m_loader) + ": " + ex.what()).c_str();
+
+            return false;
+        }
+
+        m_ready = true;
     }
 
     return m_ready;
@@ -141,7 +173,7 @@ bool xmrig::CudaLib::init(const char *fileName)
 
 const char *xmrig::CudaLib::lastError() noexcept
 {
-    return uv_dlerror(&cudaLib);
+    return m_error;
 }
 
 
@@ -196,6 +228,24 @@ bool xmrig::CudaLib::rxHash(nvid_ctx *ctx, uint32_t startNonce, uint64_t target,
 bool xmrig::CudaLib::rxPrepare(nvid_ctx *ctx, const void *dataset, size_t datasetSize, bool dataset_host, uint32_t batchSize) noexcept
 {
     return pRxPrepare(ctx, dataset, datasetSize, dataset_host, batchSize);
+}
+
+
+bool xmrig::CudaLib::kawPowHash(nvid_ctx *ctx, uint8_t* job_blob, uint64_t target, uint32_t *rescount, uint32_t *resnonce, uint32_t *skipped_hashes) noexcept
+{
+    return pKawPowHash(ctx, job_blob, target, rescount, resnonce, skipped_hashes);
+}
+
+
+bool xmrig::CudaLib::kawPowPrepare(nvid_ctx *ctx, const void* cache, size_t cache_size, const void* dag_precalc, size_t dag_size, uint32_t height, const uint64_t* dag_sizes) noexcept
+{
+    return pKawPowPrepare_v2(ctx, cache, cache_size, dag_precalc, dag_size, height, dag_sizes);
+}
+
+
+bool xmrig::CudaLib::kawPowStopHash(nvid_ctx *ctx) noexcept
+{
+    return pKawPowStopHash(ctx);
 }
 
 
@@ -317,62 +367,70 @@ void xmrig::CudaLib::release(nvid_ctx *ctx) noexcept
 }
 
 
-bool xmrig::CudaLib::load()
+bool xmrig::CudaLib::open()
 {
-    if (uv_dlsym(&cudaLib, kVersion, reinterpret_cast<void**>(&pVersion)) == -1) {
+    m_error = nullptr;
+
+    if (uv_dlopen(m_loader, &cudaLib) == 0) {
+        return true;
+    }
+
+#   ifdef XMRIG_OS_LINUX
+    if (m_loader == defaultLoader) {
+        m_loader = Process::location(Process::ExeLocation, m_loader);
+    }
+    else {
         return false;
     }
 
-    if (pVersion(ApiVersion) != 3u) {
-        return false;
+    if (uv_dlopen(m_loader, &cudaLib) == 0) {
+        return true;
     }
+#   endif
 
-    uv_dlsym(&cudaLib, kDeviceInfo_v2,  reinterpret_cast<void**>(&pDeviceInfo_v2));
-    uv_dlsym(&cudaLib, kSetJob_v2,      reinterpret_cast<void**>(&pSetJob_v2));
+    m_error = uv_dlerror(&cudaLib);
 
-    try {
-        DLSYM(Alloc);
-        DLSYM(CnHash);
-        DLSYM(DeviceCount);
-        DLSYM(DeviceInit);
-        DLSYM(DeviceInt);
-        DLSYM(DeviceName);
-        DLSYM(DeviceUint);
-        DLSYM(DeviceUlong);
-        DLSYM(Init);
-        DLSYM(LastError);
-        DLSYM(PluginVersion);
-        DLSYM(Release);
-        DLSYM(RxHash);
-        DLSYM(RxPrepare);
-        DLSYM(AstroBWTHash);
-        DLSYM(AstroBWTPrepare);
-        DLSYM(Version);
-
-        if (!pDeviceInfo_v2) {
-            DLSYM(DeviceInfo);
-        }
-
-        if (!pSetJob_v2) {
-            DLSYM(SetJob);
-        }
-    } catch (std::exception &ex) {
-        return false;
-    }
-
-    pInit();
-
-    return true;
+    return false;
 }
 
 
-xmrig::String xmrig::CudaLib::defaultLoader()
+void xmrig::CudaLib::load()
 {
-#   if defined(__APPLE__)
-    return "/System/Library/Frameworks/OpenCL.framework/OpenCL"; // FIXME
-#   elif defined(_WIN32)
-    return "xmrig-cuda.dll";
-#   else
-    return "libxmrig-cuda.so";
-#   endif
+    DLSYM(Version);
+
+    if (pVersion(ApiVersion) != 3U) {
+        throw std::runtime_error("API version mismatch");
+    }
+
+    DLSYM(Alloc);
+    DLSYM(CnHash);
+    DLSYM(DeviceCount);
+    DLSYM(DeviceInit);
+    DLSYM(DeviceInt);
+    DLSYM(DeviceName);
+    DLSYM(DeviceUint);
+    DLSYM(DeviceUlong);
+    DLSYM(Init);
+    DLSYM(LastError);
+    DLSYM(PluginVersion);
+    DLSYM(Release);
+    DLSYM(RxHash);
+    DLSYM(RxPrepare);
+    DLSYM(AstroBWTHash);
+    DLSYM(AstroBWTPrepare);
+    DLSYM(KawPowHash);
+    DLSYM(KawPowPrepare_v2);
+    DLSYM(KawPowStopHash);
+
+    uv_dlsym(&cudaLib, kDeviceInfo_v2, reinterpret_cast<void**>(&pDeviceInfo_v2));
+    if (!pDeviceInfo_v2) {
+        DLSYM(DeviceInfo);
+    }
+
+    uv_dlsym(&cudaLib, kSetJob_v2, reinterpret_cast<void**>(&pSetJob_v2));
+    if (!pSetJob_v2) {
+        DLSYM(SetJob);
+    }
+
+    pInit();
 }

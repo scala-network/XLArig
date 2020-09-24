@@ -28,21 +28,22 @@
 #include <thread>
 
 
+#include "core/Miner.h"
+#include "3rdparty/rapidjson/document.h"
 #include "backend/common/Hashrate.h"
 #include "backend/cpu/Cpu.h"
 #include "backend/cpu/CpuBackend.h"
 #include "base/io/log/Log.h"
+#include "base/io/log/Tags.h"
 #include "base/kernel/Platform.h"
 #include "base/net/stratum/Job.h"
 #include "base/tools/Object.h"
+#include "base/tools/Profiler.h"
 #include "base/tools/Timer.h"
 #include "core/config/Config.h"
 #include "core/Controller.h"
-#include "core/Miner.h"
 #include "crypto/common/Nonce.h"
 #include "crypto/rx/Rx.h"
-#include "crypto/astrobwt/AstroBWT.h"
-#include "rapidjson/document.h"
 #include "version.h"
 
 
@@ -64,6 +65,11 @@
 
 #ifdef XMRIG_ALGO_RANDOMX
 #   include "crypto/rx/RxConfig.h"
+#endif
+
+
+#ifdef XMRIG_ALGO_ASTROBWT
+#   include "crypto/astrobwt/AstroBWT.h"
 #endif
 
 
@@ -238,20 +244,89 @@ public:
 #   endif
 
 
+    void printHashrate(bool details)
+    {
+        char num[16 * 4] = { 0 };
+        double speed[3] = { 0.0 };
+
+        for (auto backend : backends) {
+            const auto hashrate = backend->hashrate();
+            if (hashrate) {
+                speed[0] += hashrate->calc(Hashrate::ShortInterval);
+                speed[1] += hashrate->calc(Hashrate::MediumInterval);
+                speed[2] += hashrate->calc(Hashrate::LargeInterval);
+            }
+
+            backend->printHashrate(details);
+        }
+
+        double scale = 1.0;
+        const char* h = "H/s";
+
+        if ((speed[0] >= 1e6) || (speed[1] >= 1e6) || (speed[2] >= 1e6) || (maxHashrate[algorithm] >= 1e6)) {
+            scale = 1e-6;
+            h = "MH/s";
+        }
+
+#       ifdef XMRIG_FEATURE_PROFILING
+        ProfileScopeData* data[ProfileScopeData::MAX_DATA_COUNT];
+
+        const uint32_t n = std::min<uint32_t>(ProfileScopeData::s_dataCount, ProfileScopeData::MAX_DATA_COUNT);
+        memcpy(data, ProfileScopeData::s_data, n * sizeof(ProfileScopeData*));
+
+        std::sort(data, data + n, [](ProfileScopeData* a, ProfileScopeData* b) {
+            return strcmp(a->m_threadId, b->m_threadId) < 0;
+        });
+
+        for (uint32_t i = 0; i < n;)
+        {
+            uint32_t n1 = i;
+            while ((n1 < n) && (strcmp(data[i]->m_threadId, data[n1]->m_threadId) == 0)) {
+                ++n1;
+            }
+
+            std::sort(data + i, data + n1, [](ProfileScopeData* a, ProfileScopeData* b) {
+                return a->m_totalCycles > b->m_totalCycles;
+            });
+
+            for (uint32_t j = i; j < n1; ++j) {
+                ProfileScopeData* p = data[j];
+                LOG_INFO("%s Thread %6s | %-30s | %7.3f%% | %9.0f ns",
+                    Tags::profiler(),
+                    p->m_threadId,
+                    p->m_name,
+                    p->m_totalCycles * 100.0 / data[i]->m_totalCycles,
+                    p->m_totalCycles / p->m_totalSamples * 1e9 / ProfileScopeData::s_tscSpeed
+                );
+            }
+
+            LOG_INFO("%s --------------|--------------------------------|----------|-------------", Tags::profiler());
+
+            i = n1;
+        }
+#       endif
+
+        LOG_INFO("%s " WHITE_BOLD("speed") " 10s/60s/15m " CYAN_BOLD("%s") CYAN(" %s %s ") CYAN_BOLD("%s") " max " CYAN_BOLD("%s %s"),
+                 Tags::miner(),
+                 Hashrate::format(speed[0] * scale,                 num,          sizeof(num) / 4),
+                 Hashrate::format(speed[1] * scale,                 num + 16,     sizeof(num) / 4),
+                 Hashrate::format(speed[2] * scale,                 num + 16 * 2, sizeof(num) / 4), h,
+                 Hashrate::format(maxHashrate[algorithm] * scale,   num + 16 * 3, sizeof(num) / 4), h
+                 );
+    }
+
+
 #   ifdef XMRIG_ALGO_RANDOMX
     inline bool initRX() { return Rx::init(job, controller->config()->rx(), controller->config()->cpu()); }
 #   endif
 
-
-#   ifdef XMRIG_ALGO_ASTROBWT
-    inline bool initAstroBWT() { return astrobwt::init(job); }
-#   endif
 
     Algorithm algorithm;
     Algorithms algorithms;
     bool active         = false;
     bool enabled        = true;
     bool reset          = true;
+    bool battery_power  = false;
     Controller *controller;
     Job job;
     mutable std::map<Algorithm::Id, double> maxHashrate;
@@ -275,8 +350,16 @@ xmrig::Miner::Miner(Controller *controller)
         Platform::setThreadPriority(std::min(priority + 1, 5));
     }
 
+#   ifdef XMRIG_FEATURE_PROFILING
+    ProfileScopeData::Init();
+#   endif
+
 #   ifdef XMRIG_ALGO_RANDOMX
     Rx::init(this);
+#   endif
+
+#   ifdef XMRIG_ALGO_ASTROBWT
+    astrobwt::init();
 #   endif
 
     controller->addListener(this);
@@ -345,7 +428,7 @@ void xmrig::Miner::execCommand(char command)
     switch (command) {
     case 'h':
     case 'H':
-        printHashrate(true);
+        d_ptr->printHashrate(true);
         break;
 
     case 'p':
@@ -384,44 +467,30 @@ void xmrig::Miner::pause()
 }
 
 
-void xmrig::Miner::printHashrate(bool details)
-{
-    char num[8 * 4] = { 0 };
-    double speed[3] = { 0.0 };
-
-    for (IBackend *backend : d_ptr->backends) {
-        const Hashrate *hashrate = backend->hashrate();
-        if (hashrate) {
-            speed[0] += hashrate->calc(Hashrate::ShortInterval);
-            speed[1] += hashrate->calc(Hashrate::MediumInterval);
-            speed[2] += hashrate->calc(Hashrate::LargeInterval);
-        }
-
-        backend->printHashrate(details);
-    }
-
-    LOG_INFO(WHITE_BOLD("speed") " 10s/60s/15m " CYAN_BOLD("%s") CYAN(" %s %s ") CYAN_BOLD("H/s") " max " CYAN_BOLD("%s H/s"),
-             Hashrate::format(speed[0],                                 num,         sizeof(num) / 4),
-             Hashrate::format(speed[1],                                 num + 8,     sizeof(num) / 4),
-             Hashrate::format(speed[2],                                 num + 8 * 2, sizeof(num) / 4 ),
-             Hashrate::format(d_ptr->maxHashrate[d_ptr->algorithm],     num + 8 * 3, sizeof(num) / 4)
-             );
-}
-
-
 void xmrig::Miner::setEnabled(bool enabled)
 {
     if (d_ptr->enabled == enabled) {
         return;
     }
 
+    if (d_ptr->battery_power && enabled) {
+        LOG_INFO("%s " YELLOW_BOLD("can't resume while on battery power"), Tags::miner());
+
+        return;
+    }
+
     d_ptr->enabled = enabled;
 
     if (enabled) {
-        LOG_INFO(GREEN_BOLD("resumed"));
+        LOG_INFO("%s " GREEN_BOLD("resumed"), Tags::miner());
     }
     else {
-        LOG_INFO(YELLOW_BOLD("paused") ", press " MAGENTA_BG_BOLD(" r ") " to resume");
+        if (d_ptr->battery_power) {
+            LOG_INFO("%s " YELLOW_BOLD("paused"), Tags::miner());
+        }
+        else {
+            LOG_INFO("%s " YELLOW_BOLD("paused") ", press " MAGENTA_BG_BOLD(" r ") " to resume", Tags::miner());
+        }
     }
 
     if (!d_ptr->active) {
@@ -459,14 +528,10 @@ void xmrig::Miner::setJob(const Job &job, bool donate)
         d_ptr->userJobId = job.id();
     }
 
-    bool ready = true;
-
 #   ifdef XMRIG_ALGO_RANDOMX
-    ready &= d_ptr->initRX();
-#   endif
-
-#   ifdef XMRIG_ALGO_ASTROBWT
-    ready &= d_ptr->initAstroBWT();
+    const bool ready = d_ptr->initRX();
+#   else
+    constexpr const bool ready = true;
 #   endif
 
     mutex.unlock();
@@ -524,10 +589,24 @@ void xmrig::Miner::onTimer(const Timer *)
 
     const auto printTime = d_ptr->controller->config()->printTime();
     if (printTime && d_ptr->ticks && (d_ptr->ticks % (printTime * 2)) == 0) {
-        printHashrate(false);
+        d_ptr->printHashrate(false);
     }
 
     d_ptr->ticks++;
+
+    if (d_ptr->controller->config()->isPauseOnBattery()) {
+        const bool battery_power = Platform::isOnBatteryPower();
+        if (battery_power && d_ptr->enabled) {
+            LOG_INFO("%s " YELLOW_BOLD("on battery power"), Tags::miner());
+            d_ptr->battery_power = true;
+            setEnabled(false);
+        }
+        else if (!battery_power && !d_ptr->enabled && d_ptr->battery_power) {
+            LOG_INFO("%s " GREEN_BOLD("on AC power"), Tags::miner());
+            d_ptr->battery_power = false;
+            setEnabled(true);
+        }
+    }
 }
 
 

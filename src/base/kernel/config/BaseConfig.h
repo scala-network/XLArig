@@ -26,6 +26,7 @@
 #define XMRIG_BASECONFIG_H
 
 
+#include "base/kernel/config/Title.h"
 #include "base/kernel/interfaces/IConfig.h"
 #include "base/net/http/Http.h"
 #include "base/net/stratum/Pools.h"
@@ -54,8 +55,10 @@ public:
     static const char *kDryRun;
     static const char *kHttp;
     static const char *kLogFile;
+    static const char *kPauseOnBattery;
     static const char *kPrintTime;
     static const char *kSyslog;
+    static const char *kTitle;
     static const char *kUserAgent;
     static const char *kVerbose;
     static const char *kWatch;
@@ -69,6 +72,7 @@ public:
     inline bool isAutoSave() const                          { return m_autoSave; }
     inline bool isBackground() const                        { return m_background; }
     inline bool isDryRun() const                            { return m_dryRun; }
+    inline bool isPauseOnBattery() const                    { return m_pauseOnBattery; }
     inline bool isSyslog() const                            { return m_syslog; }
     inline const char *logFile() const                      { return m_logFile.data(); }
     inline const char *userAgent() const                    { return m_userAgent.data(); }
@@ -76,6 +80,7 @@ public:
     inline const Pools &pools() const                       { return m_pools; }
     inline const String &apiId() const                      { return m_apiId; }
     inline const String &apiWorkerId() const                { return m_apiWorkerId; }
+    inline const Title &title() const                       { return m_title; }
     inline uint32_t printTime() const                       { return m_printTime; }
 
 #   ifdef XMRIG_FEATURE_TLS
@@ -92,12 +97,13 @@ public:
     void printVersions();
 
 protected:
-    bool m_autoSave    = true;
-    bool m_background  = false;
-    bool m_dryRun      = false;
-    bool m_syslog      = false;
-    bool m_upgrade     = false;
-    bool m_watch       = true;
+    bool m_autoSave         = true;
+    bool m_background       = false;
+    bool m_dryRun           = false;
+    bool m_pauseOnBattery   = false;
+    bool m_syslog           = false;
+    bool m_upgrade          = false;
+    bool m_watch            = true;
     Http m_http;
     Pools m_pools;
     String m_apiId;
@@ -105,6 +111,7 @@ protected:
     String m_fileName;
     String m_logFile;
     String m_userAgent;
+    Title m_title;
     uint32_t m_printTime = 60;
 
 #   ifdef XMRIG_FEATURE_TLS
@@ -112,8 +119,6 @@ protected:
 #   endif
 
 private:
-    inline void setPrintTime(uint32_t printTime) { if (printTime <= 3600) { m_printTime = printTime; } }
-
     void setVerbose(const rapidjson::Value &value);
 };
 

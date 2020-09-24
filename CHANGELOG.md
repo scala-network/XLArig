@@ -1,7 +1,13 @@
+# v5.2.0
+- Updated Panthera algo
+- Removed DefyX algo
+- Rebased from XMRig v6.3.4 [(changelog)](doc/CHANGELOG.md)
+
+
 # v5.1.0
-- Added Panthera Algo
+- Added Panthera algo
 - Moved DefyX config data into RandomX.
-- Rebased from XMRig v5.11.1 [(changelog)](doc/CHANGELOG.md)
+- Rebased from XMRig v5.11.1
 
 # v5.0.2
 

@@ -74,8 +74,8 @@ namespace randomx {
 	constexpr int SuperscalarMaxSize = 3 * RANDOMX_SUPERSCALAR_MAX_LATENCY + 2;
 	constexpr size_t CacheLineSize = RANDOMX_DATASET_ITEM_SIZE;
 	#define ScratchpadSize RandomX_CurrentConfig.ScratchpadL3_Size
-	#define CacheLineAlignMask RandomX_CurrentConfig.CacheLineAlignMask_Calculated
-	#define DatasetExtraItems RandomX_CurrentConfig.DatasetExtraItems_Calculated
+	#define CacheLineAlignMask RandomX_ConfigurationBase::CacheLineAlignMask_Calculated
+	#define DatasetExtraItems RandomX_ConfigurationBase::DatasetExtraItems_Calculated
 	constexpr int StoreL3Condition = 14;
 
 	//Prevent some unsafe configurations.
@@ -126,10 +126,7 @@ namespace randomx {
 		double hi;
 	};
 
-	#define ScratchpadL1Mask RandomX_CurrentConfig.ScratchpadL1Mask_Calculated
-	#define ScratchpadL1Mask16 RandomX_CurrentConfig.ScratchpadL1Mask16_Calculated
-	#define ScratchpadL2Mask RandomX_CurrentConfig.ScratchpadL2Mask_Calculated
-	#define ScratchpadL2Mask16 RandomX_CurrentConfig.ScratchpadL2Mask16_Calculated
+	#define AddressMask RandomX_CurrentConfig.AddressMask_Calculated
 	#define ScratchpadL3Mask RandomX_CurrentConfig.ScratchpadL3Mask_Calculated
 	#define ScratchpadL3Mask64 RandomX_CurrentConfig.ScratchpadL3Mask64_Calculated
 	constexpr int RegistersCount = 8;

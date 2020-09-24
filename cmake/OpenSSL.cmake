@@ -5,10 +5,15 @@ if (WITH_TLS)
         set(OPENSSL_USE_STATIC_LIBS TRUE)
         set(OPENSSL_MSVC_STATIC_RT TRUE)
 
-        set(EXTRA_LIBS ${EXTRA_LIBS} Crypt32)
+        set(EXTRA_LIBS ${EXTRA_LIBS} crypt32)
     elseif (APPLE)
         set(OPENSSL_USE_STATIC_LIBS TRUE)
     endif()
+
+    if (BUILD_STATIC)
+        set(OPENSSL_USE_STATIC_LIBS TRUE)
+    endif()
+
 
     find_package(OpenSSL)
 

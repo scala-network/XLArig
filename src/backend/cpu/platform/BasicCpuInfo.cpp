@@ -23,6 +23,7 @@
  */
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <thread>
 
@@ -33,28 +34,9 @@
 #   include <cpuid.h>
 #endif
 
-#ifndef bit_AES
-#   define bit_AES (1 << 25)
-#endif
-
-#ifndef bit_OSXSAVE
-#   define bit_OSXSAVE (1 << 27)
-#endif
-
-#ifndef bit_AVX2
-#   define bit_AVX2 (1 << 5)
-#endif
-
-#ifndef bit_BMI2
-#   define bit_BMI2 (1 << 8)
-#endif
-
-#ifndef bit_PDPE1GB
-#   define bit_PDPE1GB (1 << 26)
-#endif
-
 
 #include "backend/cpu/platform/BasicCpuInfo.h"
+#include "3rdparty/rapidjson/document.h"
 #include "crypto/common/Assembly.h"
 
 
@@ -75,12 +57,16 @@
 namespace xmrig {
 
 
+static const std::array<const char *, ICpuInfo::FLAG_MAX> flagNames     = { "aes", "avx2", "avx512f", "bmi2", "osxsave", "pdpe1gb", "sse2", "ssse3", "sse4.1", "xop", "popcnt", "cat_l3" };
+static const std::array<const char *, ICpuInfo::MSR_MOD_MAX> msrNames   = { "none", "ryzen", "intel", "custom" };
+
+
 static inline void cpuid(uint32_t level, int32_t output[4])
 {
     memset(output, 0, sizeof(int32_t) * 4);
 
 #   ifdef _MSC_VER
-    __cpuid(output, static_cast<int>(level));
+    __cpuidex(output, static_cast<int>(level), 0);
 #   else
     __cpuid_count(level, 0, output[0], output[1], output[2], output[3]);
 #   endif
@@ -133,41 +119,69 @@ static inline int32_t get_masked(int32_t val, int32_t h, int32_t l)
 }
 
 
-static inline bool has_aes_ni()
+static inline uint64_t xgetbv()
 {
-    return has_feature(PROCESSOR_INFO, ECX_Reg, bit_AES);
+#ifdef _MSC_VER
+    return _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+#else
+    uint32_t eax_reg = 0;
+    uint32_t edx_reg = 0;
+    __asm__ __volatile__("xgetbv": "=a"(eax_reg), "=d"(edx_reg) : "c"(0) : "cc");
+    return (static_cast<uint64_t>(edx_reg) << 32) | eax_reg;
+#endif
 }
 
-
-static inline bool has_avx2()
-{
-    return has_feature(EXTENDED_FEATURES, EBX_Reg, bit_AVX2) && has_feature(PROCESSOR_INFO, ECX_Reg, bit_OSXSAVE);
-}
-
-
-static inline bool has_bmi2()
-{
-    return has_feature(EXTENDED_FEATURES, EBX_Reg, bit_BMI2);
-}
-
-
-static inline bool has_pdpe1gb()
-{
-    return has_feature(PROCESSOR_EXT_INFO, EDX_Reg, bit_PDPE1GB);
-}
+static inline bool has_xcr_avx2()   { return (xgetbv() & 0x06) == 0x06; }
+static inline bool has_xcr_avx512() { return (xgetbv() & 0xE6) == 0xE6; }
+static inline bool has_osxsave()    { return has_feature(PROCESSOR_INFO,        ECX_Reg, 1 << 27); }
+static inline bool has_aes_ni()     { return has_feature(PROCESSOR_INFO,        ECX_Reg, 1 << 25); }
+static inline bool has_avx2()       { return has_feature(EXTENDED_FEATURES,     EBX_Reg, 1 << 5) && has_osxsave() && has_xcr_avx2(); }
+static inline bool has_avx512f()    { return has_feature(EXTENDED_FEATURES,     EBX_Reg, 1 << 16) && has_osxsave() && has_xcr_avx512(); }
+static inline bool has_bmi2()       { return has_feature(EXTENDED_FEATURES,     EBX_Reg, 1 << 8); }
+static inline bool has_pdpe1gb()    { return has_feature(PROCESSOR_EXT_INFO,    EDX_Reg, 1 << 26); }
+static inline bool has_sse2()       { return has_feature(PROCESSOR_INFO,        EDX_Reg, 1 << 26); }
+static inline bool has_ssse3()      { return has_feature(PROCESSOR_INFO,        ECX_Reg, 1 << 9); }
+static inline bool has_sse41()      { return has_feature(PROCESSOR_INFO,        ECX_Reg, 1 << 19); }
+static inline bool has_xop()        { return has_feature(0x80000001,            ECX_Reg, 1 << 11); }
+static inline bool has_popcnt()     { return has_feature(PROCESSOR_INFO,        ECX_Reg, 1 << 23); }
+static inline bool has_cat_l3()     { return has_feature(EXTENDED_FEATURES,     EBX_Reg, 1 << 15) && has_feature(0x10, EBX_Reg, 1 << 1); }
 
 
 } // namespace xmrig
 
 
+#ifdef XMRIG_ALGO_ARGON2
+extern "C" {
+
+
+int cpu_flags_has_avx2()    { return xmrig::has_avx2(); }
+int cpu_flags_has_avx512f() { return xmrig::has_avx512f(); }
+int cpu_flags_has_sse2()    { return xmrig::has_sse2(); }
+int cpu_flags_has_ssse3()   { return xmrig::has_ssse3(); }
+int cpu_flags_has_xop()     { return xmrig::has_xop(); }
+
+
+}
+#endif
+
+
 xmrig::BasicCpuInfo::BasicCpuInfo() :
-    m_threads(std::thread::hardware_concurrency()),
-    m_aes(has_aes_ni()),
-    m_avx2(has_avx2()),
-    m_bmi2(has_bmi2()),
-    m_pdpe1gb(has_pdpe1gb())
+    m_threads(std::thread::hardware_concurrency())
 {
     cpu_brand_string(m_brand);
+
+    m_flags.set(FLAG_AES,     has_aes_ni());
+    m_flags.set(FLAG_AVX2,    has_avx2());
+    m_flags.set(FLAG_AVX512F, has_avx512f());
+    m_flags.set(FLAG_BMI2,    has_bmi2());
+    m_flags.set(FLAG_OSXSAVE, has_osxsave());
+    m_flags.set(FLAG_PDPE1GB, has_pdpe1gb());
+    m_flags.set(FLAG_SSE2,    has_sse2());
+    m_flags.set(FLAG_SSSE3,   has_ssse3());
+    m_flags.set(FLAG_SSE41,   has_sse41());
+    m_flags.set(FLAG_XOP,     has_xop());
+    m_flags.set(FLAG_POPCNT,  has_popcnt());
+    m_flags.set(FLAG_CAT_L3,  has_cat_l3());
 
 #   ifdef XMRIG_FEATURE_ASM
     if (hasAES()) {
@@ -198,6 +212,37 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
             m_vendor   = VENDOR_INTEL;
             m_assembly = Assembly::INTEL;
             m_msrMod   = MSR_MOD_INTEL;
+
+            struct
+            {
+                unsigned int stepping : 4;
+                unsigned int model : 4;
+                unsigned int family : 4;
+                unsigned int processor_type : 2;
+                unsigned int reserved1 : 2;
+                unsigned int ext_model : 4;
+                unsigned int ext_family : 8;
+                unsigned int reserved2 : 4;
+            } processor_info;
+
+            cpuid(1, data);
+            memcpy(&processor_info, data, sizeof(processor_info));
+
+            // Intel JCC erratum mitigation
+            if (processor_info.family == 6) {
+                const uint32_t model = processor_info.model | (processor_info.ext_model << 4);
+                const uint32_t stepping = processor_info.stepping;
+
+                // Affected CPU models and stepping numbers are taken from https://www.intel.com/content/dam/support/us/en/documents/processors/mitigations-jump-conditional-code-erratum.pdf
+                m_jccErratum =
+                    ((model == 0x4E) && (stepping == 0x3)) ||
+                    ((model == 0x55) && (stepping == 0x4)) ||
+                    ((model == 0x5E) && (stepping == 0x3)) ||
+                    ((model == 0x8E) && (stepping >= 0x9) && (stepping <= 0xC)) ||
+                    ((model == 0x9E) && (stepping >= 0x9) && (stepping <= 0xD)) ||
+                    ((model == 0xA6) && (stepping == 0x0)) ||
+                    ((model == 0xAE) && (stepping == 0xA));
+            }
         }
     }
 #   endif
@@ -206,7 +251,7 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
 
 const char *xmrig::BasicCpuInfo::backend() const
 {
-    return "basic";
+    return "basic/1";
 }
 
 
@@ -217,12 +262,6 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
     if (count == 1) {
         return 1;
     }
-
-#   ifdef XMRIG_ALGO_CN_GPU
-    if (algorithm == Algorithm::CN_GPU) {
-        return count;
-    }
-#   endif
 
 #   ifdef XMRIG_ALGO_CN_LITE
     if (algorithm.family() == Algorithm::CN_LITE) {
@@ -269,4 +308,44 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
 #   endif
 
     return CpuThreads(std::max<size_t>(count / 2, 1), 1);
+}
+
+
+rapidjson::Value xmrig::BasicCpuInfo::toJSON(rapidjson::Document &doc) const
+{
+    using namespace rapidjson;
+    auto &allocator = doc.GetAllocator();
+
+    Value out(kObjectType);
+
+    out.AddMember("brand",      StringRef(brand()), allocator);
+    out.AddMember("aes",        hasAES(), allocator);
+    out.AddMember("avx2",       hasAVX2(), allocator);
+    out.AddMember("x64",        isX64(), allocator);
+    out.AddMember("l2",         static_cast<uint64_t>(L2()), allocator);
+    out.AddMember("l3",         static_cast<uint64_t>(L3()), allocator);
+    out.AddMember("cores",      static_cast<uint64_t>(cores()), allocator);
+    out.AddMember("threads",    static_cast<uint64_t>(threads()), allocator);
+    out.AddMember("packages",   static_cast<uint64_t>(packages()), allocator);
+    out.AddMember("nodes",      static_cast<uint64_t>(nodes()), allocator);
+    out.AddMember("backend",    StringRef(backend()), allocator);
+    out.AddMember("msr",        StringRef(msrNames[msrMod()]), allocator);
+
+#   ifdef XMRIG_FEATURE_ASM
+    out.AddMember("assembly",   StringRef(Assembly(assembly()).toString()), allocator);
+#   else
+    out.AddMember("assembly",   "none", allocator);
+#   endif
+
+    Value flags(kArrayType);
+
+    for (size_t i = 0; i < flagNames.size(); ++i) {
+        if (m_flags.test(i)) {
+            flags.PushBack(StringRef(flagNames[i]), allocator);
+        }
+    }
+
+    out.AddMember("flags", flags, allocator);
+
+    return out;
 }

@@ -1,5 +1,6 @@
 if (WITH_RANDOMX)
     add_definitions(/DXMRIG_ALGO_RANDOMX)
+    set(WITH_ARGON2 ON)
 
     list(APPEND HEADERS_CRYPTO
         src/crypto/rx/Rx.h
@@ -16,8 +17,6 @@ if (WITH_RANDOMX)
     list(APPEND SOURCES_CRYPTO
         src/crypto/randomx/aes_hash.cpp
         src/crypto/randomx/allocator.cpp
-        src/crypto/randomx/argon2_core.c
-        src/crypto/randomx/argon2_ref.c
         src/crypto/randomx/blake2_generator.cpp
         src/crypto/randomx/blake2/blake2b.c
         src/crypto/randomx/bytecode_machine.cpp
@@ -47,7 +46,6 @@ if (WITH_RANDOMX)
 		src/crypto/randomx/panthera/KangarooTwelve.c
 		src/crypto/randomx/panthera/KeccakP-1600-reference.c
 		src/crypto/randomx/panthera/KeccakSpongeWidth1600.c
-		src/crypto/randomx/defyx/yescrypt-best.c
 		src/crypto/randomx/panthera/yespower-opt.c
     )
 
