@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include "base/crypto/Algorithm.h"
 #include "crypto/randomx/intrin_portable.h"
 
 #define RANDOMX_HASH_SIZE 32
@@ -67,18 +68,17 @@ struct RandomX_ConfigurationBase
 	// Common parameters for all RandomX variants
 	enum Params : uint64_t
 	{
-		ArgonMemory = 262144,
-		CacheAccesses = 8,
 		SuperscalarLatency = 170,
-		DatasetBaseSize = 2147483648,
 		DatasetExtraSize = 33554368,
 		JumpBits = 8,
 		JumpOffset = 8,
-		CacheLineAlignMask_Calculated = (DatasetBaseSize - 1) & ~(RANDOMX_DATASET_ITEM_SIZE - 1),
 		DatasetExtraItems_Calculated = DatasetExtraSize / RANDOMX_DATASET_ITEM_SIZE,
 		ConditionMask_Calculated = ((1 << JumpBits) - 1) << JumpOffset,
 	};
-
+	uint32_t ArgonMemory;
+	uint32_t CacheAccesses;
+	uint32_t DatasetBaseSize;
+		
 	uint32_t ArgonIterations;
 	uint32_t ArgonLanes;
 	const char* ArgonSalt;
@@ -132,6 +132,7 @@ struct RandomX_ConfigurationBase
 	uint8_t codeReadDatasetLightSshInitTweaked[68];
 	uint8_t codePrefetchScratchpadTweaked[32];
 
+	uint32_t CacheLineAlignMask_Calculated;
 	uint32_t AddressMask_Calculated[4];
 	uint32_t ScratchpadL3Mask_Calculated;
 	uint32_t ScratchpadL3Mask64_Calculated;
@@ -317,7 +318,6 @@ RANDOMX_EXPORT void randomx_destroy_vm(randomx_vm *machine);
  *        be NULL and at least RANDOMX_HASH_SIZE bytes must be available for writing.
 */
 RANDOMX_EXPORT void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
-
 RANDOMX_EXPORT void randomx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
 RANDOMX_EXPORT void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
 

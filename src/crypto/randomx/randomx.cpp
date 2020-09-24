@@ -112,17 +112,20 @@ RandomX_ConfigurationKeva::RandomX_ConfigurationKeva()
 
 RandomX_ConfigurationScala::RandomX_ConfigurationScala()
 {
-  ArgonIterations   = 2;
-  ArgonSalt         = "DefyXScala\x13";
-  ProgramSize       = 64;
-  ProgramIterations = 1024;
-  ProgramCount      = 4;
-  ScratchpadL3_Size = 262144;
-  ScratchpadL2_Size = 131072;
-  ScratchpadL1_Size = 65536;
+	ArgonMemory       = 131072;
+	ArgonIterations   = 2;
+	ArgonSalt         = "DefyXScala\x13";
+	CacheAccesses     = 2;
+	DatasetBaseSize   = 33554432;
+	ScratchpadL1_Size = 65536;
+	ScratchpadL2_Size = 131072;
+	ScratchpadL3_Size = 262144;
+	ProgramSize       = 64;
+	ProgramIterations = 1024;
+	ProgramCount      = 4;
 
-  RANDOMX_FREQ_IADD_RS = 25;
-  RANDOMX_FREQ_CBRANCH = 16;
+	RANDOMX_FREQ_IADD_RS = 25;
+	RANDOMX_FREQ_CBRANCH = 16;
 
   // Begin of DefyX/Panthera DATASET
   const uint32_t DatasetBaseMask = DatasetBaseSize - RANDOMX_DATASET_ITEM_SIZE;
@@ -135,7 +138,10 @@ RandomX_ConfigurationScala::RandomX_ConfigurationScala()
 }
 
 RandomX_ConfigurationBase::RandomX_ConfigurationBase()
-	: ArgonIterations(3)
+	: ArgonMemory(262144)
+	, CacheAccesses(8)
+	, DatasetBaseSize(2147483648)
+	, ArgonIterations(3)
 	, ArgonLanes(1)
 	, ArgonSalt("RandomX\x03")
 	, ScratchpadL1_Size(16384)
@@ -659,21 +665,21 @@ extern "C" {
 		assert(inputSize == 0 || input != nullptr);
 		assert(output != nullptr);
 		alignas(16) uint64_t tempHash[8];
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
+		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize, 0, 0);
 		yespower_hash(tempHash, sizeof(tempHash), tempHash);
 		k12(tempHash, sizeof(tempHash), tempHash);
 		machine->initScratchpad(&tempHash);
 		machine->resetRoundingMode();
 		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
 			machine->run(&tempHash);
-			rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile));
+			rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile), nullptr, 0);
 		}
 		machine->run(&tempHash);
 		machine->getFinalResult(output);
 	}
 
 	void panthera_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize) {
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
+		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize, 0, 0);
 		yespower_hash(tempHash, sizeof(tempHash), tempHash);
 		k12(tempHash, sizeof(tempHash), tempHash);
 		machine->initScratchpad(tempHash);
@@ -683,12 +689,12 @@ extern "C" {
 		machine->resetRoundingMode();
 		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
 			machine->run(&tempHash);
-			rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile));
+			rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile), nullptr, 0);
 		}
 		machine->run(&tempHash);
 
 		// Finish current hash and fill the scratchpad for the next hash at the same time
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), nextInput, nextInputSize);
+		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), nextInput, nextInputSize, 0, 0);
 		yespower_hash(tempHash, sizeof(tempHash), tempHash);
 		k12(tempHash, sizeof(tempHash), tempHash);
 		machine->hashAndFill(output, tempHash);
