@@ -28,8 +28,10 @@
 #endif
 
 #include "net/Network.h"
+#include "3rdparty/rapidjson/document.h"
 #include "backend/common/Tags.h"
 #include "base/io/log/Log.h"
+#include "base/io/log/Tags.h"
 #include "base/net/stratum/Client.h"
 #include "base/net/stratum/NetworkState.h"
 #include "base/net/stratum/SubmitResult.h"
@@ -41,7 +43,6 @@
 #include "net/JobResult.h"
 #include "net/JobResults.h"
 #include "net/strategies/DonateStrategy.h"
-#include "rapidjson/document.h"
 
 
 #ifdef XMRIG_FEATURE_API
@@ -55,22 +56,6 @@
 #include <ctime>
 #include <iterator>
 #include <memory>
-
-
-namespace xmrig {
-
-
-static const char *tag = BLUE_BG_BOLD(WHITE_BOLD_S " net ");
-
-
-} // namespace xmrig
-
-
-
-const char *xmrig::net_tag()
-{
-    return tag;
-}
 
 
 xmrig::Network::Network(Controller *controller) :
@@ -113,20 +98,39 @@ void xmrig::Network::connect()
 }
 
 
+void xmrig::Network::execCommand(char command)
+{
+    switch (command) {
+    case 's':
+    case 'S':
+        m_state->printResults();
+        break;
+
+    case 'c':
+    case 'C':
+        m_state->printConnection();
+        break;
+
+    default:
+        break;
+    }
+}
+
+
 void xmrig::Network::onActive(IStrategy *strategy, IClient *client)
 {
     if (m_donate && m_donate == strategy) {
-        LOG_NOTICE("%s " WHITE_BOLD("dev donate started"), tag);
+        LOG_NOTICE("%s " WHITE_BOLD("dev donate started"), Tags::network());
         return;
     }
 
     const char *tlsVersion = client->tlsVersion();
     LOG_INFO("%s " WHITE_BOLD("use %s ") CYAN_BOLD("%s:%d ") GREEN_BOLD("%s") " " BLACK_BOLD("%s"),
-             tag, client->mode(), client->pool().host().data(), client->pool().port(), tlsVersion ? tlsVersion : "", client->ip().data());
+             Tags::network(), client->mode(), client->pool().host().data(), client->pool().port(), tlsVersion ? tlsVersion : "", client->ip().data());
 
     const char *fingerprint = client->tlsFingerprint();
     if (fingerprint != nullptr) {
-        LOG_INFO("%s " BLACK_BOLD("fingerprint (SHA-256): \"%s\""), tag, fingerprint);
+        LOG_INFO("%s " BLACK_BOLD("fingerprint (SHA-256): \"%s\""), Tags::network(), fingerprint);
     }
 }
 
@@ -147,7 +151,7 @@ void xmrig::Network::onConfigChanged(Config *config, Config *previousConfig)
 }
 
 
-void xmrig::Network::onJob(IStrategy *strategy, IClient *client, const Job &job)
+void xmrig::Network::onJob(IStrategy *strategy, IClient *client, const Job &job, const rapidjson::Value &)
 {
     if (m_donate && m_donate->isActive() && m_donate != strategy) {
         return;
@@ -195,12 +199,12 @@ void xmrig::Network::onLogin(IStrategy *, IClient *client, rapidjson::Document &
 void xmrig::Network::onPause(IStrategy *strategy)
 {
     if (m_donate && m_donate == strategy) {
-        LOG_NOTICE("%s " WHITE_BOLD("dev donate finished"), tag);
+        LOG_NOTICE("%s " WHITE_BOLD("dev donate finished"), Tags::network());
         m_strategy->resume();
     }
 
     if (!m_strategy->isActive()) {
-        LOG_ERR("%s " RED("no active pools, stop mining"), tag);
+        LOG_ERR("%s " RED("no active pools, stop mining"), Tags::network());
 
         return m_controller->miner()->pause();
     }
@@ -209,13 +213,16 @@ void xmrig::Network::onPause(IStrategy *strategy)
 
 void xmrig::Network::onResultAccepted(IStrategy *, IClient *, const SubmitResult &result, const char *error)
 {
+    uint64_t diff     = result.diff;
+    const char *scale = NetworkState::scaleDiff(diff);
+
     if (error) {
-        LOG_INFO("%s " RED_BOLD("rejected") " (%" PRId64 "/%" PRId64 ") diff " WHITE_BOLD("%" PRIu64) " " RED("\"%s\"") " " BLACK_BOLD("(%" PRIu64 " ms)"),
-                 backend_tag(result.backend), m_state->accepted(), m_state->rejected(), result.diff, error, result.elapsed);
+        LOG_INFO("%s " RED_BOLD("rejected") " (%" PRId64 "/%" PRId64 ") diff " WHITE_BOLD("%" PRIu64 "%s") " " RED("\"%s\"") " " BLACK_BOLD("(%" PRIu64 " ms)"),
+                 backend_tag(result.backend), m_state->accepted(), m_state->rejected(), diff, scale, error, result.elapsed);
     }
     else {
-        LOG_INFO("%s " GREEN_BOLD("accepted") " (%" PRId64 "/%" PRId64 ") diff " WHITE_BOLD("%" PRIu64) " " BLACK_BOLD("(%" PRIu64 " ms)"),
-                 backend_tag(result.backend), m_state->accepted(), m_state->rejected(), result.diff, result.elapsed);
+        LOG_INFO("%s " GREEN_BOLD("accepted") " (%" PRId64 "/%" PRId64 ") diff " WHITE_BOLD("%" PRIu64 "%s") " " BLACK_BOLD("(%" PRIu64 " ms)"),
+                 backend_tag(result.backend), m_state->accepted(), m_state->rejected(), diff, scale, result.elapsed);
     }
 }
 
@@ -245,13 +252,16 @@ void xmrig::Network::onRequest(IApiRequest &request)
 
 void xmrig::Network::setJob(IClient *client, const Job &job, bool donate)
 {
+    uint64_t diff     = job.diff();;
+    const char *scale = NetworkState::scaleDiff(diff);
+
     if (job.height()) {
-        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64) " algo " WHITE_BOLD("%s") " height " WHITE_BOLD("%" PRIu64),
-                 tag, client->pool().host().data(), client->pool().port(), job.diff(), job.algorithm().shortName(), job.height());
+        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64 "%s") " algo " WHITE_BOLD("%s") " height " WHITE_BOLD("%" PRIu64),
+                 Tags::network(), client->pool().host().data(), client->pool().port(), diff, scale, job.algorithm().shortName(), job.height());
     }
     else {
-        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64) " algo " WHITE_BOLD("%s"),
-                 tag, client->pool().host().data(), client->pool().port(), job.diff(), job.algorithm().shortName());
+        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64 "%s") " algo " WHITE_BOLD("%s"),
+                 Tags::network(), client->pool().host().data(), client->pool().port(), diff, scale, job.algorithm().shortName());
     }
 
     if (!donate && m_donate) {

@@ -27,13 +27,13 @@
 #define XMRIG_NETWORK_H
 
 
+#include "3rdparty/rapidjson/fwd.h"
 #include "base/api/interfaces/IApiListener.h"
 #include "base/kernel/interfaces/IBaseListener.h"
 #include "base/kernel/interfaces/IStrategyListener.h"
 #include "base/kernel/interfaces/ITimerListener.h"
 #include "base/tools/Object.h"
 #include "interfaces/IJobResultListener.h"
-#include "rapidjson/fwd.h"
 
 
 #include <vector>
@@ -58,13 +58,14 @@ public:
     inline IStrategy *strategy() const { return m_strategy; }
 
     void connect();
+    void execCommand(char command);
 
 protected:
     inline void onTimer(const Timer *) override { tick(); }
 
     void onActive(IStrategy *strategy, IClient *client) override;
     void onConfigChanged(Config *config, Config *previousConfig) override;
-    void onJob(IStrategy *strategy, IClient *client, const Job &job) override;
+    void onJob(IStrategy *strategy, IClient *client, const Job &job, const rapidjson::Value &params) override;
     void onJobResult(const JobResult &result) override;
     void onLogin(IStrategy *strategy, IClient *client, rapidjson::Document &doc, rapidjson::Value &params) override;
     void onPause(IStrategy *strategy) override;

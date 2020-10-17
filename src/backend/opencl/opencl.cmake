@@ -1,3 +1,9 @@
+if (BUILD_STATIC AND XMRIG_OS_UNIX AND WITH_OPENCL)
+    message(WARNING "OpenCL backend is not compatible with static build, use -DWITH_OPENCL=OFF to suppress this warning")
+
+    set(WITH_OPENCL OFF)
+endif()
+
 if (WITH_OPENCL)
     add_definitions(/DCL_TARGET_OPENCL_VERSION=200)
     add_definitions(/DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
@@ -125,20 +131,18 @@ if (WITH_OPENCL)
              )
     endif()
 
-    if (WITH_CN_GPU AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    if (WITH_KAWPOW)
         list(APPEND HEADERS_BACKEND_OPENCL
-             src/backend/opencl/kernels/Cn00RyoKernel.h
-             src/backend/opencl/kernels/Cn1RyoKernel.h
-             src/backend/opencl/kernels/Cn2RyoKernel.h
-             src/backend/opencl/runners/OclRyoRunner.h
+             src/backend/opencl/kernels/kawpow/KawPow_CalculateDAGKernel.h
+             src/backend/opencl/runners/OclKawPowRunner.h
+             src/backend/opencl/runners/tools/OclKawPow.h
              )
 
         list(APPEND SOURCES_BACKEND_OPENCL
-             src/backend/opencl/generators/ocl_generic_cn_gpu_generator.cpp
-             src/backend/opencl/kernels/Cn00RyoKernel.cpp
-             src/backend/opencl/kernels/Cn1RyoKernel.cpp
-             src/backend/opencl/kernels/Cn2RyoKernel.cpp
-             src/backend/opencl/runners/OclRyoRunner.cpp
+             src/backend/opencl/generators/ocl_generic_kawpow_generator.cpp
+             src/backend/opencl/kernels/kawpow/KawPow_CalculateDAGKernel.cpp
+             src/backend/opencl/runners/OclKawPowRunner.cpp
+             src/backend/opencl/runners/tools/OclKawPow.cpp
              )
     endif()
 

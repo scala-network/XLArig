@@ -24,9 +24,9 @@
 
 
 #include "crypto/rx/RxConfig.h"
+#include "3rdparty/rapidjson/document.h"
 #include "backend/cpu/Cpu.h"
 #include "base/io/json/Json.h"
-#include "rapidjson/document.h"
 
 
 #ifdef XMRIG_FEATURE_HWLOC
@@ -51,10 +51,13 @@ static const char *kMode        = "mode";
 static const char *kOneGbPages  = "1gb-pages";
 static const char *kRdmsr       = "rdmsr";
 static const char *kWrmsr       = "wrmsr";
+static const char *kCacheQoS    = "cache_qos";
 
 #ifdef XMRIG_FEATURE_HWLOC
 static const char *kNUMA        = "numa";
 #endif
+
+static const char *kScratchpadPrefetchMode = "scratchpad_prefetch_mode";
 
 static const std::array<const char *, RxConfig::ModeMax> modeNames = { "auto", "fast", "light" };
 
@@ -89,6 +92,8 @@ bool xmrig::RxConfig::read(const rapidjson::Value &value)
         readMSR(Json::getValue(value, kWrmsr));
 #       endif
 
+        m_cacheQoS = Json::getBool(value, kCacheQoS, m_cacheQoS);
+
 #       ifdef XMRIG_OS_LINUX
         m_oneGbPages = Json::getBool(value, kOneGbPages, m_oneGbPages);
 #       endif
@@ -114,6 +119,11 @@ bool xmrig::RxConfig::read(const rapidjson::Value &value)
             m_numa = numa.GetBool();
         }
 #       endif
+
+        const uint32_t mode = static_cast<uint32_t>(Json::getInt(value, kScratchpadPrefetchMode, static_cast<int>(m_scratchpadPrefetchMode)));
+        if (mode < ScratchpadPrefetchMax) {
+            m_scratchpadPrefetchMode = static_cast<ScratchpadPrefetchMode>(mode);
+        }
 
         return true;
     }
@@ -151,6 +161,8 @@ rapidjson::Value xmrig::RxConfig::toJSON(rapidjson::Document &doc) const
     obj.AddMember(StringRef(kWrmsr), false, allocator);
 #   endif
 
+    obj.AddMember(StringRef(kCacheQoS), m_cacheQoS, allocator);
+
 #   ifdef XMRIG_FEATURE_HWLOC
     if (!m_nodeset.empty()) {
         Value numa(kArrayType);
@@ -165,6 +177,8 @@ rapidjson::Value xmrig::RxConfig::toJSON(rapidjson::Document &doc) const
         obj.AddMember(StringRef(kNUMA), m_numa, allocator);
     }
 #   endif
+
+    obj.AddMember(StringRef(kScratchpadPrefetchMode), static_cast<int>(m_scratchpadPrefetchMode), allocator);
 
     return obj;
 }

@@ -7,8 +7,8 @@
  * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018      Lee Clagett <https://github.com/vtnerd>
  * Copyright 2018-2019 tevador     <tevador@gmail.com>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,9 +28,12 @@
 #include "crypto/rx/Rx.h"
 #include "backend/common/Tags.h"
 #include "backend/cpu/CpuConfig.h"
+#include "backend/cpu/CpuThreads.h"
 #include "base/io/log/Log.h"
 #include "crypto/rx/RxConfig.h"
 #include "crypto/rx/RxQueue.h"
+#include "crypto/randomx/randomx.h"
+#include "crypto/randomx/soft_aes.h"
 
 
 namespace xmrig {
@@ -41,7 +44,6 @@ class RxPrivate;
 
 static bool osInitialized   = false;
 static bool msrInitialized  = false;
-static const char *tag      = BLUE_BG(WHITE_BOLD_S " rx  ") " ";
 static RxPrivate *d_ptr     = nullptr;
 
 
@@ -55,48 +57,6 @@ public:
 
 
 } // namespace xmrig
-
-
-const char *xmrig::rx_tag()
-{
-    return tag;
-}
-
-
-bool xmrig::Rx::init(const Job &job, const RxConfig &config, const CpuConfig &cpu)
-{
-    if (job.algorithm().family() != Algorithm::RANDOM_X) {
-        if (msrInitialized) {
-            msrDestroy();
-            msrInitialized = false;
-        }
-        return true;
-    }
-
-    if (isReady(job)) {
-        return true;
-    }
-
-    if (!msrInitialized) {
-        msrInit(config);
-        msrInitialized = true;
-    }
-
-    if (!osInitialized) {
-        setupMainLoopExceptionFrame();
-        osInitialized = true;
-    }
-
-    d_ptr->queue.enqueue(job, config.nodeset(), config.threads(cpu.limit()), cpu.isHugePages(), config.isOneGbPages(), config.mode(), cpu.priority());
-
-    return false;
-}
-
-
-bool xmrig::Rx::isReady(const Job &job)
-{
-    return d_ptr->queue.isReady(job);
-}
 
 
 xmrig::HugePagesInfo xmrig::Rx::hugePages()
@@ -129,8 +89,52 @@ void xmrig::Rx::init(IRxListener *listener)
 }
 
 
+template<typename T>
+bool xmrig::Rx::init(const T &seed, const RxConfig &config, const CpuConfig &cpu)
+{
+    if (seed.algorithm().family() != Algorithm::RANDOM_X) {
+        if (msrInitialized) {
+            msrDestroy();
+            msrInitialized = false;
+        }
+
+        return true;
+    }
+
+    randomx_set_scratchpad_prefetch_mode(config.scratchpadPrefetchMode());
+
+    if (isReady(seed)) {
+        return true;
+    }
+
+    if (!msrInitialized) {
+        msrInit(config, cpu.threads().get(seed.algorithm()).data());
+        msrInitialized = true;
+    }
+
+    if (!osInitialized) {
+        setupMainLoopExceptionFrame();
+        if (!cpu.isHwAES()) {
+            SelectSoftAESImpl();
+        }
+        osInitialized = true;
+    }
+
+    d_ptr->queue.enqueue(seed, config.nodeset(), config.threads(cpu.limit()), cpu.isHugePages(), config.isOneGbPages(), config.mode(), cpu.priority());
+
+    return false;
+}
+
+
+template<typename T>
+bool xmrig::Rx::isReady(const T &seed)
+{
+    return d_ptr->queue.isReady(seed);
+}
+
+
 #ifndef XMRIG_FEATURE_MSR
-void xmrig::Rx::msrInit(const RxConfig &)
+void xmrig::Rx::msrInit(const RxConfig &, const std::vector<CpuThread> &)
 {
 }
 
@@ -146,3 +150,15 @@ void xmrig::Rx::setupMainLoopExceptionFrame()
 {
 }
 #endif
+
+
+namespace xmrig {
+
+
+template bool Rx::init(const RxSeed &seed, const RxConfig &config, const CpuConfig &cpu);
+template bool Rx::isReady(const RxSeed &seed);
+template bool Rx::init(const Job &seed, const RxConfig &config, const CpuConfig &cpu);
+template bool Rx::isReady(const Job &seed);
+
+
+} // namespace xmrig

@@ -28,14 +28,12 @@
 #include <cinttypes>
 
 
+#include "core/config/Config.h"
+#include "3rdparty/rapidjson/document.h"
 #include "backend/cpu/Cpu.h"
 #include "base/io/log/Log.h"
 #include "base/kernel/interfaces/IJsonReader.h"
-#include "core/config/Config.h"
 #include "crypto/common/Assembly.h"
-#include "rapidjson/document.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/prettywriter.h"
 
 
 #ifdef XMRIG_ALGO_RANDOMX
@@ -219,6 +217,7 @@ void xmrig::Config::getJSON(rapidjson::Document &doc) const
     doc.AddMember(StringRef(kAutosave),                 isAutoSave(), allocator);
     doc.AddMember(StringRef(kBackground),               isBackground(), allocator);
     doc.AddMember(StringRef(kColors),                   Log::isColors(), allocator);
+    doc.AddMember(StringRef(kTitle),                    title().toJSON(), allocator);
 
 #   ifdef XMRIG_ALGO_RANDOMX
     doc.AddMember(StringRef(kRandomX),                  rx().toJSON(doc), allocator);
@@ -253,4 +252,5 @@ void xmrig::Config::getJSON(rapidjson::Document &doc) const
     doc.AddMember(StringRef(kUserAgent),                m_userAgent.toJSON(), allocator);
     doc.AddMember(StringRef(kVerbose),                  Log::verbose(), allocator);
     doc.AddMember(StringRef(kWatch),                    m_watch, allocator);
+    doc.AddMember(StringRef(kPauseOnBattery),           isPauseOnBattery(), allocator);
 }

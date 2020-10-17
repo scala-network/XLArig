@@ -26,7 +26,7 @@
 #define XMRIG_ICONFIG_H
 
 
-#include "rapidjson/fwd.h"
+#include "3rdparty/rapidjson/fwd.h"
 
 
 namespace xmrig {
@@ -74,6 +74,9 @@ public:
         DaemonPollKey        = 1019,
         SelfSelectKey        = 1028,
         DataDirKey           = 1035,
+        TitleKey             = 1037,
+        NoTitleKey           = 1038,
+        PauseOnBatteryKey    = 1041,
 
         // xmrig common
         CPUPriorityKey       = 1021,
@@ -99,6 +102,8 @@ public:
         YieldKey             = 1030,
         AstroBWTMaxSizeKey   = 1034,
         AstroBWTAVX2Key      = 1036,
+        Argon2ImplKey        = 1039,
+        RandomXCacheQoSKey   = 1040,
 
         // xmrig amd
         OclPlatformKey       = 1400,

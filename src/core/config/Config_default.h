@@ -51,7 +51,12 @@ R"===(
     "randomx": {
         "init": -1,
         "mode": "auto",
-        "numa": true
+        "1gb-pages": false,
+        "rdmsr": true,
+        "wrmsr": true,
+        "cache_qos": false,
+        "numa": true,
+        "scratchpad_prefetch_mode": 1
     },
     "cpu": {
         "enabled": true,
@@ -65,7 +70,8 @@ R"===(
         "argon2-impl": null,
         "astrobwt-max-size": 550,
         "cn/0": false,
-        "cn-lite/0": false
+        "cn-lite/0": false,
+        "kawpow": false
     },
     "opencl": {
         "enabled": false,
@@ -87,11 +93,11 @@ R"===(
     "log-file": null,
     "pools": [
         {
-            "algo": "defyx",
+            "algo": null,
             "coin": null,
-            "url": "mine.scalaproject.io:80",
-            "user": "Se2J4W9J5W4GRX2E5dJWdQbhVfq4nf4tQJkUQ5bBUdgALqiUewJfWQwbmptDEmKqeqc4tRb26duxe3483w2RZRXQ2MPGvpoAU",
-            "pass": "xla-donate",
+            "url": "donate.v2.xmrig.com:3333",
+            "user": "YOUR_WALLET_ADDRESS",
+            "pass": "x",
             "rig-id": null,
             "nicehash": false,
             "keepalive": false,
@@ -108,7 +114,8 @@ R"===(
     "retry-pause": 5,
     "syslog": false,
     "user-agent": null,
-    "watch": true
+    "watch": true,
+    "pause-on-battery": false
 }
 )===";
 #endif

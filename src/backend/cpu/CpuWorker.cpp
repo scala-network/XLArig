@@ -36,6 +36,7 @@
 #include "crypto/common/Nonce.h"
 #include "crypto/common/VirtualMemory.h"
 #include "crypto/rx/Rx.h"
+#include "crypto/rx/RxDataset.h"
 #include "crypto/rx/RxVm.h"
 #include "net/JobResults.h"
 
@@ -118,7 +119,9 @@ void xmrig::CpuWorker<N>::allocateRandomX_VM()
     }
 
     if (!m_vm) {
-        m_vm = RxVm::create(dataset, m_memory->scratchpad(), !m_hwAES, m_assembly, m_node);
+        // Try to allocate scratchpad from dataset's 1 GB huge pages, if normal huge pages are not available
+        uint8_t* scratchpad = m_memory->isHugePages() ? m_memory->scratchpad() : dataset->tryAllocateScrathpad();
+        m_vm = RxVm::create(dataset, scratchpad ? scratchpad : m_memory->scratchpad(), !m_hwAES, m_assembly, m_node);
     }
 }
 #endif
@@ -146,17 +149,10 @@ bool xmrig::CpuWorker<N>::selfTest()
                         verify2(Algorithm::CN_R,     test_output_r)    &&
                         verify(Algorithm::CN_RWZ,    test_output_rwz)  &&
                         verify(Algorithm::CN_ZLS,    test_output_zls)  &&
+                        verify(Algorithm::CN_CCX,    test_output_ccx)  &&
                         verify(Algorithm::CN_DOUBLE, test_output_double);
 
-#       ifdef XMRIG_ALGO_CN_GPU
-        if (!rc || N > 1) {
-            return rc;
-        }
-
-        return verify(Algorithm::CN_GPU, test_output_gpu);
-#       else
         return rc;
-#       endif
     }
 
 #   ifdef XMRIG_ALGO_CN_LITE
@@ -247,44 +243,25 @@ void xmrig::CpuWorker<N>::start()
 
 #           ifdef XMRIG_ALGO_RANDOMX
             if (job.algorithm().family() == Algorithm::RANDOM_X) {
-
-              if (job.algorithm() == Algorithm::DEFYX) {
                 if (first) {
                     first = false;
-                    defyx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
-                }
+                    if (job.algorithm() == Algorithm::RX_XLA) {
+                      panthera_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
+                    } else {
+                      randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
+                    }                
+				}
 
                 if (!nextRound(m_job)) {
                     break;
                 }
-
-                defyx_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
-              } else {
-			  if (job.algorithm() == Algorithm::RX_XLA) {
-                if (first) {
-                    first = false;
-                    defyx2_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
-                }
-
-                if (!nextRound(m_job)) {
-                    break;
-                }
-
-                defyx2_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
-				} else {  
-                if (first) {
-                    first = false;
-                    randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
-                }
-
-                if (!nextRound(m_job)) {
-                    break;
-                }
-
-                randomx_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
-              }
-            } 
-			} else
+				if (job.algorithm() == Algorithm::RX_XLA) {
+                  panthera_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
+                } else {
+                  randomx_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
+                }            
+			}
+            else
 #           endif
             {
 #               ifdef XMRIG_ALGO_ASTROBWT

@@ -5,8 +5,8 @@
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@
 #include "backend/opencl/wrappers/OclLib.h"
 #include "backend/common/Tags.h"
 #include "backend/opencl/wrappers/OclError.h"
+#include "base/io/Env.h"
 #include "base/io/log/Log.h"
-#include "base/kernel/Env.h"
 
 
 #if defined(OCL_DEBUG_REFERENCE_COUNT)
@@ -44,7 +44,7 @@
 
 static uv_lib_t oclLib;
 
-static const char *kErrorTemplate                    = MAGENTA_BG_BOLD(WHITE_BOLD_S " ocl ") RED(" error ") RED_BOLD("%s") RED(" when calling ") RED_BOLD("%s");
+static const char *kErrorTemplate                    = MAGENTA_BG_BOLD(WHITE_BOLD_S " opencl  ") RED(" error ") RED_BOLD("%s") RED(" when calling ") RED_BOLD("%s");
 
 static const char *kBuildProgram                     = "clBuildProgram";
 static const char *kCreateBuffer                     = "clCreateBuffer";

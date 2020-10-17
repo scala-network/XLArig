@@ -60,10 +60,6 @@ size_t inline generate<Algorithm::CN>(Threads<CpuThreads> &threads, uint32_t lim
         ++count;
     }
 
-#   ifdef XMRIG_ALGO_CN_GPU
-    count += generate("cn/gpu", threads, Algorithm::CN_GPU, limit);
-#   endif
-
     return count;
 }
 
@@ -136,10 +132,6 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
 
     if (!threads.isExist(Algorithm::RX_WOW)) {
         count += threads.move("rx/wow", std::move(wow));
-    }
-
-    if (!threads.isExist(Algorithm::DEFYX)) {
-        count += generate("defyx", threads, Algorithm::DEFYX, limit);
     }
 
     if (!threads.isExist(Algorithm::RX_XLA)) {

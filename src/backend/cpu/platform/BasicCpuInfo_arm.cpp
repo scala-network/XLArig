@@ -1,12 +1,6 @@
 /* XMRig
- * Copyright 2010      Jeff Garzik <jgarzik@pobox.com>
- * Copyright 2012-2014 pooler      <pooler@litecoinpool.org>
- * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
- * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
- * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
- * Copyright 2016-2019 XMRig       <support@xmrig.com>
+ * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
+ * Copyright 2016-2020 XMRig       <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,6 +16,11 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+#include "base/tools/String.h"
+
+
+#include <array>
 #include <cstring>
 #include <thread>
 
@@ -33,6 +32,16 @@
 
 
 #include "backend/cpu/platform/BasicCpuInfo.h"
+#include "3rdparty/rapidjson/document.h"
+
+
+#ifdef XMRIG_OS_UNIX
+namespace xmrig {
+
+extern String cpu_name_arm();
+
+} // namespace xmrig
+#endif
 
 
 xmrig::BasicCpuInfo::BasicCpuInfo() :
@@ -46,21 +55,61 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
 
 #   if __ARM_FEATURE_CRYPTO
 #   if !defined(__APPLE__)
-    m_aes = getauxval(AT_HWCAP) & HWCAP_AES;
+    m_flags.set(FLAG_AES, getauxval(AT_HWCAP) & HWCAP_AES);
 #   else
-    m_aes = true;
+    m_flags.set(FLAG_AES, true);
 #   endif
+#   endif
+
+#   ifdef XMRIG_OS_UNIX
+    auto name = cpu_name_arm();
+    if (!name.isNull()) {
+        strncpy(m_brand, name, sizeof(m_brand) - 1);
+    }
 #   endif
 }
 
 
 const char *xmrig::BasicCpuInfo::backend() const
 {
-    return "basic_arm";
+    return "basic/1";
 }
 
 
 xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &, uint32_t) const
 {
     return CpuThreads(threads());
+}
+
+
+rapidjson::Value xmrig::BasicCpuInfo::toJSON(rapidjson::Document &doc) const
+{
+    using namespace rapidjson;
+    auto &allocator = doc.GetAllocator();
+
+    Value out(kObjectType);
+
+    out.AddMember("brand",      StringRef(brand()), allocator);
+    out.AddMember("aes",        hasAES(), allocator);
+    out.AddMember("avx2",       false, allocator);
+    out.AddMember("x64",        isX64(), allocator);
+    out.AddMember("l2",         static_cast<uint64_t>(L2()), allocator);
+    out.AddMember("l3",         static_cast<uint64_t>(L3()), allocator);
+    out.AddMember("cores",      static_cast<uint64_t>(cores()), allocator);
+    out.AddMember("threads",    static_cast<uint64_t>(threads()), allocator);
+    out.AddMember("packages",   static_cast<uint64_t>(packages()), allocator);
+    out.AddMember("nodes",      static_cast<uint64_t>(nodes()), allocator);
+    out.AddMember("backend",    StringRef(backend()), allocator);
+    out.AddMember("msr",        "none", allocator);
+    out.AddMember("assembly",   "none", allocator);
+
+    Value flags(kArrayType);
+
+    if (hasAES()) {
+        flags.PushBack("aes", allocator);
+    }
+
+    out.AddMember("flags", flags, allocator);
+
+    return out;
 }

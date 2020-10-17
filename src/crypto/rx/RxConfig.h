@@ -26,7 +26,7 @@
 #define XMRIG_RXCONFIG_H
 
 
-#include "rapidjson/fwd.h"
+#include "3rdparty/rapidjson/fwd.h"
 
 
 #ifdef XMRIG_FEATURE_MSR
@@ -50,6 +50,14 @@ public:
         ModeMax
     };
 
+    enum ScratchpadPrefetchMode : uint32_t {
+        ScratchpadPrefetchOff,
+        ScratchpadPrefetchT0,
+        ScratchpadPrefetchNTA,
+        ScratchpadPrefetchMov,
+        ScratchpadPrefetchMax,
+    };
+
     bool read(const rapidjson::Value &value);
     rapidjson::Value toJSON(rapidjson::Document &doc) const;
 
@@ -65,7 +73,10 @@ public:
     inline bool isOneGbPages() const    { return m_oneGbPages; }
     inline bool rdmsr() const           { return m_rdmsr; }
     inline bool wrmsr() const           { return m_wrmsr; }
+    inline bool cacheQoS() const        { return m_cacheQoS; }
     inline Mode mode() const            { return m_mode; }
+
+    inline ScratchpadPrefetchMode scratchpadPrefetchMode() const { return m_scratchpadPrefetchMode; }
 
 #   ifdef XMRIG_FEATURE_MSR
     const char *msrPresetName() const;
@@ -83,6 +94,8 @@ private:
     bool m_wrmsr = false;
 #   endif
 
+    bool m_cacheQoS = false;
+
     Mode readMode(const rapidjson::Value &value) const;
 
     bool m_numa         = true;
@@ -90,6 +103,8 @@ private:
     bool m_rdmsr        = true;
     int m_threads       = -1;
     Mode m_mode         = AutoMode;
+
+    ScratchpadPrefetchMode m_scratchpadPrefetchMode = ScratchpadPrefetchT0;
 
 #   ifdef XMRIG_FEATURE_HWLOC
     std::vector<uint32_t> m_nodeset;
