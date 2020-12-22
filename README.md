@@ -83,16 +83,19 @@ Misc:
 The building instructions has been moved [here](doc/building.md)
 
 ## Donations
-The donation mining in XLArig has been turned off, if you wish to help the original creators or the Scala Project team donate to the addresses below.
+If you wish to help the original creators or the Scala Project team, you can donate with one of the addresses below.
 
+* The Scala Project Team addresses:
+	** Global wallets :
+		*	WIP (waiting for the new addresses to be generated)
+		
+	** Teredic :
+		*	BTC: `34R361wbG28Fdqk5e2zkVHqJdSYPmuoeKF`
+		*	XLA: `Ssy29d734PWJveMXbCKX9cRbqCXNYq78A3N2NT1mPDnCZQW2WMnuQTfCqVwcqmS7dvcqEgLiRNQduFoYrjHtx4Rw1yE1YP7JNt`
+	
 * Original Creators addresses: 
   *	XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
   *	BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
-	
-* The Scala Project Team addresses:
-  *	BTC: `1XTLY5LqdBXRW6hcHtnuMU7c68mAyW6qm`
-  *	XLA: `SEiTBcLGpfm3uj5b5RaZDGSUoAGnLCyG5aJjAwko67jqRwWEH26NFPd26EUpdL1zh4RTmTdRWLz8WCmk5F4umYaFByMtJT6RLjD6vzApQJWfi`
-
 
 ## Contacts
 * hello@scalaproject.io
