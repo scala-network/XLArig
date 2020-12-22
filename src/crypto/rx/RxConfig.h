@@ -58,6 +58,20 @@ public:
         ScratchpadPrefetchMax,
     };
 
+    static const char *kCacheQoS;
+    static const char *kField;
+    static const char *kInit;
+    static const char *kInitAVX2;
+    static const char *kMode;
+    static const char *kOneGbPages;
+    static const char *kRdmsr;
+    static const char *kScratchpadPrefetchMode;
+    static const char *kWrmsr;
+
+#   ifdef XMRIG_FEATURE_HWLOC
+    static const char *kNUMA;
+#   endif
+
     bool read(const rapidjson::Value &value);
     rapidjson::Value toJSON(rapidjson::Document &doc) const;
 
@@ -70,6 +84,7 @@ public:
     const char *modeName() const;
     uint32_t threads(uint32_t limit = 100) const;
 
+    inline int initDatasetAVX2() const  { return m_initDatasetAVX2; }
     inline bool isOneGbPages() const    { return m_oneGbPages; }
     inline bool rdmsr() const           { return m_rdmsr; }
     inline bool wrmsr() const           { return m_wrmsr; }
@@ -98,11 +113,12 @@ private:
 
     Mode readMode(const rapidjson::Value &value) const;
 
-    bool m_numa         = true;
-    bool m_oneGbPages   = false;
-    bool m_rdmsr        = true;
-    int m_threads       = -1;
-    Mode m_mode         = AutoMode;
+    bool m_numa           = true;
+    bool m_oneGbPages     = false;
+    bool m_rdmsr          = true;
+    int m_threads         = -1;
+    int m_initDatasetAVX2 = -1;
+    Mode m_mode           = AutoMode;
 
     ScratchpadPrefetchMode m_scratchpadPrefetchMode = ScratchpadPrefetchT0;
 

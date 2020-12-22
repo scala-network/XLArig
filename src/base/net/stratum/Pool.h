@@ -29,6 +29,7 @@
 
 #include <bitset>
 #include <vector>
+#include <memory>
 
 
 #include "3rdparty/rapidjson/fwd.h"
@@ -39,6 +40,7 @@
 namespace xmrig {
 
 
+class BenchConfig;
 class IClient;
 class IClientListener;
 
@@ -50,7 +52,10 @@ public:
         MODE_POOL,
         MODE_DAEMON,
         MODE_SELF_SELECT,
-        MODE_AUTO_ETH
+        MODE_AUTO_ETH,
+#       ifdef XMRIG_FEATURE_BENCHMARK
+        MODE_BENCHMARK,
+#       endif
     };
 
     static const String kDefaultPassword;
@@ -81,6 +86,13 @@ public:
     Pool(const char *host, uint16_t port, const char *user, const char *password, int keepAlive, bool nicehash, bool tls, Mode mode);
     Pool(const char *url);
     Pool(const rapidjson::Value &object);
+
+#   ifdef XMRIG_FEATURE_BENCHMARK
+    Pool(const std::shared_ptr<BenchConfig> &benchmark);
+
+    BenchConfig *benchmark() const;
+    uint32_t benchSize() const;
+#   endif
 
     inline bool isNicehash() const                      { return m_flags.test(FLAG_NICEHASH); }
     inline bool isTLS() const                           { return m_flags.test(FLAG_TLS) || m_url.isTLS(); }
@@ -129,6 +141,8 @@ private:
     inline void setKeepAlive(bool enable)               { setKeepAlive(enable ? kKeepAliveTimeout : 0); }
     inline void setKeepAlive(int keepAlive)             { m_keepAlive = keepAlive >= 0 ? keepAlive : 0; }
 
+    void setKeepAlive(const rapidjson::Value &value);
+
     Algorithm m_algorithm;
     Coin m_coin;
     int m_keepAlive                 = 0;
@@ -142,6 +156,10 @@ private:
     uint64_t m_pollInterval         = kDefaultPollInterval;
     Url m_daemon;
     Url m_url;
+
+#   ifdef XMRIG_FEATURE_BENCHMARK
+    std::shared_ptr<BenchConfig> m_benchmark;
+#   endif
 };
 
 

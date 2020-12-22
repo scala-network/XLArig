@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
-#include "base/tools/Profiler.h"
+#include "crypto/rx/Profiler.h"
 
 RandomX_ConfigurationWownero::RandomX_ConfigurationWownero()
 {
@@ -74,18 +74,6 @@ RandomX_ConfigurationWownero::RandomX_ConfigurationWownero()
 	fillAes4Rx4_Key[5] = fillAes4Rx4_Key[1];
 	fillAes4Rx4_Key[6] = fillAes4Rx4_Key[2];
 	fillAes4Rx4_Key[7] = fillAes4Rx4_Key[3];
-}
-
-RandomX_ConfigurationLoki::RandomX_ConfigurationLoki()
-{
-	ArgonIterations = 4;
-	ArgonLanes = 2;
-	ArgonSalt = "RandomXL\x12";
-	ProgramSize = 320;
-	ProgramCount = 7;
-
-	RANDOMX_FREQ_IADD_RS = 25;
-	RANDOMX_FREQ_CBRANCH = 16;
 }
 
 RandomX_ConfigurationArqma::RandomX_ConfigurationArqma()
@@ -396,7 +384,6 @@ typedef void(randomx::JitCompilerX86::* InstructionGeneratorX86_2)(const randomx
 
 RandomX_ConfigurationMonero RandomX_MoneroConfig;
 RandomX_ConfigurationWownero RandomX_WowneroConfig;
-RandomX_ConfigurationLoki RandomX_LokiConfig;
 RandomX_ConfigurationArqma RandomX_ArqmaConfig;
 RandomX_ConfigurationSafex RandomX_SafexConfig;
 RandomX_ConfigurationKeva RandomX_KevaConfig;
@@ -449,9 +436,9 @@ extern "C" {
 					break;
 
 				case RANDOMX_FLAG_JIT:
-					cache->jit          = new randomx::JitCompiler();
+					cache->jit          = new randomx::JitCompiler(false, true);
 					cache->initialize   = &randomx::initCacheCompile;
-					cache->datasetInit  = cache->jit->getDatasetInitFunc();
+					cache->datasetInit  = nullptr;
 					cache->memory       = memory;
 					break;
 

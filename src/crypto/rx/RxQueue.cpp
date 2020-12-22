@@ -27,9 +27,10 @@
 
 #include "crypto/rx/RxQueue.h"
 #include "backend/common/interfaces/IRxListener.h"
+#include "base/io/Async.h"
 #include "base/io/log/Log.h"
 #include "base/io/log/Tags.h"
-#include "base/tools/Handle.h"
+#include "base/tools/Cvt.h"
 #include "crypto/rx/RxBasicStorage.h"
 
 
@@ -41,11 +42,7 @@
 xmrig::RxQueue::RxQueue(IRxListener *listener) :
     m_listener(listener)
 {
-    m_async = new uv_async_t;
-    m_async->data = this;
-
-    uv_async_init(uv_default_loop(), m_async, [](uv_async_t *handle) { static_cast<RxQueue *>(handle->data)->onReady(); });
-
+    m_async  = std::make_shared<Async>(this);
     m_thread = std::thread(&RxQueue::backgroundInit, this);
 }
 
@@ -61,8 +58,6 @@ xmrig::RxQueue::~RxQueue()
     m_thread.join();
 
     delete m_storage;
-
-    Handle::close(m_async);
 }
 
 
@@ -155,19 +150,19 @@ void xmrig::RxQueue::backgroundInit()
                  item.nodeset.size() > 1 ? "s" : "",
                  item.seed.algorithm().shortName(),
                  item.threads,
-                 Buffer::toHex(item.seed.data().data(), 8).data()
+                 Cvt::toHex(item.seed.data().data(), 8).data()
                  );
 
         m_storage->init(item.seed, item.threads, item.hugePages, item.oneGbPages, item.mode, item.priority);
 
-        lock = std::unique_lock<std::mutex>(m_mutex);
+        lock.lock();
 
         if (m_state == STATE_SHUTDOWN || !m_queue.empty()) {
             continue;
         }
 
         m_state = STATE_IDLE;
-        uv_async_send(m_async);
+        m_async->send();
     }
 }
 

@@ -50,6 +50,17 @@
 #endif
 
 
+#ifdef XMRIG_FEATURE_BENCHMARK
+#   include "base/net/stratum/benchmark/BenchClient.h"
+#   include "base/net/stratum/benchmark/BenchConfig.h"
+#endif
+
+
+#ifdef _MSC_VER
+#   define strcasecmp  _stricmp
+#endif
+
+
 namespace xmrig {
 
 
@@ -72,9 +83,7 @@ const char *Pool::kSOCKS5                 = "socks5";
 const char *Pool::kTls                    = "tls";
 const char *Pool::kUrl                    = "url";
 const char *Pool::kUser                   = "user";
-
-
-const char *Pool::kNicehashHost = "nicehash.com";
+const char *Pool::kNicehashHost           = "nicehash.com";
 
 
 }
@@ -125,21 +134,40 @@ xmrig::Pool::Pool(const rapidjson::Value &object) :
     m_flags.set(FLAG_NICEHASH, Json::getBool(object, kNicehash) || m_url.host().contains(kNicehashHost));
     m_flags.set(FLAG_TLS,      Json::getBool(object, kTls) || m_url.isTLS());
 
+    setKeepAlive(Json::getValue(object, kKeepalive));
+
     if (m_daemon.isValid()) {
         m_mode = MODE_SELF_SELECT;
     }
     else if (Json::getBool(object, kDaemon)) {
         m_mode = MODE_DAEMON;
     }
-
-    const rapidjson::Value &keepalive = Json::getValue(object, kKeepalive);
-    if (keepalive.IsInt()) {
-        setKeepAlive(keepalive.GetInt());
-    }
-    else if (keepalive.IsBool()) {
-        setKeepAlive(keepalive.GetBool());
-    }
 }
+
+
+#ifdef XMRIG_FEATURE_BENCHMARK
+xmrig::Pool::Pool(const std::shared_ptr<BenchConfig> &benchmark) :
+    m_mode(MODE_BENCHMARK),
+    m_flags(1 << FLAG_ENABLED),
+    m_url(BenchConfig::kBenchmark),
+    m_benchmark(benchmark)
+{
+}
+
+
+xmrig::BenchConfig *xmrig::Pool::benchmark() const
+{
+    assert(m_mode == MODE_BENCHMARK && m_benchmark);
+
+    return m_benchmark.get();
+}
+
+
+uint32_t xmrig::Pool::benchSize() const
+{
+    return benchmark()->size();
+}
+#endif
 
 
 bool xmrig::Pool::isEnabled() const
@@ -215,6 +243,11 @@ xmrig::IClient *xmrig::Pool::createClient(int id, IClientListener *listener) con
 #   ifdef XMRIG_ALGO_KAWPOW
     else if (m_mode == MODE_AUTO_ETH) {
         client = new AutoClient(id, Platform::userAgent(), listener);
+    }
+#   endif
+#   ifdef XMRIG_FEATURE_BENCHMARK
+    else if (m_mode == MODE_BENCHMARK) {
+        client = new BenchClient(m_benchmark, listener);
     }
 #   endif
 
@@ -307,3 +340,14 @@ void xmrig::Pool::print() const
     LOG_DEBUG ("keepAlive: %d", m_keepAlive);
 }
 #endif
+
+
+void xmrig::Pool::setKeepAlive(const rapidjson::Value &value)
+{
+    if (value.IsInt()) {
+        setKeepAlive(value.GetInt());
+    }
+    else if (value.IsBool()) {
+        setKeepAlive(value.GetBool());
+    }
+}

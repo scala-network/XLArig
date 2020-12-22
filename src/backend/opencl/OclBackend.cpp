@@ -397,9 +397,9 @@ void xmrig::OclBackend::printHashrate(bool details)
     }
 
     Log::print(WHITE_BOLD_S "|        - |        - | %8s | %8s | %8s |",
-               Hashrate::format(hashrate()->calc(Hashrate::ShortInterval)  * scale, num,          sizeof num / 3),
-               Hashrate::format(hashrate()->calc(Hashrate::MediumInterval) * scale, num + 16,     sizeof num / 3),
-               Hashrate::format(hashrate()->calc(Hashrate::LargeInterval)  * scale, num + 16 * 2, sizeof num / 3)
+               Hashrate::format(hashrate_short  * scale, num,          sizeof num / 3),
+               Hashrate::format(hashrate_medium * scale, num + 16,     sizeof num / 3),
+               Hashrate::format(hashrate_large  * scale, num + 16 * 2, sizeof num / 3)
                );
 }
 
@@ -485,9 +485,9 @@ void xmrig::OclBackend::stop()
 }
 
 
-void xmrig::OclBackend::tick(uint64_t ticks)
+bool xmrig::OclBackend::tick(uint64_t ticks)
 {
-    d_ptr->workers.tick(ticks);
+    return d_ptr->workers.tick(ticks);
 }
 
 

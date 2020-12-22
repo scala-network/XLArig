@@ -58,7 +58,6 @@ public:
     Pools();
 
     inline const std::vector<Pool> &data() const        { return m_data; }
-    inline int donateLevel() const                      { return m_donateLevel; }
     inline int retries() const                          { return m_retries; }
     inline int retryPause() const                       { return m_retryPause; }
     inline ProxyDonate proxyDonate() const              { return m_proxyDonate; }
@@ -67,11 +66,14 @@ public:
     inline bool operator==(const Pools &other) const    { return isEqual(other); }
 
     bool isEqual(const Pools &other) const;
+    int donateLevel() const;
     IStrategy *createStrategy(IStrategyListener *listener) const;
     rapidjson::Value toJSON(rapidjson::Document &doc) const;
     size_t active() const;
+    uint32_t benchSize() const;
     void load(const IJsonReader &reader);
     void print() const;
+    void toJSON(rapidjson::Value &out, rapidjson::Document &doc) const;
 
 private:
     void setDonateLevel(int level);
@@ -84,6 +86,10 @@ private:
     int m_retryPause            = 5;
     ProxyDonate m_proxyDonate   = PROXY_DONATE_AUTO;
     std::vector<Pool> m_data;
+
+#   ifdef XMRIG_FEATURE_BENCHMARK
+    std::shared_ptr<BenchConfig> m_benchmark;
+#   endif
 };
 
 
