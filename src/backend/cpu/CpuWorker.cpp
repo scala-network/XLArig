@@ -249,8 +249,6 @@ void xmrig::CpuWorker<N>::start()
                       randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
                     }                
 				}
-                    randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
-                }
 
                 if (!nextRound()) {
                     break;
