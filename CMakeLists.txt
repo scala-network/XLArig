@@ -88,6 +88,7 @@ set(HEADERS_CRYPTO
    )
 
 if (XMRIG_ARM)
+    set(HEADERS_CRYPTO "${HEADERS_CRYPTO}" src/crypto/cn/sse2neon.h)
     set(HEADERS_CRYPTO "${HEADERS_CRYPTO}" src/crypto/cn/CryptoNight_arm.h)
 else()
     set(HEADERS_CRYPTO "${HEADERS_CRYPTO}" src/crypto/cn/CryptoNight_x86.h)
