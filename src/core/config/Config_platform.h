@@ -96,6 +96,18 @@ static const option options[] = {
     { "title",                 1, nullptr, IConfig::TitleKey              },
     { "no-title",              0, nullptr, IConfig::NoTitleKey            },
     { "pause-on-battery",      0, nullptr, IConfig::PauseOnBatteryKey     },
+#   ifdef XMRIG_FEATURE_BENCHMARK
+    { "stress",                0, nullptr, IConfig::StressKey             },
+    { "bench",                 1, nullptr, IConfig::BenchKey              },
+    { "benchmark",             1, nullptr, IConfig::BenchKey              },
+#   ifdef XMRIG_FEATURE_HTTP
+    { "submit",                0, nullptr, IConfig::BenchSubmitKey        },
+    { "verify",                1, nullptr, IConfig::BenchVerifyKey        },
+    { "token",                 1, nullptr, IConfig::BenchTokenKey         },
+#   endif
+    { "seed",                  1, nullptr, IConfig::BenchSeedKey          },
+    { "hash",                  1, nullptr, IConfig::BenchHashKey          },
+#   endif
 #   ifdef XMRIG_FEATURE_TLS
     { "tls",                   0, nullptr, IConfig::TlsKey                },
     { "tls-fingerprint",       1, nullptr, IConfig::FingerprintKey        },

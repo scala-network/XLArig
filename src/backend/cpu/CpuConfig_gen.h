@@ -134,10 +134,6 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
         count += threads.move("rx/wow", std::move(wow));
     }
 
-    if (!threads.isExist(Algorithm::RX_XLA)) {
-        count += generate("panthera", threads, Algorithm::RX_XLA, limit);
-    }
-
     count += generate("rx", threads, Algorithm::RX_0, limit);
 
     return count;
@@ -149,7 +145,7 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
 template<>
 size_t inline generate<Algorithm::ARGON2>(Threads<CpuThreads> &threads, uint32_t limit)
 {
-    return generate("argon2", threads, Algorithm::AR2_CHUKWA, limit);
+    return generate("argon2", threads, Algorithm::AR2_CHUKWA_V2, limit);
 }
 #endif
 

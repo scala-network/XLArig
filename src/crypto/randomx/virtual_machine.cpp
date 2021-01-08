@@ -30,13 +30,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <stdexcept>
 #include "crypto/randomx/virtual_machine.hpp"
-#include "crypto/randomx/common.hpp"
 #include "crypto/randomx/aes_hash.hpp"
-#include "crypto/randomx/blake2/blake2.h"
-#include "crypto/randomx/intrin_portable.h"
 #include "crypto/randomx/allocator.hpp"
+#include "crypto/randomx/blake2/blake2.h"
+#include "crypto/randomx/common.hpp"
+#include "crypto/randomx/intrin_portable.h"
 #include "crypto/randomx/soft_aes.h"
-#include "base/tools/Profiler.h"
+#include "crypto/rx/Profiler.h"
 
 randomx_vm::~randomx_vm() {
 
@@ -119,15 +119,10 @@ namespace randomx {
 	template<int softAes>
 	void VmBase<softAes>::hashAndFill(void* out, uint64_t (&fill_state)[8]) {
 		if (!softAes) {
-			hashAndFillAes1Rx4<0>(scratchpad, ScratchpadSize, &reg.a, fill_state);
+			hashAndFillAes1Rx4<0, 2>(scratchpad, ScratchpadSize, &reg.a, fill_state);
 		}
 		else {
-			if (GetSoftAESImpl() == 1) {
-				hashAndFillAes1Rx4<1>(scratchpad, ScratchpadSize, &reg.a, fill_state);
-			}
-			else {
-				hashAndFillAes1Rx4<2>(scratchpad, ScratchpadSize, &reg.a, fill_state);
-			}
+			(*GetSoftAESImpl())(scratchpad, ScratchpadSize, &reg.a, fill_state);
 		}
 
 		rx_blake2b_wrapper::run(out, RANDOMX_HASH_SIZE, &reg, sizeof(RegisterFile));

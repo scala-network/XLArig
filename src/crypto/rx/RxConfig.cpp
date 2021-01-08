@@ -46,33 +46,36 @@
 
 namespace xmrig {
 
-static const char *kInit        = "init";
-static const char *kMode        = "mode";
-static const char *kOneGbPages  = "1gb-pages";
-static const char *kRdmsr       = "rdmsr";
-static const char *kWrmsr       = "wrmsr";
-static const char *kCacheQoS    = "cache_qos";
+const char *RxConfig::kInit                     = "init";
+const char *RxConfig::kInitAVX2                 = "init-avx2";
+const char *RxConfig::kField                    = "randomx";
+const char *RxConfig::kMode                     = "mode";
+const char *RxConfig::kOneGbPages               = "1gb-pages";
+const char *RxConfig::kRdmsr                    = "rdmsr";
+const char *RxConfig::kWrmsr                    = "wrmsr";
+const char *RxConfig::kScratchpadPrefetchMode   = "scratchpad_prefetch_mode";
+const char *RxConfig::kCacheQoS                 = "cache_qos";
 
 #ifdef XMRIG_FEATURE_HWLOC
-static const char *kNUMA        = "numa";
+const char *RxConfig::kNUMA                     = "numa";
 #endif
 
-static const char *kScratchpadPrefetchMode = "scratchpad_prefetch_mode";
 
 static const std::array<const char *, RxConfig::ModeMax> modeNames = { "auto", "fast", "light" };
 
 
 #ifdef XMRIG_FEATURE_MSR
-constexpr size_t kMsrArraySize = 4;
+constexpr size_t kMsrArraySize = 5;
 
 static const std::array<MsrItems, kMsrArraySize> msrPresets = {
     MsrItems(),
-    MsrItems{{ 0xC0011020, 0x0 }, { 0xC0011021, 0x40, ~0x20ULL }, { 0xC0011022, 0x510000 }, { 0xC001102b, 0x1808cc16 }},
+    MsrItems{{ 0xC0011020, 0ULL }, { 0xC0011021, 0x40ULL, ~0x20ULL }, { 0xC0011022, 0x1510000ULL }, { 0xC001102b, 0x2000cc16ULL }},
+    MsrItems{{ 0xC0011020, 0x0004480000000000ULL }, { 0xC0011021, 0x001c000200000040ULL, ~0x20ULL }, { 0xC0011022, 0xc000000401500000ULL }, { 0xC001102b, 0x2000cc14ULL }},
     MsrItems{{ 0x1a4, 0xf }},
     MsrItems()
 };
 
-static const std::array<const char *, kMsrArraySize> modNames = { "none", "ryzen", "intel", "custom" };
+static const std::array<const char *, kMsrArraySize> modNames = { MSR_NAMES_LIST };
 
 static_assert (kMsrArraySize == ICpuInfo::MSR_MOD_MAX, "kMsrArraySize and MSR_MOD_MAX mismatch");
 #endif
@@ -84,9 +87,10 @@ static_assert (kMsrArraySize == ICpuInfo::MSR_MOD_MAX, "kMsrArraySize and MSR_MO
 bool xmrig::RxConfig::read(const rapidjson::Value &value)
 {
     if (value.IsObject()) {
-        m_threads    = Json::getInt(value, kInit, m_threads);
-        m_mode       = readMode(Json::getValue(value, kMode));
-        m_rdmsr      = Json::getBool(value, kRdmsr, m_rdmsr);
+        m_threads         = Json::getInt(value, kInit, m_threads);
+        m_initDatasetAVX2 = Json::getInt(value, kInitAVX2, m_initDatasetAVX2);
+        m_mode            = readMode(Json::getValue(value, kMode));
+        m_rdmsr           = Json::getBool(value, kRdmsr, m_rdmsr);
 
 #       ifdef XMRIG_FEATURE_MSR
         readMSR(Json::getValue(value, kWrmsr));
@@ -120,7 +124,7 @@ bool xmrig::RxConfig::read(const rapidjson::Value &value)
         }
 #       endif
 
-        const uint32_t mode = static_cast<uint32_t>(Json::getInt(value, kScratchpadPrefetchMode, static_cast<int>(m_scratchpadPrefetchMode)));
+        const auto mode = static_cast<uint32_t>(Json::getInt(value, kScratchpadPrefetchMode, static_cast<int>(m_scratchpadPrefetchMode)));
         if (mode < ScratchpadPrefetchMax) {
             m_scratchpadPrefetchMode = static_cast<ScratchpadPrefetchMode>(mode);
         }
@@ -139,6 +143,7 @@ rapidjson::Value xmrig::RxConfig::toJSON(rapidjson::Document &doc) const
 
     Value obj(kObjectType);
     obj.AddMember(StringRef(kInit),         m_threads, allocator);
+    obj.AddMember(StringRef(kInitAVX2),     m_initDatasetAVX2, allocator);
     obj.AddMember(StringRef(kMode),         StringRef(modeName()), allocator);
     obj.AddMember(StringRef(kOneGbPages),   m_oneGbPages, allocator);
     obj.AddMember(StringRef(kRdmsr),        m_rdmsr, allocator);

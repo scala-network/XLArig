@@ -50,6 +50,7 @@ R"===(
     "colors": true,
     "randomx": {
         "init": -1,
+        "init-avx2": -1,
         "mode": "auto",
         "1gb-pages": false,
         "rdmsr": true,
@@ -61,6 +62,7 @@ R"===(
     "cpu": {
         "enabled": true,
         "huge-pages": true,
+        "huge-pages-jit": false,
         "hw-aes": null,
         "priority": null,
         "memory-pool": false,

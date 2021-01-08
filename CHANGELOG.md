@@ -1,7 +1,12 @@
+# v5.2.1
+- Rebased from XMRig v6.7.0 [(changelog)](doc/CHANGELOG.md)
+- Added Compatibiliy with Apple M1 CPU's
+- Several optimisations for the latest x86 CPU's (mainly Ryzen's)
+
+
 # v5.2.0
 - Updated Panthera algo
 - Removed DefyX algo
-- Rebased from XMRig v6.3.4 [(changelog)](doc/CHANGELOG.md)
 
 
 # v5.1.0
