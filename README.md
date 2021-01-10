@@ -8,7 +8,7 @@ Forked from XMRig for Monero and other cryptonight currencies.
 ## Download
 * Binary releases: https://github.com/scala-network/xlarig/releases
 * Git tree: https://github.com/scala-network/xlarig.git
-  * Clone with `git clone https://github.com/scala-network/xlarig.git` :hammer: [Build instructions](https://github.com/scala-network/xlarig/wiki/Build).
+  * Clone with `git clone https://github.com/scala-network/xlarig.git` :hammer: [Build instructions](doc/building.md).
 
 ## Usage
 
@@ -77,10 +77,6 @@ Misc:
       --dry-run                 test configuration and exit
       --export-topology         export hwloc topology to a XML file and exit
 ```
-
-## Building 
-
-The building instructions has been moved [here](doc/building.md)
 
 ## Donations
 Since the donation mining in XLArig can be turned off, if you wish to help the original creators or the Scala Project team, you can donate with one of the addresses below.
