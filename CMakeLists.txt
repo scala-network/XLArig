@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 project(xlarig)
 
 option(WITH_HWLOC           "Enable hwloc support" OFF)
