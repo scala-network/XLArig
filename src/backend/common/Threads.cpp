@@ -23,8 +23,6 @@
  */
 
 
-#include <type_traits>
-
 #include "backend/common/Threads.h"
 #include "3rdparty/rapidjson/document.h"
 #include "backend/cpu/CpuThreads.h"
@@ -137,8 +135,6 @@ xmrig::String xmrig::Threads<T>::profileName(const Algorithm &algorithm, bool st
             return base;
         }
     }
-
-    if (std::is_same<T, CpuThreads>::value && (name == "panthera") && has("rx")) return "rx";
 
     if (has(kAsterisk)) {
         return kAsterisk;

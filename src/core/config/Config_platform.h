@@ -71,6 +71,8 @@ static const option options[] = {
     { "nicehash",              0, nullptr, IConfig::NicehashKey           },
     { "no-color",              0, nullptr, IConfig::ColorKey              },
     { "no-huge-pages",         0, nullptr, IConfig::HugePagesKey          },
+    { "no-hugepages",          0, nullptr, IConfig::HugePagesKey          },
+    { "hugepage-size",         1, nullptr, IConfig::HugePageSizeKey       },
     { "pass",                  1, nullptr, IConfig::PasswordKey           },
     { "print-time",            1, nullptr, IConfig::PrintTimeKey          },
     { "retries",               1, nullptr, IConfig::RetriesKey            },
@@ -155,7 +157,12 @@ static const option options[] = {
 #   endif
 #   ifdef XMRIG_FEATURE_NVML
     { "no-nvml",               0, nullptr, IConfig::NvmlKey               },
+#   endif
+#   if defined(XMRIG_FEATURE_NVML) || defined (XMRIG_FEATURE_ADL)
     { "health-print-time",     1, nullptr, IConfig::HealthPrintTimeKey    },
+#   endif
+#   ifdef XMRIG_FEATURE_DMI
+    { "no-dmi",                0, nullptr, IConfig::DmiKey                },
 #   endif
     { nullptr,                 0, nullptr, 0 }
 };
