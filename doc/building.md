@@ -38,3 +38,16 @@ mkdir xlarig/build && cd xlarig/scripts
 cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DHWLOC_INCLUDE_DIR=../scripts/deps/include -DHWLOC_LIBRARY=../scripts/deps/lib/libhwloc.a
 make -j$(sysctl -n hw.logicalcpu)
 ```
+
+### Raspberry Pi 4
+
+Since Raspbian is a 32 bit OS and XLArig is a 64 bit miner, you'll need to be on a 64-bit container if you don't want to get a segmentation fault after starting it.
+If the command `ds64-shell` doesn't work, here's the command to install that package : ``sudo apt-get install -y raspbian-nspawn-64``
+
+```
+sudo apt-get install git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
+git clone https://github.com/scala-network/XLArig
+mkdir xlarig/build && cd xlarig/build
+cmake ..
+make -j$(nproc)
+```
