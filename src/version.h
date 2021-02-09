@@ -28,7 +28,7 @@
 #define APP_ID        "xlarig"
 #define APP_NAME      "XLArig"
 #define APP_DESC      "XLArig miner"
-#define APP_VERSION   "5.2.1a"
+#define APP_VERSION   "5.2.2"
 #define APP_DOMAIN    "xmrig.com"
 #define APP_SITE      "www.xmrig.com"
 #define APP_COPYRIGHT "Copyright (C) 2016-2020 xmrig.com | 2018-2020 scalaproject.io"
@@ -36,7 +36,7 @@
 
 #define APP_VER_MAJOR  5
 #define APP_VER_MINOR  2
-#define APP_VER_PATCH  1a
+#define APP_VER_PATCH  2
 
 #ifdef _MSC_VER
 #   if (_MSC_VER >= 1920)

@@ -1,5 +1,6 @@
-# v5.2.1a
+# v5.2.2
 - Rebased from XMRig v6.8.1 [(changelog)](doc/CHANGELOG.md)
+- Full RandomX integration for Panthera
 
 # v5.2.1
 - Rebased from XMRig v6.7.0
