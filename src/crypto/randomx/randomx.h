@@ -75,10 +75,11 @@ struct RandomX_ConfigurationBase
 		DatasetExtraItems_Calculated = DatasetExtraSize / RANDOMX_DATASET_ITEM_SIZE,
 		ConditionMask_Calculated = ((1 << JumpBits) - 1) << JumpOffset,
 	};
-	uint32_t ArgonMemory;
-	uint32_t CacheAccesses;
-	uint32_t DatasetBaseSize;
-		
+
+        uint32_t ArgonMemory;
+        uint32_t CacheAccesses;
+        uint32_t DatasetBaseSize;
+
 	uint32_t ArgonIterations;
 	uint32_t ArgonLanes;
 	const char* ArgonSalt;
@@ -132,7 +133,8 @@ struct RandomX_ConfigurationBase
 	uint8_t codeReadDatasetLightSshInitTweaked[68];
 	uint8_t codePrefetchScratchpadTweaked[32];
 
-	uint32_t CacheLineAlignMask_Calculated;
+        uint32_t CacheLineAlignMask_Calculated;
+
 	uint32_t AddressMask_Calculated[4];
 	uint32_t ScratchpadL3Mask_Calculated;
 	uint32_t ScratchpadL3Mask64_Calculated;
@@ -317,14 +319,10 @@ RANDOMX_EXPORT void randomx_destroy_vm(randomx_vm *machine);
  * @param output is a pointer to memory where the hash will be stored. Must not
  *        be NULL and at least RANDOMX_HASH_SIZE bytes must be available for writing.
 */
-RANDOMX_EXPORT void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
-RANDOMX_EXPORT void randomx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
-RANDOMX_EXPORT void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
+RANDOMX_EXPORT void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output, const xmrig::Algorithm algo);
 
-RANDOMX_EXPORT void panthera_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output);
-RANDOMX_EXPORT void panthera_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize);
-RANDOMX_EXPORT void panthera_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output);
-
+RANDOMX_EXPORT void randomx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize, const xmrig::Algorithm algo);
+RANDOMX_EXPORT void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output, const xmrig::Algorithm algo);
 
 #if defined(__cplusplus)
 }

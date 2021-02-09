@@ -136,7 +136,6 @@ void xmrig::CpuConfig::read(const rapidjson::Value &value)
         m_yield        = Json::getBool(value, kYield, m_yield);
 
         setAesMode(Json::getValue(value, kHwAes));
-        setPriority(Json::getInt(value,  kPriority, -1));
         setHugePages(Json::getValue(value, kHugePages));
         setMemoryPool(Json::getValue(value, kMemoryPool));
         setPriority(Json::getInt(value,  kPriority, -1));

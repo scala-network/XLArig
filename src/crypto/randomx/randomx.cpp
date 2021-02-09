@@ -47,6 +47,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
+extern "C" {
+#include "crypto/randomx/panthera/yespower.h"
+#include "crypto/randomx/panthera/KangarooTwelve.h"
+}
+
 #include "crypto/rx/Profiler.h"
 
 RandomX_ConfigurationWownero::RandomX_ConfigurationWownero()
@@ -114,15 +119,6 @@ RandomX_ConfigurationScala::RandomX_ConfigurationScala()
 
 	RANDOMX_FREQ_IADD_RS = 25;
 	RANDOMX_FREQ_CBRANCH = 16;
-
-  // Begin of DefyX/Panthera DATASET
-  const uint32_t DatasetBaseMask = DatasetBaseSize - RANDOMX_DATASET_ITEM_SIZE;
-  *(uint32_t*)(codeReadDatasetRyzenTweaked + 9) = DatasetBaseMask;
-  *(uint32_t*)(codeReadDatasetRyzenTweaked + 24) = DatasetBaseMask;
-  *(uint32_t*)(codeReadDatasetTweaked + 7) = DatasetBaseMask;
-  *(uint32_t*)(codeReadDatasetTweaked + 23) = DatasetBaseMask;
-  *(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
-  // End of DefyX/Panthera DATASET
 }
 
 RandomX_ConfigurationBase::RandomX_ConfigurationBase()
@@ -243,15 +239,17 @@ void RandomX_ConfigurationBase::Apply()
 
 	ScratchpadL3Mask_Calculated = (((ScratchpadL3_Size / sizeof(uint64_t)) - 1) * 8);
 	ScratchpadL3Mask64_Calculated = ((ScratchpadL3_Size / sizeof(uint64_t)) / 8 - 1) * 64;
-	CacheLineAlignMask_Calculated = (DatasetBaseSize - 1) & ~(RANDOMX_DATASET_ITEM_SIZE - 1);
-	
+
+        CacheLineAlignMask_Calculated = (DatasetBaseSize - 1) & ~(RANDOMX_DATASET_ITEM_SIZE - 1);
+
 #if defined(_M_X64) || defined(__x86_64__)
 	*(uint32_t*)(codeShhPrefetchTweaked + 3) = ArgonMemory * 16 - 1;
-	// Not needed right now because all variants use default dataset base size
-	//const uint32_t DatasetBaseMask = DatasetBaseSize - RANDOMX_DATASET_ITEM_SIZE;
-	//*(uint32_t*)(codeReadDatasetTweaked + 9) = DatasetBaseMask;
-	//*(uint32_t*)(codeReadDatasetTweaked + 24) = DatasetBaseMask;
-	//*(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
+	const uint32_t DatasetBaseMask = DatasetBaseSize - RANDOMX_DATASET_ITEM_SIZE;
+	*(uint32_t*)(codeReadDatasetRyzenTweaked + 9) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetRyzenTweaked + 24) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetTweaked + 7) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetTweaked + 23) = DatasetBaseMask;
+	*(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
 
 	*(uint32_t*)(codePrefetchScratchpadTweaked + 4) = ScratchpadL3Mask64_Calculated;
 	*(uint32_t*)(codePrefetchScratchpadTweaked + 18) = ScratchpadL3Mask64_Calculated;
@@ -388,32 +386,17 @@ RandomX_ConfigurationArqma RandomX_ArqmaConfig;
 RandomX_ConfigurationSafex RandomX_SafexConfig;
 RandomX_ConfigurationKeva RandomX_KevaConfig;
 RandomX_ConfigurationScala RandomX_ScalaConfig;
- 
+
 alignas(64) RandomX_ConfigurationBase RandomX_CurrentConfig;
 
 static std::mutex vm_pool_mutex;
 
-extern "C" {
-#include "panthera/yespower.h"
-#include "panthera/KangarooTwelve.h"
-  int yespower_hash(const void *data, size_t length, void *hash)
-  {
-    yespower_params_t params = {
-      .version = YESPOWER_1_0,
-      .N = 2048,
-      .r = 8,
-      .pers = NULL
-    };
-
-    int finale_yespower = yespower_tls((const uint8_t *) data, length, &params, (yespower_binary_t *) hash);
-    return finale_yespower; //0 for success
-  }
-
-  int k12(const void *data, size_t length, void *hash)
-  {
-    int kDo = KangarooTwelve((const unsigned char *) data, length, (unsigned char *) hash, 32, 0, 0);
-    return kDo;
-  }
+int rx_yespower_k12(void *out, size_t outlen, const void *in, size_t inlen)
+{
+	rx_blake2b_wrapper::run(out, outlen, in, inlen);
+	yespower_params_t params = { YESPOWER_1_0, 2048, 8, NULL };
+	if (yespower_tls((const uint8_t *)out, outlen, &params, (yespower_binary_t *)out)) return -1;
+	return KangarooTwelve((const unsigned char *)out, outlen, (unsigned char *)out, 32, 0, 0);
 }
 
 extern "C" {
@@ -616,12 +599,15 @@ extern "C" {
 		vm->~randomx_vm();
 	}
 
-	void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output) {
+	void randomx_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output, const xmrig::Algorithm algo) {
 		assert(machine != nullptr);
 		assert(inputSize == 0 || input != nullptr);
 		assert(output != nullptr);
 		alignas(16) uint64_t tempHash[8];
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
+                switch (algo) {
+                    case xmrig::Algorithm::RX_XLA:   rx_yespower_k12(tempHash, sizeof(tempHash), input, inputSize); break;
+		    default: rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
+		}
 		machine->initScratchpad(&tempHash);
 		machine->resetRoundingMode();
 		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
@@ -632,12 +618,15 @@ extern "C" {
 		machine->getFinalResult(output);
 	}
 
-	void randomx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize) {
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
+	void randomx_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize, const xmrig::Algorithm algo) {
+                switch (algo) {
+                    case xmrig::Algorithm::RX_XLA:   rx_yespower_k12(tempHash, sizeof(tempHash), input, inputSize); break;
+		    default: rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
+		}
 		machine->initScratchpad(tempHash);
 	}
 
-	void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output) {
+	void randomx_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output, const xmrig::Algorithm algo) {
 		PROFILE_SCOPE(RandomX_hash);
 
 		machine->resetRoundingMode();
@@ -648,47 +637,11 @@ extern "C" {
 		machine->run(&tempHash);
 
 		// Finish current hash and fill the scratchpad for the next hash at the same time
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), nextInput, nextInputSize);
+                switch (algo) {
+                    case xmrig::Algorithm::RX_XLA:   rx_yespower_k12(tempHash, sizeof(tempHash), nextInput, nextInputSize); break;
+		    default: rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), nextInput, nextInputSize);
+		}
 		machine->hashAndFill(output, tempHash);
 	}
- 
-	void panthera_calculate_hash(randomx_vm *machine, const void *input, size_t inputSize, void *output) {
-		assert(machine != nullptr);
-		assert(inputSize == 0 || input != nullptr);
-		assert(output != nullptr);
-		alignas(16) uint64_t tempHash[8];
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
-		yespower_hash(tempHash, sizeof(tempHash), tempHash);
-		k12(tempHash, sizeof(tempHash), tempHash);
-		machine->initScratchpad(&tempHash);
-		machine->resetRoundingMode();
-		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
-			machine->run(&tempHash);
-			rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile));
-		}
-		machine->run(&tempHash);
-		machine->getFinalResult(output);
-	}
 
-	void panthera_calculate_hash_first(randomx_vm* machine, uint64_t (&tempHash)[8], const void* input, size_t inputSize) {
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), input, inputSize);
-		yespower_hash(tempHash, sizeof(tempHash), tempHash);
-		k12(tempHash, sizeof(tempHash), tempHash);
-		machine->initScratchpad(tempHash);
-	}
-
-	void panthera_calculate_hash_next(randomx_vm* machine, uint64_t (&tempHash)[8], const void* nextInput, size_t nextInputSize, void* output) {
-		machine->resetRoundingMode();
-		for (uint32_t chain = 0; chain < RandomX_CurrentConfig.ProgramCount - 1; ++chain) {
-			machine->run(&tempHash);
-			rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), machine->getRegisterFile(), sizeof(randomx::RegisterFile));
-		}
-		machine->run(&tempHash);
-
-		// Finish current hash and fill the scratchpad for the next hash at the same time
-		rx_blake2b_wrapper::run(tempHash, sizeof(tempHash), nextInput, nextInputSize);
-		yespower_hash(tempHash, sizeof(tempHash), tempHash);
-		k12(tempHash, sizeof(tempHash), tempHash);
-		machine->hashAndFill(output, tempHash);
-	}
 }
