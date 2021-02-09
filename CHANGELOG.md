@@ -1,5 +1,8 @@
+# v5.2.1a
+- Rebased from XMRig v6.8.1 [(changelog)](doc/CHANGELOG.md)
+
 # v5.2.1
-- Rebased from XMRig v6.7.0 [(changelog)](doc/CHANGELOG.md)
+- Rebased from XMRig v6.7.0
 - Added Compatibiliy with Apple M1 CPU's
 - Several optimisations for the latest x86 CPU's (mainly Ryzen's)
 
