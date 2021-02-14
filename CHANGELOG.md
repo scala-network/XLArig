@@ -1,6 +1,7 @@
 # v5.2.2
 - Rebased from XMRig v6.8.1 [(changelog)](doc/CHANGELOG.md)
 - Full RandomX integration for Panthera
+- Better algo detection (it only use the "True" CPU Cores, since HT ones only add electricity costs if used) 
 
 # v5.2.1
 - Rebased from XMRig v6.7.0
