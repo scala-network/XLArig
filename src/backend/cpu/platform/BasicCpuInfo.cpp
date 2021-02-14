@@ -2,6 +2,7 @@
  * Copyright (c) 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2021 XMRig       <support@xmrig.com>
+ * Copyright 2018-2021 The Scala Project Team  <https://github.com/scala-network>, <hello@scalaproject.io>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -334,12 +335,14 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
         if (algorithm == Algorithm::RX_WOW) {
             return count_limit;
         }
+// True core detection - Thanks Bendr0id for the code !
 		if (algorithm == Algorithm::RX_XLA) {
 			CpuThreads threads;
 			for (size_t i = 0; i < std::max<size_t>(count / 2, 1); ++i) {
                 threads.add(i, 0);
             }
             return threads;
+//end
         }
         return count_limit2;
     }

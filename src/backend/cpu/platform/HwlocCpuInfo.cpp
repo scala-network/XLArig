@@ -1,6 +1,7 @@
 /* XMRig
  * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2021 XMRig       <support@xmrig.com>
+ * Copyright 2018-2021 The Scala Project Team  <https://github.com/scala-network>, <hello@scalaproject.io>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -356,7 +357,7 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
         for (hwloc_obj_t core : cores) {
             const std::vector<hwloc_obj_t> units = findByType(core, HWLOC_OBJ_PU);
             for (hwloc_obj_t pu : units) {
-				
+// True core detection - Thanks Bendr0id for the code !
 				#   ifdef XMRIG_ALGO_RANDOMX
 				if (algorithm == Algorithm::RX_XLA) {
 					if (core->first_child != pu) {
@@ -364,6 +365,7 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
 					}
 				}
 				#   endif
+//end
               threads.add(pu->os_index, intensity);
             }
         }
@@ -380,7 +382,7 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
             if (units.size() <= pu_id) {
                 continue;
             }
-
+// True core detection - Thanks Bendr0id for the code !
 			#   ifdef XMRIG_ALGO_RANDOMX
            if (algorithm == Algorithm::RX_XLA) {
 				if (core->first_child != units[pu_id]) {
@@ -388,7 +390,7 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
 				}
 			}
 			#   endif
-
+// end
             cacheHashes--;
             PUs--;
 
