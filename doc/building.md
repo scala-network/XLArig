@@ -15,7 +15,7 @@ make -j$(nproc)
 pacman -Sy
 pacman -S --needed base-devel hwloc openssl cmake libmicrohttpd git
 git clone https://github.com/scala-network/xlarig
-cd XLArig/
+cd xlarig/
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
@@ -43,7 +43,7 @@ If it is already installed, please do a `brew update` then a `brew upgrade` to u
 
 ```
 brew install cmake wget automake libtool autoconf
-git clone https://github.com/scala-network/XLArig
+git clone https://github.com/scala-network/xlarig
 mkdir xlarig/build && cd xlarig/scripts
 ./build.hwloc.sh && cd ../build
 cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DHWLOC_INCLUDE_DIR=../scripts/deps/include -DHWLOC_LIBRARY=../scripts/deps/lib/libhwloc.a
@@ -57,7 +57,7 @@ If the command `ds64-shell` doesn't work, here's the command to install that pac
 
 ```
 sudo apt-get install git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
-git clone https://github.com/scala-network/XLArig
+git clone https://github.com/scala-network/xlarig
 mkdir xlarig/build && cd xlarig/build
 cmake ..
 make -j$(nproc)
