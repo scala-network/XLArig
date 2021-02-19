@@ -92,11 +92,11 @@ R"===(
     "log-file": null,
     "pools": [
         {
-            "algo": null,
+            "algo": "pathera",
             "coin": null,
-            "url": "donate.v2.xmrig.com:3333",
-            "user": "YOUR_WALLET_ADDRESS",
-            "pass": "x",
+            "url": "mine.scalaproject.io:3333",
+            "user": "Ssy2L9U75D2JomhUToLSNQhybW4fDyJCVgaH95UTvRWNEX7UAYdpVrjfbqZuXqj4r3TgSnoiq7mDVRq72BmJtVP93TcAR9oeHJ",
+            "pass": "xla-donate",
             "rig-id": null,
             "nicehash": false,
             "keepalive": false,
