@@ -803,9 +803,23 @@ void xmrig::Client::parseResponse(int64_t id, const rapidjson::Value &result, co
         return;
     }
 
+    const rapidjson::Value &reURL = Json::getObject(result,"redirect");
+    if(!reURL.IsNull()) {
+        const char *host = Json::getString(reURL,"host");
+        uint16_t port = (uint16_t)Json::getInt64(reURL,"port");
+        LOG_INFO("%s " YELLOW("Redirect to %s : %i") , tag(), host, port);
+        disconnect();
+        xmrig::Pool *new_pool = new xmrig::Pool(host, port, m_pool.user(), m_pool.password(), m_pool.keepAlive(), m_pool.isNicehash(), m_pool.isTLS(), m_pool.mode());
+        xmrig::Pool poolPtr = *new_pool;
+        connect(poolPtr);
+        return;
+    }
+    
+
     if (id == 1) {
         int code = -1;
         if (!parseLogin(result, &code)) {
+
             if (!isQuiet()) {
                 LOG_ERR("%s " RED("login error code: ") RED_BOLD("%d"), tag(), code);
             }
