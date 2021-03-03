@@ -92,7 +92,7 @@ R"===(
     "log-file": null,
     "pools": [
         {
-            "algo": "pathera",
+            "algo": "panthera",
             "coin": null,
             "url": "mine.scalaproject.io:3333",
             "user": "Ssy2L9U75D2JomhUToLSNQhybW4fDyJCVgaH95UTvRWNEX7UAYdpVrjfbqZuXqj4r3TgSnoiq7mDVRq72BmJtVP93TcAR9oeHJ",
