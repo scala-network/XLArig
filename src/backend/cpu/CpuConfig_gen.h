@@ -7,6 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2020 SChernykh   <https://github.com/SChernykh>
  * Copyright 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2021 The Scala Project Team  <https://github.com/scala-network>, <hello@scalaproject.io>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -132,6 +133,10 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
 
     if (!threads.isExist(Algorithm::RX_WOW)) {
         count += threads.move("rx/wow", std::move(wow));
+    }
+
+    if (!threads.isExist(Algorithm::RX_XLA)) {
+        count += generate("panthera", threads, Algorithm::RX_XLA, limit);
     }
 
     count += generate("rx", threads, Algorithm::RX_0, limit);

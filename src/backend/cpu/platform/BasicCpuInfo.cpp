@@ -1,7 +1,8 @@
 /* XMRig
  * Copyright (c) 2017-2019 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
- * Copyright (c) 2018-2020 SChernykh   <https://github.com/SChernykh>
- * Copyright (c) 2016-2020 XMRig       <support@xmrig.com>
+ * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2021 XMRig       <support@xmrig.com>
+ * Copyright 2018-2021 The Scala Project Team  <https://github.com/scala-network>, <hello@scalaproject.io>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -190,6 +191,11 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
     m_flags.set(FLAG_CAT_L3,  has_cat_l3());
     m_flags.set(FLAG_VM,      is_vm());
 
+    m_units.resize(m_threads);
+    for (int32_t i = 0; i < static_cast<int32_t>(m_threads); ++i) {
+        m_units[i] = i;
+    }
+
 #   ifdef XMRIG_FEATURE_ASM
     if (hasAES()) {
         char vendor[13] = { 0 };
@@ -296,9 +302,11 @@ const char *xmrig::BasicCpuInfo::backend() const
 }
 
 
-xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint32_t) const
+xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint32_t limit) const
 {
-    const size_t count = std::thread::hardware_concurrency();
+    const uint32_t count = std::thread::hardware_concurrency();
+    const uint32_t count_limit  = std::max(static_cast<uint32_t>(count * (limit / 100.0f)), 1U);
+    const uint32_t count_limit2 = std::max(static_cast<uint32_t>(count / 2), count_limit);
 
     if (count == 1) {
         return 1;
@@ -306,49 +314,57 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
 
 #   ifdef XMRIG_ALGO_CN_LITE
     if (algorithm.family() == Algorithm::CN_LITE) {
-        return CpuThreads(count, 1);
+        return CpuThreads(count_limit, 1);
     }
 #   endif
 
 #   ifdef XMRIG_ALGO_CN_PICO
     if (algorithm.family() == Algorithm::CN_PICO) {
-        return CpuThreads(count, 2);
+        return CpuThreads(count_limit, 2);
     }
 #   endif
 
 #   ifdef XMRIG_ALGO_CN_HEAVY
     if (algorithm.family() == Algorithm::CN_HEAVY) {
-        return CpuThreads(std::max<size_t>(count / 4, 1), 1);
+        return CpuThreads(count_limit4, 1);
     }
 #   endif
 
 #   ifdef XMRIG_ALGO_RANDOMX
     if (algorithm.family() == Algorithm::RANDOM_X) {
         if (algorithm == Algorithm::RX_WOW) {
-            return count;
+            return count_limit;
         }
-
-        return std::max<size_t>(count / 2, 1);
+// True core detection - Thanks Bendr0id for the code !
+		if (algorithm == Algorithm::RX_XLA) {
+			CpuThreads threads;
+			for (size_t i = 0; i < std::max<size_t>(count / 2, 1); ++i) {
+                threads.add(i, 0);
+            }
+            return threads;
+//end
+        }
+        return count_limit2;
     }
 #   endif
 
 #   ifdef XMRIG_ALGO_ARGON2
     if (algorithm.family() == Algorithm::ARGON2) {
-        return count;
+        return count_limit;
     }
 #   endif
 
 #   ifdef XMRIG_ALGO_ASTROBWT
     if (algorithm.family() == Algorithm::ASTROBWT) {
         CpuThreads threads;
-        for (size_t i = 0; i < count; ++i) {
+        for (size_t i = 0; i < count_limit; ++i) {
             threads.add(i, 0);
         }
         return threads;
     }
 #   endif
 
-    return CpuThreads(std::max<size_t>(count / 2, 1), 1);
+    return CpuThreads(count_limit2, 1);
 }
 
 

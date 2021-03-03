@@ -1,6 +1,7 @@
 /* XMRig
  * Copyright (c) 2018-2020 SChernykh   <https://github.com/SChernykh>
  * Copyright (c) 2016-2020 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2021 The Scala Project Team  <https://github.com/scala-network>, <hello@scalaproject.io>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -241,24 +242,18 @@ void xmrig::CpuWorker<N>::start()
 
 #           ifdef XMRIG_ALGO_RANDOMX
             if (job.algorithm().family() == Algorithm::RANDOM_X) {
+
                 if (first) {
                     first = false;
-                    if (job.algorithm() == Algorithm::RX_XLA) {
-                      panthera_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
-                    } else {
-                      randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size());
-                    }                
-				}
+                    randomx_calculate_hash_first(m_vm, tempHash, m_job.blob(), job.size(), job.algorithm());
+                }
 
                 if (!nextRound()) {
                     break;
                 }
-				if (job.algorithm() == Algorithm::RX_XLA) {
-                  panthera_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
-                } else {
-                  randomx_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash);
-                }            
-			}
+
+                randomx_calculate_hash_next(m_vm, tempHash, m_job.blob(), job.size(), m_hash, job.algorithm());
+            }
             else
 #           endif
             {

@@ -7,6 +7,7 @@
  * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
  * Copyright 2018-2019 SChernykh   <https://github.com/SChernykh>
  * Copyright 2016-2019 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright 2018-2021 The Scala Project Team  <https://github.com/scala-network>, <hello@scalaproject.io>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@
 #define APP_ID        "xlarig"
 #define APP_NAME      "XLArig"
 #define APP_DESC      "XLArig miner"
-#define APP_VERSION   "5.2.1"
+#define APP_VERSION   "5.2.2"
 #define APP_DOMAIN    "xmrig.com"
 #define APP_SITE      "www.xmrig.com"
 #define APP_COPYRIGHT "Copyright (C) 2016-2020 xmrig.com | 2018-2020 scalaproject.io"
@@ -36,7 +37,7 @@
 
 #define APP_VER_MAJOR  5
 #define APP_VER_MINOR  2
-#define APP_VER_PATCH  1
+#define APP_VER_PATCH  2
 
 #ifdef _MSC_VER
 #   if (_MSC_VER >= 1920)

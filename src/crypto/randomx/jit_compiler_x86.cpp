@@ -1,7 +1,7 @@
 /*
 Copyright (c) 2018-2020, tevador    <tevador@gmail.com>
-Copyright (c) 2019-2020, SChernykh  <https://github.com/SChernykh>
-Copyright (c) 2019-2020, XMRig      <https://github.com/xmrig>, <support@xmrig.com>
+Copyright (c) 2019-2021, SChernykh  <https://github.com/SChernykh>
+Copyright (c) 2019-2021, XMRig      <https://github.com/xmrig>, <support@xmrig.com>
 
 All rights reserved.
 
@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "crypto/rx/Profiler.h"
 
 #ifdef XMRIG_FIX_RYZEN
-#   include "crypto/rx/Rx.h"
+#   include "crypto/rx/RxFix.h"
 #endif
 
 #ifdef _MSC_VER
@@ -164,8 +164,9 @@ namespace randomx {
 	static const uint8_t NOP6[] = { 0x66, 0x0F, 0x1F, 0x44, 0x00, 0x00 };
 	static const uint8_t NOP7[] = { 0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00 };
 	static const uint8_t NOP8[] = { 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	static const uint8_t NOP9[] = { 0x66, 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	static const uint8_t* NOPX[] = { NOP1, NOP2, NOP3, NOP4, NOP5, NOP6, NOP7, NOP8 };
+	static const uint8_t* NOPX[] = { NOP1, NOP2, NOP3, NOP4, NOP5, NOP6, NOP7, NOP8, NOP9 };
 
 	static const uint8_t JMP_ALIGN_PREFIX[14][16] = {
 		{},
@@ -416,21 +417,20 @@ namespace randomx {
 
 	void JitCompilerX86::generateProgramPrologue(Program& prog, ProgramConfiguration& pcfg) {
 		codePos = ADDR(randomx_program_prologue_first_load) - ADDR(randomx_program_prologue);
-		code[codePos + 2] = 0xc0 + pcfg.readReg0;
-		code[codePos + 5] = 0xc0 + pcfg.readReg1;
-		*(uint32_t*)(code + codePos + 10) = RandomX_CurrentConfig.ScratchpadL3Mask64_Calculated;
-		*(uint32_t*)(code + codePos + 20) = RandomX_CurrentConfig.ScratchpadL3Mask64_Calculated;
+		*(uint32_t*)(code + codePos + 4) = RandomX_CurrentConfig.ScratchpadL3Mask64_Calculated;
+		*(uint32_t*)(code + codePos + 14) = RandomX_CurrentConfig.ScratchpadL3Mask64_Calculated;
 		if (hasAVX) {
-			uint32_t* p = (uint32_t*)(code + codePos + 67);
+			uint32_t* p = (uint32_t*)(code + codePos + 61);
 			*p = (*p & 0xFF000000U) | 0x0077F8C5U;
 		}
 
 #		ifdef XMRIG_FIX_RYZEN
-		xmrig::Rx::setMainLoopBounds(mainLoopBounds);
+        xmrig::RxFix::setMainLoopBounds(mainLoopBounds);
 #		endif
 
 		memcpy(code + prologueSize - 48, &pcfg.eMask, sizeof(pcfg.eMask));
 		codePos = codePosFirst;
+		prevCFROUND = 0;
 
 		//mark all registers as used
 		uint64_t* r = (uint64_t*)registerUsage;
@@ -1155,6 +1155,8 @@ namespace randomx {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
 
+		prevCFROUND = 0;
+
 		const uint64_t dst = instr.dst % RegisterCountFlt;
 		const uint64_t src = instr.src % RegisterCountFlt;
 
@@ -1167,6 +1169,8 @@ namespace randomx {
 	void JitCompilerX86::h_FADD_M(const Instruction& instr) {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
+
+		prevCFROUND = 0;
 
 		const uint32_t src = instr.src % RegistersCount;
 		const uint32_t dst = instr.dst % RegisterCountFlt;
@@ -1183,6 +1187,8 @@ namespace randomx {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
 
+		prevCFROUND = 0;
+
 		const uint64_t dst = instr.dst % RegisterCountFlt;
 		const uint64_t src = instr.src % RegisterCountFlt;
 
@@ -1195,6 +1201,8 @@ namespace randomx {
 	void JitCompilerX86::h_FSUB_M(const Instruction& instr) {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
+
+		prevCFROUND = 0;
 
 		const uint32_t src = instr.src % RegistersCount;
 		const uint32_t dst = instr.dst % RegisterCountFlt;
@@ -1221,7 +1229,9 @@ namespace randomx {
 	void JitCompilerX86::h_FMUL_R(const Instruction& instr) {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
-		
+
+		prevCFROUND = 0;
+
 		const uint64_t dst = instr.dst % RegisterCountFlt;
 		const uint64_t src = instr.src % RegisterCountFlt;
 
@@ -1234,6 +1244,8 @@ namespace randomx {
 	void JitCompilerX86::h_FDIV_M(const Instruction& instr) {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
+
+		prevCFROUND = 0;
 
 		const uint32_t src = instr.src % RegistersCount;
 		const uint64_t dst = instr.dst % RegisterCountFlt;
@@ -1260,6 +1272,8 @@ namespace randomx {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
 
+		prevCFROUND = 0;
+
 		const uint32_t dst = instr.dst % RegisterCountFlt;
 
 		emit32(0xe4510f66 + (((dst << 3) + dst) << 24), p, pos);
@@ -1269,7 +1283,22 @@ namespace randomx {
 
 	void JitCompilerX86::h_CFROUND(const Instruction& instr) {
 		uint8_t* const p = code;
-		uint32_t pos = codePos;
+		uint32_t pos = prevCFROUND;
+
+		if (pos) {
+			if (vm_flags & RANDOMX_FLAG_AMD) {
+				memcpy(p + pos + 0, NOP9, 9);
+				memcpy(p + pos + 9, NOP9, 9);
+				memcpy(p + pos + 18, NOP8, 8);
+			}
+			else {
+				memcpy(p + pos + 0, NOP8, 8);
+				memcpy(p + pos + 8, NOP6, 6);
+			}
+		}
+
+		pos = codePos;
+		prevCFROUND = pos;
 
 		const uint32_t src = instr.src % RegistersCount;
 
@@ -1293,7 +1322,22 @@ namespace randomx {
 
 	void JitCompilerX86::h_CFROUND_BMI2(const Instruction& instr) {
 		uint8_t* const p = code;
-		uint32_t pos = codePos;
+		uint32_t pos = prevCFROUND;
+
+		if (pos) {
+			if (vm_flags & RANDOMX_FLAG_AMD) {
+				memcpy(p + pos + 0, NOP9, 9);
+				memcpy(p + pos + 9, NOP9, 9);
+				memcpy(p + pos + 18, NOP7, 7);
+			}
+			else {
+				memcpy(p + pos + 0, NOP8, 8);
+				memcpy(p + pos + 8, NOP5, 5);
+			}
+		}
+
+		pos = codePos;
+		prevCFROUND = pos;
 
 		const uint64_t src = instr.src % RegistersCount;
 
@@ -1318,7 +1362,9 @@ namespace randomx {
 	void JitCompilerX86::h_CBRANCH(const Instruction& instr) {
 		uint8_t* const p = code;
 		uint32_t pos = codePos;
-		
+
+		prevCFROUND = 0;
+
 		const int reg = instr.dst % RegistersCount;
 		int32_t jmp_offset = registerUsage[reg] - (pos + 16);
 
