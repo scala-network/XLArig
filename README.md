@@ -82,13 +82,9 @@ Misc:
 Since the donation mining in XLArig can be turned off, if you wish to help the original creators or the Scala Project team, you can donate with one of the addresses below.
 
 * The Scala Project Team addresses:
-	* Global wallets :
-		*	WIP (waiting for the new addresses to be generated)
+	* Team's wallets :
+		*	XLA : `Ssy2L9U75D2JomhUToLSNQhybW4fDyJCVgaH95UTvRWNEX7UAYdpVrjfbqZuXqj4r3TgSnoiq7mDVRq72BmJtVP93TcAR9oeHJ`
 		
-	* Teredic :
-		*	BTC: `34R361wbG28Fdqk5e2zkVHqJdSYPmuoeKF`
-		*	XLA: `Ssy29d734PWJveMXbCKX9cRbqCXNYq78A3N2NT1mPDnCZQW2WMnuQTfCqVwcqmS7dvcqEgLiRNQduFoYrjHtx4Rw1yE1YP7JNt`
-	
 * Original Creators addresses: 
   *	XMR: `48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD`
   *	BTC: `1P7ujsXeX7GxQwHNnJsRMgAdNkFZmNVqJT`
