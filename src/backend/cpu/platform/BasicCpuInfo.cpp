@@ -332,10 +332,6 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
 
 #   ifdef XMRIG_ALGO_RANDOMX
     if (algorithm.family() == Algorithm::RANDOM_X) {
-        if (algorithm == Algorithm::RX_WOW) {
-            return count_limit;
-			}
-        }
         return count_limit2;
     }
 #   endif

@@ -25,22 +25,6 @@
 #include "base/io/log/Tags.h"
 #include "base/tools/Chrono.h"
 
-
-#ifdef XMRIG_FEATURE_OPENCL
-#   include "backend/opencl/OclWorker.h"
-#endif
-
-
-#ifdef XMRIG_FEATURE_CUDA
-#   include "backend/cuda/CudaWorker.h"
-#endif
-
-
-#ifdef XMRIG_FEATURE_BENCHMARK
-#   include "backend/common/benchmark/Benchmark.h"
-#endif
-
-
 namespace xmrig {
 
 
@@ -106,14 +90,8 @@ bool xmrig::Workers<T>::tick(uint64_t)
     if (totalAvailable) {
         d_ptr->hashrate->add(totalHashCount, Chrono::steadyMSecs());
     }
-
-#   ifdef XMRIG_FEATURE_BENCHMARK
-    return !d_ptr->benchmark || !d_ptr->benchmark->finish(totalHashCount);
-#   else
-    return true;
-#   endif
+	return true;
 }
-
 
 template<class T>
 const xmrig::Hashrate *xmrig::Workers<T>::hashrate() const
@@ -148,22 +126,6 @@ void xmrig::Workers<T>::stop()
 
     d_ptr->hashrate.reset();
 }
-
-
-#ifdef XMRIG_FEATURE_BENCHMARK
-template<class T>
-void xmrig::Workers<T>::start(const std::vector<T> &data, const std::shared_ptr<Benchmark> &benchmark)
-{
-    if (!benchmark) {
-        return start(data, true);
-    }
-
-    start(data, false);
-
-    d_ptr->benchmark = benchmark;
-    d_ptr->benchmark->start();
-}
-#endif
 
 
 template<class T>
@@ -252,30 +214,5 @@ xmrig::IWorker *xmrig::Workers<CpuLaunchData>::create(Thread<CpuLaunchData> *han
 
 
 template class Workers<CpuLaunchData>;
-
-
-#ifdef XMRIG_FEATURE_OPENCL
-template<>
-xmrig::IWorker *xmrig::Workers<OclLaunchData>::create(Thread<OclLaunchData> *handle)
-{
-    return new OclWorker(handle->id(), handle->config());
-}
-
-
-template class Workers<OclLaunchData>;
-#endif
-
-
-#ifdef XMRIG_FEATURE_CUDA
-template<>
-xmrig::IWorker *xmrig::Workers<CudaLaunchData>::create(Thread<CudaLaunchData> *handle)
-{
-    return new CudaWorker(handle->id(), handle->config());
-}
-
-
-template class Workers<CudaLaunchData>;
-#endif
-
 
 } // namespace xmrig

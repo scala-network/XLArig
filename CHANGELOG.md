@@ -1,3 +1,9 @@
+# v5.2.3
+- Removed the True Core functionnality (too buggy at this time)
+- Removed code for GPU's (OpenCL/Cuda)
+- Removed non-randomx algorythms
+
+
 # v5.2.2
 - Rebased from XMRig v6.8.1 [(changelog)](doc/CHANGELOG.md)
 - Full RandomX integration for Panthera
