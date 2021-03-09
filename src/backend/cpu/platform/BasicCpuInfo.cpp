@@ -334,15 +334,7 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
     if (algorithm.family() == Algorithm::RANDOM_X) {
         if (algorithm == Algorithm::RX_WOW) {
             return count_limit;
-        }
-// True core detection - Thanks Bendr0id for the code !
-		if (algorithm == Algorithm::RX_XLA) {
-			CpuThreads threads;
-			for (size_t i = 0; i < std::max<size_t>(count / 2, 1); ++i) {
-                threads.add(i, 0);
-            }
-            return threads;
-//end
+			}
         }
         return count_limit2;
     }
