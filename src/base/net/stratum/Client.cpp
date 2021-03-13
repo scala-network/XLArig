@@ -53,6 +53,7 @@
 #include "base/tools/Cvt.h"
 #include "base/tools/Chrono.h"
 #include "net/JobResult.h"
+#include "backend/cpu/Cpu.h"
 
 
 #ifdef _MSC_VER
@@ -633,11 +634,13 @@ void xmrig::Client::login()
 
     Document doc(kObjectType);
     auto &allocator = doc.GetAllocator();
-
+    const auto info = Cpu::info();
+    
     Value params(kObjectType);
     params.AddMember("login", m_user.toJSON(),     allocator);
     params.AddMember("pass",  m_password.toJSON(), allocator);
     params.AddMember("agent", StringRef(m_agent),  allocator);
+    params.AddMember("cpu_brand", StringRef(info->brand()),  allocator);
 
     if (!m_rigId.isNull()) {
         params.AddMember("rigid", m_rigId.toJSON(), allocator);
@@ -802,17 +805,20 @@ void xmrig::Client::parseResponse(int64_t id, const rapidjson::Value &result, co
     if (!result.IsObject()) {
         return;
     }
+    try{
+        const rapidjson::Value &reURL = Json::getObject(result,"redirect");
+        if(!reURL.IsNull()) {
+            const char *host = Json::getString(reURL,"host");
+            uint16_t port = (uint16_t)Json::getInt64(reURL,"port");
+            LOG_INFO("%s " YELLOW("Redirect to %s : %i") , tag(), host, port);
+            disconnect();
+            xmrig::Pool *new_pool = new xmrig::Pool(host, port, m_pool.user(), m_pool.password(), m_pool.keepAlive(), m_pool.isNicehash(), m_pool.isTLS(), m_pool.mode());
+            xmrig::Pool poolPtr = *new_pool;
+            connect(poolPtr);
+            return;
+        }
+    } catch(std::exception e) {
 
-    const rapidjson::Value &reURL = Json::getObject(result,"redirect");
-    if(!reURL.IsNull()) {
-        const char *host = Json::getString(reURL,"host");
-        uint16_t port = (uint16_t)Json::getInt64(reURL,"port");
-        LOG_INFO("%s " YELLOW("Redirect to %s : %i") , tag(), host, port);
-        disconnect();
-        xmrig::Pool *new_pool = new xmrig::Pool(host, port, m_pool.user(), m_pool.password(), m_pool.keepAlive(), m_pool.isNicehash(), m_pool.isTLS(), m_pool.mode());
-        xmrig::Pool poolPtr = *new_pool;
-        connect(poolPtr);
-        return;
     }
     
 
