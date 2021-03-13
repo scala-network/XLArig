@@ -357,31 +357,48 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
         for (hwloc_obj_t core : cores) {
             const std::vector<hwloc_obj_t> units = findByType(core, HWLOC_OBJ_PU);
             for (hwloc_obj_t pu : units) {
-              threads.add(pu->os_index, intensity);
+                threads.add(pu->os_index, intensity);
             }
         }
 
         return;
     }
 
+    std::vector<std::pair<int64_t, int32_t>> threads_data;
+    threads_data.reserve(cores.size());
+
     size_t pu_id = 0;
     while (cacheHashes > 0 && PUs > 0) {
         bool allocated_pu = false;
 
+        threads_data.clear();
         for (hwloc_obj_t core : cores) {
             const std::vector<hwloc_obj_t> units = findByType(core, HWLOC_OBJ_PU);
             if (units.size() <= pu_id) {
                 continue;
             }
+
             cacheHashes--;
             PUs--;
 
             allocated_pu = true;
-            threads.add(units[pu_id]->os_index, intensity);
+            threads_data.emplace_back(units[pu_id]->os_index, intensity);
 
             if (cacheHashes == 0) {
                 break;
             }
+        }
+
+        // Reversing of "threads_data" and "cores" is done to fill in virtual cores starting from the last one, but still in order
+        // For example, cn-heavy threads on 6-core Zen2/Zen3 will have affinity [0,2,4,6,8,10,9,11]
+        // This is important for Zen3 cn-heavy optimization
+
+        if (pu_id & 1) {
+            std::reverse(threads_data.begin(), threads_data.end());
+        }
+
+        for (const auto& t : threads_data) {
+            threads.add(t.first, t.second);
         }
 
         if (!allocated_pu) {
@@ -389,6 +406,7 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
         }
 
         pu_id++;
+        std::reverse(cores.begin(), cores.end());
     }
 #   endif
 }

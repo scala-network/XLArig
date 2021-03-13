@@ -160,7 +160,7 @@ endif()
 
 if (WITH_HTTP)
     set(HEADERS_BASE_HTTP
-        src/3rdparty/http-parser/http_parser.h
+        src/3rdparty/llhttp/llhttp.h
         src/base/api/Api.h
         src/base/api/Httpd.h
         src/base/api/interfaces/IApiRequest.h
@@ -181,7 +181,9 @@ if (WITH_HTTP)
         )
 
     set(SOURCES_BASE_HTTP
-        src/3rdparty/http-parser/http_parser.c
+        src/3rdparty/llhttp/llhttp.c
+        src/3rdparty/llhttp/api.c
+        src/3rdparty/llhttp/http.c
         src/base/api/Api.cpp
         src/base/api/Httpd.cpp
         src/base/api/requests/ApiRequest.cpp
@@ -230,4 +232,21 @@ if (WITH_KAWPOW)
         src/base/net/stratum/AutoClient.cpp
         src/base/net/stratum/EthStratumClient.cpp
         )
+endif()
+
+
+if (WITH_RANDOMX AND WITH_BENCHMARK)
+    add_definitions(/DXMRIG_FEATURE_BENCHMARK)
+
+    list(APPEND HEADERS_BASE
+        src/base/net/stratum/benchmark/BenchClient.h
+        src/base/net/stratum/benchmark/BenchConfig.h
+        )
+
+    list(APPEND SOURCES_BASE
+        src/base/net/stratum/benchmark/BenchClient.cpp
+        src/base/net/stratum/benchmark/BenchConfig.cpp
+        )
+else()
+    remove_definitions(/DXMRIG_FEATURE_BENCHMARK)
 endif()
