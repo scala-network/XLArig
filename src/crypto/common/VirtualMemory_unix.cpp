@@ -68,12 +68,14 @@
 namespace xmrig {
 
 
-#ifdef XMRIG_OS_LINUX
 static inline int hugePagesFlag(size_t size)
 {
+#ifdef XMRIG_OS_LINUX
     return (static_cast<int>(log2(size)) & MAP_HUGE_MASK) << MAP_HUGE_SHIFT;
-}
+#else
+    return 0;
 #endif
+}
 
 } // namespace xmrig
 
