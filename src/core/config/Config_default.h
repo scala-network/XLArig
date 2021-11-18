@@ -46,7 +46,7 @@ R"===(
     "title": true,
     "randomx": {
         "init": -1,
-        "init-avx2": -1,
+        "init-avx2": 0,
         "mode": "auto",
         "1gb-pages": false,
         "rdmsr": true,
