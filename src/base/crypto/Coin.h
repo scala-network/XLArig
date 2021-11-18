@@ -40,7 +40,7 @@ public:
     enum Id : int {
         INVALID = -1,
         MONERO,
-        ARQ,
+        ARQMA,
         DERO,
         KEVA,
         RAVEN,

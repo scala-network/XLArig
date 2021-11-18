@@ -307,6 +307,7 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
     const uint32_t count = std::thread::hardware_concurrency();
     const uint32_t count_limit  = std::max(static_cast<uint32_t>(count * (limit / 100.0f)), 1U);
     const uint32_t count_limit2 = std::max(static_cast<uint32_t>(count / 2), count_limit);
+    const uint32_t count_limit4 = std::max(static_cast<uint32_t>(count / 4), count_limit);
 
     if (count == 1) {
         return 1;
@@ -335,15 +336,15 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
         if (algorithm == Algorithm::RX_WOW) {
             return count_limit;
         }
-// True core detection - Thanks Bendr0id for the code !
-		if (algorithm == Algorithm::RX_XLA) {
-			CpuThreads threads;
-			for (size_t i = 0; i < std::max<size_t>(count / 2, 1); ++i) {
+
+        if (algorithm == Algorithm::RX_XLA) {
+            CpuThreads threads;
+            for (size_t i = 0; i < count_limit2; ++i) {
                 threads.add(i, 0);
             }
             return threads;
-//end
         }
+
         return count_limit2;
     }
 #   endif
@@ -361,6 +362,12 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
             threads.add(i, 0);
         }
         return threads;
+    }
+#   endif
+
+#   ifdef XMRIG_ALGO_CN_GPU
+    if (algorithm == Algorithm::CN_GPU) {
+        return count_limit;
     }
 #   endif
 
