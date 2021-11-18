@@ -88,6 +88,7 @@ void xmrig::Rx::init(IRxListener *listener)
 template<typename T>
 bool xmrig::Rx::init(const T &seed, const RxConfig &config, const CpuConfig &cpu)
 {
+    const Algorithm algo = seed.algorithm();
     if (seed.algorithm().family() != Algorithm::RANDOM_X) {
 #       ifdef XMRIG_FEATURE_MSR
         RxMsr::destroy();
@@ -98,7 +99,7 @@ bool xmrig::Rx::init(const T &seed, const RxConfig &config, const CpuConfig &cpu
 
     randomx_set_scratchpad_prefetch_mode(config.scratchpadPrefetchMode());
     randomx_set_huge_pages_jit(cpu.isHugePagesJit());
-    randomx_set_optimized_dataset_init(config.initDatasetAVX2()) : 0);
+    randomx_set_optimized_dataset_init(algo != Algorithm::RX_XLA ? config.initDatasetAVX2() : 0);
 
 #   ifdef XMRIG_FEATURE_MSR
     if (!RxMsr::isInitialized()) {
