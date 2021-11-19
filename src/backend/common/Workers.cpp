@@ -24,6 +24,7 @@
 #include "base/io/log/Log.h"
 #include "base/io/log/Tags.h"
 #include "base/tools/Chrono.h"
+#include <memory>
 
 namespace xmrig {
 
