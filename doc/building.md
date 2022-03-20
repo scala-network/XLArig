@@ -62,3 +62,12 @@ mkdir xlarig/build && cd xlarig/build
 cmake ..
 make -j$(nproc)
 ```
+### FreeBSD 
+
+```
+sudo pkg install git cmake automake libtool autoconf openssl
+git clone https://github.com/scala-network/xlarig
+mkdir xlarig/build && cd xlarig/build
+cmake ..
+make -j$(sysctl -n hw.ncpu)
+```
