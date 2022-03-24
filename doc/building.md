@@ -65,7 +65,7 @@ make -j$(nproc)
 ### FreeBSD 
 
 ```
-sudo pkg install git cmake automake libtool autoconf openssl
+sudo pkg install git cmake automake libtool autoconf openssl hwloc
 git clone https://github.com/scala-network/xlarig
 mkdir xlarig/build && cd xlarig/build
 cmake ..
