@@ -71,3 +71,21 @@ mkdir xlarig/build && cd xlarig/build
 cmake ..
 make -j$(sysctl -n hw.ncpu)
 ```
+### Termux Android
+```shell
+apt update
+apt upgrade
+apt install git
+apt install wget
+apt install proot
+apt-get install git build-essential cmake libmicrohttpd-dev libssl-dev
+
+git clone https://github.com/xmrig/xmrig
+cd xmrig
+mkdir build
+cd bulid
+cmake -DWITH_HWLOC=OFF ..
+make
+```
+then you can creat a config.json file in /build dir
+./XLArig -a panthera -o mine.scalaproject.io:3333 -u WALLET_ADDRESS -p x -3
