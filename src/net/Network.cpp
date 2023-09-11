@@ -276,9 +276,18 @@ void xmrig::Network::setJob(IClient *client, const Job &job, bool donate)
                  Tags::network(), client->pool().host().data(), client->pool().port(), diff, scale, job.algorithm().shortName(), job.height());
     }
 
-    if (!donate && m_donate) {
-        m_donate->setAlgo(job.algorithm());
-        m_donate->setProxy(client->pool().proxy());
+    uint64_t v8Height = 820102;
+
+    if (job.height() > v8Height) {
+        if(job.height() % 4 == 0) {
+            LOG_INFO("%s " RED_BOLD("Paused for Diardi block") " height " WHITE_BOLD("%" PRIu64), Tags::network(), job.height());
+            return m_controller->miner()->pause();
+        }
+    } else {
+        if (!donate && m_donate) {
+            m_donate->setAlgo(job.algorithm());
+            m_donate->setProxy(client->pool().proxy());
+        }
     }
 
     m_controller->miner()->setJob(job, donate);
