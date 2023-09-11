@@ -29,10 +29,10 @@
 #define APP_ID        "xlarig"
 #define APP_NAME      "XLArig"
 #define APP_DESC      "XLArig miner"
-#define APP_VERSION   "5.2.3"
+#define APP_VERSION   "5.2.4"
 #define APP_DOMAIN    "xmrig.com"
 #define APP_SITE      "www.xmrig.com"
-#define APP_COPYRIGHT "Copyright (C) 2016-2021 xmrig.com | 2018-2021 scalaproject.io"
+#define APP_COPYRIGHT "Copyright (C) 2016-2021 xmrig.com | 2018-2023 scalaproject.io"
 #define APP_KIND      "miner"
 
 #define APP_VER_MAJOR  5
