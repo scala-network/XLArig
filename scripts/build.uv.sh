@@ -11,7 +11,7 @@ mkdir -p build && cd build
 wget https://dist.libuv.org/dist/v${UV_VERSION}/libuv-v${UV_VERSION}.tar.gz -O v${UV_VERSION}.tar.gz
 tar -xzf v${UV_VERSION}.tar.gz
 
-cd libuv-${UV_VERSION}
+cd libuv-v${UV_VERSION}
 sh autogen.sh
 ./configure --disable-shared
 make -j$(nproc || sysctl -n hw.ncpu || sysctl -n hw.logicalcpu)
