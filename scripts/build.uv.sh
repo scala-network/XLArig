@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-UV_VERSION="1.40.0"
+UV_VERSION="1.47.0"
 
 mkdir -p deps
 mkdir -p deps/include
@@ -8,7 +8,7 @@ mkdir -p deps/lib
 
 mkdir -p build && cd build
 
-wget https://github.com/libuv/libuv/archive/v${UV_VERSION}.tar.gz -O v${UV_VERSION}.tar.gz
+wget https://dist.libuv.org/dist/v${UV_VERSION}/libuv-v${UV_VERSION}.tar.gz -O v${UV_VERSION}.tar.gz
 tar -xzf v${UV_VERSION}.tar.gz
 
 cd libuv-${UV_VERSION}
