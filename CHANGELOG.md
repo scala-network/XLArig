@@ -1,3 +1,7 @@
+# v5.2.4
+- Updated dependencies (OpenSSL 3, ...)
+- Miner won't try to mine Diardi's block
+
 # v5.2.3
 - Removed the True Core functionnality (too buggy at this time)
 - Removed code for GPU's (OpenCL/Cuda)
